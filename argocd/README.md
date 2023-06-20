@@ -11,3 +11,14 @@ all configuration to be stored in Git.
 
 Ideally ArgoCD should be able to manage it self via GitOps
 
+
+
+Using a shell script we install argocd, and bootstrap app(s)
+
+
+
+#### Researched Resources:
+- https://github.com/rh-mobb/terraform-aro
+- https://github.com/akuity/awesome-argo
+- https://github.com/argoproj-labs/argocd-autopilot
+
