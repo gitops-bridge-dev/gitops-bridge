@@ -239,6 +239,7 @@ module "aws_cloudwatch_metrics" {
   version = "1.0.0"
 
   create = var.enable_aws_cloudwatch_metrics
+  create_release = local.create_release
 
   # https://github.com/aws/eks-charts/tree/master/stable/aws-cloudwatch-metrics
   name             = try(var.aws_cloudwatch_metrics.name, "aws-cloudwatch-metrics")

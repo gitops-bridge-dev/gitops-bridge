@@ -1,0 +1,30 @@
+apiVersion: v1
+data:
+  config: ewogICJ0bHNDbGllbnRDb25maWciOiB7CiAgICAiaW5zZWN1cmUiOiBmYWxzZQogIH0KfQo=
+  name: d29ya3Nob3A=
+  server: aHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3Zj
+kind: Secret
+metadata:
+  annotations:
+    aws_cloudwatch_metrics_iam_role_arn: arn:aws:iam::015299085168:role/aws-cloudwatch-metrics-20230621041607875900000001
+    aws_cloudwatch_metrics_namespace: amazon-cloudwatch
+    aws_cloudwatch_metrics_sa: aws-cloudwatch-metrics
+    cert_manager_iam_role_arn: arn:aws:iam::015299085168:role/cert-manager-20230621021001241700000002
+    cert_manager_namespace: cert-manager
+    cluster_autoscaler_iam_role_arn: arn:aws:iam::015299085168:role/cluster-autoscaler-20230621032655726500000002
+    cluster_autoscaler_image_tag: v1.27.2
+    cluster_autoscaler_namespace: kube-system
+    cluster_autoscaler_sa: cluster-autoscaler-sa
+    cluster_name: ex-shell-script
+    foo: bar
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Secret","metadata":{"annotations":{"aws_cloudwatch_metrics_iam_role_arn":"arn:aws:iam::015299085168:role/aws-cloudwatch-metrics-20230621041607875900000001","aws_cloudwatch_metrics_namespace":"amazon-cloudwatch","aws_cloudwatch_metrics_sa":"aws-cloudwatch-metrics","cert_manager_iam_role_arn":"arn:aws:iam::015299085168:role/cert-manager-20230621021001241700000002","cert_manager_namespace":"cert-manager","cluster_autoscaler_iam_role_arn":"arn:aws:iam::015299085168:role/cluster-autoscaler-20230621032655726500000002","cluster_autoscaler_image_tag":"v1.27.2","cluster_autoscaler_namespace":"kube-system","cluster_autoscaler_sa":"cluster-autoscaler-sa","cluster_name":"ex-shell-script","foo":"bar","region":"us-west-2"},"labels":{"argocd.argoproj.io/secret-type":"cluster"},"name":"workshop","namespace":"argocd"},"stringData":{"config":"{\n  \"tlsClientConfig\": {\n    \"insecure\": false\n  }\n}\n","name":"workshop","server":"https://kubernetes.default.svc"},"type":"Opaque"}
+    region: us-west-2
+  creationTimestamp: "2023-06-20T22:58:03Z"
+  labels:
+    argocd.argoproj.io/secret-type: cluster
+  name: workshop
+  namespace: argocd
+  resourceVersion: "320307"
+  uid: 031f3ac2-430a-4c9b-95e7-158e54680160
+type: Opaque

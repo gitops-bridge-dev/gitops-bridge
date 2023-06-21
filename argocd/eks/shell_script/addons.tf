@@ -28,7 +28,7 @@ module "eks_blueprints_addons" {
   #enable_argocd                                = true # doesn't required aws resources (ie IAM), only when used as hub-cluster
   #enable_argo_rollouts                         = true # doesn't required aws resources (ie IAM)
   #enable_argo_workflows                        = true # doesn't required aws resources (ie IAM)
-  #enable_aws_cloudwatch_metrics                = true #
+  enable_aws_cloudwatch_metrics                = true
   #enable_aws_privateca_issuer                  = true
   enable_cert_manager                          = true
   enable_cluster_autoscaler                    = true
@@ -65,10 +65,16 @@ module "eks_blueprints_addons" {
   tags = local.tags
 }
 
+
+# Only for DEBUG
 output "cert_manager" {
     value = module.eks_blueprints_addons.cert_manager
 }
 
 output "cluster_autoscaler" {
     value = module.eks_blueprints_addons.cluster_autoscaler
+}
+
+output "aws_cloudwatch_metrics" {
+    value = module.eks_blueprints_addons.aws_cloudwatch_metrics
 }

@@ -27,6 +27,9 @@ metadata:
     cluster_autoscaler_namespace: ${cluster_autoscaler_namespace}
     cluster_autoscaler_sa: ${cluster_autoscaler_sa}
     cluster_autoscaler_image_tag: ${cluster_autoscaler_image_tag}
+    aws_cloudwatch_metrics_iam_role_arn: ${aws_cloudwatch_metrics_iam_role_arn}
+    aws_cloudwatch_metrics_namespace: ${aws_cloudwatch_metrics_namespace}
+    aws_cloudwatch_metrics_sa: ${aws_cloudwatch_metrics_sa}
   labels:
     argocd.argoproj.io/secret-type: cluster
 type: Opaque

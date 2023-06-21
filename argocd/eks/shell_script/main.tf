@@ -41,6 +41,9 @@ resource "shell_script" "day2ops" {
         cluster_autoscaler_namespace = "kube-system"
         cluster_autoscaler_sa = "cluster-autoscaler-sa"
         cluster_autoscaler_image_tag = try(local.cluster_autoscaler_image_tag[module.eks.cluster_version], "v${module.eks.cluster_version}.0")
+        aws_cloudwatch_metrics_iam_role_arn = module.eks_blueprints_addons.aws_cloudwatch_metrics.iam_role_arn
+        aws_cloudwatch_metrics_namespace = "amazon-cloudwatch"
+        aws_cloudwatch_metrics_sa = "aws-cloudwatch-metrics"
     })
     update = templatefile(
       "${path.module}/templates/create.tftpl",
@@ -53,6 +56,9 @@ resource "shell_script" "day2ops" {
         cluster_autoscaler_namespace = "kube-system"
         cluster_autoscaler_sa = "cluster-autoscaler-sa"
         cluster_autoscaler_image_tag = try(local.cluster_autoscaler_image_tag[module.eks.cluster_version], "v${module.eks.cluster_version}.0")
+        aws_cloudwatch_metrics_iam_role_arn = module.eks_blueprints_addons.aws_cloudwatch_metrics.iam_role_arn
+        aws_cloudwatch_metrics_namespace = "amazon-cloudwatch"
+        aws_cloudwatch_metrics_sa = "aws-cloudwatch-metrics"
     })
     read = templatefile(
       "${path.module}/templates/create.tftpl",
@@ -65,6 +71,9 @@ resource "shell_script" "day2ops" {
         cluster_autoscaler_namespace = "kube-system"
         cluster_autoscaler_sa = "cluster-autoscaler-sa"
         cluster_autoscaler_image_tag = try(local.cluster_autoscaler_image_tag[module.eks.cluster_version], "v${module.eks.cluster_version}.0")
+        aws_cloudwatch_metrics_iam_role_arn = module.eks_blueprints_addons.aws_cloudwatch_metrics.iam_role_arn
+        aws_cloudwatch_metrics_namespace = "amazon-cloudwatch"
+        aws_cloudwatch_metrics_sa = "aws-cloudwatch-metrics"
     })
     delete = templatefile(
       "${path.module}/templates/delete.tftpl",
