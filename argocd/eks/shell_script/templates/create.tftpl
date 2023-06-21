@@ -1,15 +1,13 @@
 #!/bin/bash
 
 set -x
-env
 aws eks --region ${region} update-kubeconfig --name ${cluster_name} --kubeconfig /tmp/${cluster_name}
 export KUBECONFIG=/tmp/${cluster_name}
 
 helm repo add argo https://argoproj.github.io/argo-helm
-
 helm install argo-cd argo/argo-cd --version "5.36.4" --namespace argocd --create-namespace
-
-#kubectl apply -f bootstrap/clusters/workshop.yaml
+# bootstrap app (App or Apps)
+kubectl apply -f https://raw.githubusercontent.com/csantanapr/control-plane-eks/main/argocd-app.yaml
 
 kubectl apply -f - <<EOF
 apiVersion: v1

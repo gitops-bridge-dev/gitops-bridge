@@ -63,7 +63,7 @@ locals {
       }
     }
   }
-  create_release = var.argocd_manage_add_ons ? false : true
+  create_release = var.enable_gitops ? false : true
 }
 
 ################################################################################

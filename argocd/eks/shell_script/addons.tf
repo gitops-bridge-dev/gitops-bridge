@@ -21,7 +21,7 @@ module "eks_blueprints_addons" {
   cluster_version   = module.eks.cluster_version
   oidc_provider_arn = module.eks.oidc_provider_arn
 
-  argocd_manage_add_ons = true
+  enable_gitops = true
 
   # enable_aws_efs_csi_driver                    = true
   # enable_aws_fsx_csi_driver                    = true

@@ -538,8 +538,8 @@ variable "vpa" {
 # GitOps
 ################################################################################
 
-variable "argocd_manage_add_ons" {
-  description = "Enable Vertical Pod Autoscaler add-on"
+variable "enable_gitops" {
+  description = "When this is true the terraform helm-release is skipped"
   type        = bool
   default     = false
 }
