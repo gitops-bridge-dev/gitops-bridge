@@ -533,3 +533,13 @@ variable "vpa" {
   type        = any
   default     = {}
 }
+
+################################################################################
+# GitOps
+################################################################################
+
+variable "argocd_manage_add_ons" {
+  description = "Enable Vertical Pod Autoscaler add-on"
+  type        = bool
+  default     = false
+}

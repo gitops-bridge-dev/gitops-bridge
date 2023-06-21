@@ -63,6 +63,7 @@ locals {
       }
     }
   }
+  create_release = var.argocd_manage_add_ons ? false : true
 }
 
 ################################################################################
@@ -1500,6 +1501,7 @@ module "cert_manager" {
   version = "1.0.0"
 
   create = var.enable_cert_manager
+  create_release = local.create_release
 
   # https://github.com/cert-manager/cert-manager/blob/master/deploy/charts/cert-manager/Chart.template.yaml
   name             = try(var.cert_manager.name, "cert-manager")
@@ -1642,6 +1644,7 @@ module "cluster_autoscaler" {
   version = "1.0.0"
 
   create = var.enable_cluster_autoscaler
+  create_release = local.create_release
 
   # https://github.com/kubernetes/autoscaler/blob/master/charts/cluster-autoscaler/Chart.yaml
   name             = try(var.cluster_autoscaler.name, "cluster-autoscaler")

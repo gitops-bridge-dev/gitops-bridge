@@ -13,6 +13,17 @@ locals {
     Blueprint  = local.name
     GithubRepo = "github.com/csantanapr/terraform-gitops-bridge"
   }
+  # Lookup map to pull latest cluster-autoscaler patch version given the cluster version
+  cluster_autoscaler_image_tag = {
+    "1.20" = "v1.20.3"
+    "1.21" = "v1.21.3"
+    "1.22" = "v1.22.3"
+    "1.23" = "v1.23.1"
+    "1.24" = "v1.24.1"
+    "1.25" = "v1.25.1"
+    "1.26" = "v1.26.2"
+    "1.27" = "v1.27.2"
+  }
 }
 
 
@@ -24,21 +35,39 @@ resource "shell_script" "day2ops" {
       {
         cluster_name        = module.eks.cluster_name,
         region              = local.region
-    })
-    delete = templatefile(
-      "${path.module}/templates/delete.tftpl",
-      {
-        cluster_name        = module.eks.cluster_name,
-        region              = local.region
+        cert_manager_iam_role_arn = module.eks_blueprints_addons.cert_manager.iam_role_arn
+        cert_manager_namespace = "cert-manager"
+        cluster_autoscaler_iam_role_arn = module.eks_blueprints_addons.cluster_autoscaler.iam_role_arn
+        cluster_autoscaler_namespace = "kube-system"
+        cluster_autoscaler_sa = "cluster-autoscaler-sa"
+        cluster_autoscaler_image_tag = try(local.cluster_autoscaler_image_tag[module.eks.cluster_version], "v${module.eks.cluster_version}.0")
     })
     update = templatefile(
       "${path.module}/templates/create.tftpl",
       {
         cluster_name        = module.eks.cluster_name,
         region              = local.region
+        cert_manager_iam_role_arn = module.eks_blueprints_addons.cert_manager.iam_role_arn
+        cert_manager_namespace = "cert-manager"
+        cluster_autoscaler_iam_role_arn = module.eks_blueprints_addons.cluster_autoscaler.iam_role_arn
+        cluster_autoscaler_namespace = "kube-system"
+        cluster_autoscaler_sa = "cluster-autoscaler-sa"
+        cluster_autoscaler_image_tag = try(local.cluster_autoscaler_image_tag[module.eks.cluster_version], "v${module.eks.cluster_version}.0")
     })
     read = templatefile(
       "${path.module}/templates/create.tftpl",
+      {
+        cluster_name        = module.eks.cluster_name,
+        region              = local.region
+        cert_manager_iam_role_arn = module.eks_blueprints_addons.cert_manager.iam_role_arn
+        cert_manager_namespace = "cert-manager"
+        cluster_autoscaler_iam_role_arn = module.eks_blueprints_addons.cluster_autoscaler.iam_role_arn
+        cluster_autoscaler_namespace = "kube-system"
+        cluster_autoscaler_sa = "cluster-autoscaler-sa"
+        cluster_autoscaler_image_tag = try(local.cluster_autoscaler_image_tag[module.eks.cluster_version], "v${module.eks.cluster_version}.0")
+    })
+    delete = templatefile(
+      "${path.module}/templates/delete.tftpl",
       {
         cluster_name        = module.eks.cluster_name,
         region              = local.region
