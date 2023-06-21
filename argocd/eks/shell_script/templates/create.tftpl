@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -x
+env
+aws eks --region ${region} update-kubeconfig --name ${cluster_name} --kubeconfig /tmp/${cluster_name}
+export KUBECONFIG=/tmp/${cluster_name}
+
+helm repo add argo https://argoproj.github.io/argo-helm
+
+helm install argo-cd argo/argo-cd --version "5.36.4" --namespace argocd --create-namespace
+
+#kubectl apply -f bootstrap/clusters/workshop.yaml
+
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: workshop
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: cluster
+type: Opaque
+stringData:
+  name: workshop
+  server: https://kubernetes.default.svc
+  config: |
+    {
+      "tlsClientConfig": {
+        "insecure": false
+      }
+    }
+EOF
+
+
+echo "{\"London\": \"$(curl wttr.in/London?format="%l:+%c+%t")\"}"

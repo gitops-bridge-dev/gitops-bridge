@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: workshop
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: cluster
+type: Opaque
+stringData:
+  name: workshop
+  server: https://kubernetes.default
+  config: |
+    {
+      "tlsClientConfig": {
+        "insecure": false
+      }
+    }
+
+

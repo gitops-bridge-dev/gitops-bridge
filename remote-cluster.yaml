@@ -1,0 +1,1691 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    generation: "1"
+    label-key: label-value
+  name: akuity
+  namespace: akuity
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    generation: "1"
+    label-key: label-value
+  name: akuity-agent
+  namespace: akuity
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    generation: "1"
+    label-key: label-value
+  name: akuity-upgrader
+  namespace: akuity
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: application-controller
+    app.kubernetes.io/name: argocd-application-controller
+    app.kubernetes.io/part-of: argocd
+    generation: "1"
+    label-key: label-value
+  name: argocd-application-controller
+  namespace: akuity
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: applicationset-controller
+    app.kubernetes.io/name: argocd-applicationset-controller
+    app.kubernetes.io/part-of: argocd
+    generation: "1"
+    label-key: label-value
+  name: argocd-applicationset-controller
+  namespace: akuity
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/name: argocd-image-updater
+    app.kubernetes.io/part-of: argocd-image-updater
+    generation: "1"
+    label-key: label-value
+  name: argocd-image-updater
+  namespace: akuity
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: notifications-controller
+    app.kubernetes.io/name: argocd-notifications-controller
+    app.kubernetes.io/part-of: argocd
+    generation: "1"
+    label-key: label-value
+  name: argocd-notifications-controller
+  namespace: akuity
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: redis
+    app.kubernetes.io/name: argocd-redis
+    app.kubernetes.io/part-of: argocd
+    generation: "1"
+    label-key: label-value
+  name: argocd-redis
+  namespace: akuity
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: repo-server
+    app.kubernetes.io/name: argocd-repo-server
+    app.kubernetes.io/part-of: argocd
+    generation: "1"
+    label-key: label-value
+  name: argocd-repo-server
+  namespace: akuity
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    generation: "1"
+    label-key: label-value
+  name: akuity-upgrader
+  namespace: akuity
+rules:
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    generation: "1"
+    label-key: label-value
+  name: akuity-agent-workshop
+  namespace: akuity
+rules:
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - delete
+  - get
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - pods/log
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - pods/exec
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: application-controller
+    app.kubernetes.io/name: argocd-application-controller
+    app.kubernetes.io/part-of: argocd
+    generation: "1"
+    label-key: label-value
+  name: akuity-argocd-application-controller-workshop
+  namespace: akuity
+rules:
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- nonResourceURLs:
+  - '*'
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    generation: "1"
+    label-key: label-value
+  name: akuity-upgrader
+  namespace: akuity
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: akuity-upgrader
+subjects:
+- kind: ServiceAccount
+  name: akuity-upgrader
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    generation: "1"
+    label-key: label-value
+  name: akuity-agent-workshop
+  namespace: akuity
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: akuity-agent-workshop
+subjects:
+- kind: ServiceAccount
+  name: akuity-agent
+  namespace: akuity
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: application-controller
+    app.kubernetes.io/name: argocd-application-controller
+    app.kubernetes.io/part-of: argocd
+    generation: "1"
+    label-key: label-value
+  name: akuity-argocd-application-controller-workshop
+  namespace: akuity
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: akuity-argocd-application-controller-workshop
+subjects:
+- kind: ServiceAccount
+  name: argocd-application-controller
+  namespace: akuity
+---
+apiVersion: v1
+data:
+  PASSWORD: b2hZSk4wbDFrdGxFc0Z0MTVoODUx
+  USERNAME: d29ya3Nob3Aucm90LTE=
+kind: Secret
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    generation: "1"
+    label-key: label-value
+  name: agent-auth
+  namespace: akuity
+type: Opaque
+---
+apiVersion: v1
+data:
+  kubeconfig.yaml: YXBpVmVyc2lvbjogdjEKY2x1c3RlcnM6Ci0gY2x1c3RlcjoKICAgIGNlcnRpZmljYXRlLWF1dGhvcml0eS1kYXRhOiAKICAgIHNlcnZlcjogaHR0cHM6Ly84dGhrYm81aTVqNXc1OXB1LWNwbGFuZS5jZHN2Y3MuYWt1aXR5LmNsb3VkCiAgICBpbnNlY3VyZS1za2lwLXRscy12ZXJpZnk6IEZhbHNlCiAgbmFtZTogZGVmYXVsdApjb250ZXh0czoKLSBjb250ZXh0OgogICAgY2x1c3RlcjogZGVmYXVsdAogICAgbmFtZXNwYWNlOiBhcmdvY2QKICAgIHVzZXI6IGRlZmF1bHQKICBuYW1lOiBkZWZhdWx0CmN1cnJlbnQtY29udGV4dDogZGVmYXVsdApraW5kOiBDb25maWcKdXNlcnM6Ci0gbmFtZTogZGVmYXVsdAogIHVzZXI6CiAgICB0b2tlbjogZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNklqSXhTWE5zVTNwQlgzcGFhbGxWZG14S2JqZDRWR1pmUmxJMk5GQnRUVmwyV21aSlp6ZGxOVkJSTTNNaWZRLmV5SnBjM01pT2lKcmRXSmxjbTVsZEdWekwzTmxjblpwWTJWaFkyTnZkVzUwSWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXVZVzFsYzNCaFkyVWlPaUpoY21kdlkyUWlMQ0pyZFdKbGNtNWxkR1Z6TG1sdkwzTmxjblpwWTJWaFkyTnZkVzUwTDNObFkzSmxkQzV1WVcxbElqb2lZMngxYzNSbGNpMTNiM0pyYzJodmNDNXliM1F0TVM1MGIydGxiaUlzSW10MVltVnlibVYwWlhNdWFXOHZjMlZ5ZG1salpXRmpZMjkxYm5RdmMyVnlkbWxqWlMxaFkyTnZkVzUwTG01aGJXVWlPaUpqYkhWemRHVnlMWGR2Y210emFHOXdJaXdpYTNWaVpYSnVaWFJsY3k1cGJ5OXpaWEoyYVdObFlXTmpiM1Z1ZEM5elpYSjJhV05sTFdGalkyOTFiblF1ZFdsa0lqb2lZakpoWW1RMFpUQXRZVGt4T0MwMFlqVTRMV0V4T1RNdFpHSTROVFZtWlRoaE16STNJaXdpYzNWaUlqb2ljM2x6ZEdWdE9uTmxjblpwWTJWaFkyTnZkVzUwT21GeVoyOWpaRHBqYkhWemRHVnlMWGR2Y210emFHOXdJbjAuRGNyS190UDZhOTN2blB5bkJhTVloMzRmQUExTWRnTG91X2h1bUZvZk8yalR2YVZvRFB2YUVNbkxoZWtXMF9jbVlwMTYyNU1Zbi1DRUloN0VxZEJTc2dHNXliQjZFdFFFUFNnM0ZHblloVmFzNUdHNVJOaXRSLW1SQnZ4aHRKX1N3V2I2MWhIVHFvcUVQWXVYUnNQOHpPU3g3QjBIbDVZX2JGSjFGZDJ2NmxpR3VsZm81bWJoM3VQckxjb2pneXBIY00yLTVBR19aY0l2Ykh4a245eGtKSnZDRWRuYVNFSnZHVVhKaDFjckZpMFlWVTdNVXF3a1Bja3VHRTcyT3ZCQXdnU3ZKUmVhdDI5OWxzZnFQbWlzcVhjdUVxejBITTB2aTdpbkd6bDE2SEtOVHZQYnU2ZVBpenFMWkJGeFQyUjVmbmx0NUI4YU1rVU9QUXo3RFlsS0RBCg==
+kind: Secret
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    generation: "1"
+    label-key: label-value
+  name: cplane
+  namespace: akuity
+type: Opaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: applicationset-controller
+    app.kubernetes.io/name: argocd-applicationset-controller
+    app.kubernetes.io/part-of: argocd
+    generation: "1"
+    label-key: label-value
+  name: argocd-applicationset-controller
+  namespace: akuity
+spec:
+  ports:
+  - name: webhook
+    port: 7000
+    protocol: TCP
+    targetPort: webhook
+  - name: metrics
+    port: 8080
+    protocol: TCP
+    targetPort: metrics
+  selector:
+    app.kubernetes.io/name: argocd-applicationset-controller
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/name: argocd-metrics
+    app.kubernetes.io/part-of: argocd
+    generation: "1"
+    label-key: label-value
+  name: argocd-metrics
+  namespace: akuity
+spec:
+  ports:
+  - name: metrics
+    port: 8082
+    protocol: TCP
+    targetPort: 8082
+  selector:
+    app.kubernetes.io/name: argocd-application-controller
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: notifications-controller
+    app.kubernetes.io/name: argocd-notifications-controller-metrics
+    app.kubernetes.io/part-of: argocd
+    generation: "1"
+    label-key: label-value
+  name: argocd-notifications-controller-metrics
+  namespace: akuity
+spec:
+  ports:
+  - name: metrics
+    port: 9001
+    protocol: TCP
+    targetPort: 9001
+  selector:
+    app.kubernetes.io/name: argocd-notifications-controller
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: redis
+    app.kubernetes.io/name: argocd-redis
+    app.kubernetes.io/part-of: argocd
+    generation: "1"
+    label-key: label-value
+  name: argocd-redis
+  namespace: akuity
+spec:
+  ports:
+  - name: tcp-redis
+    port: 6379
+    targetPort: 6379
+  selector:
+    app.kubernetes.io/name: argocd-redis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: repo-server
+    app.kubernetes.io/name: argocd-repo-server
+    app.kubernetes.io/part-of: argocd
+    generation: "1"
+    label-key: label-value
+  name: argocd-repo-server
+  namespace: akuity
+spec:
+  ports:
+  - name: server
+    port: 8081
+    protocol: TCP
+    targetPort: 8081
+  - name: metrics
+    port: 8084
+    protocol: TCP
+    targetPort: 8084
+  selector:
+    app.kubernetes.io/name: argocd-repo-server
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/name: akuity-agent
+    generation: "1"
+    label-key: label-value
+  name: akuity-agent
+  namespace: akuity
+spec:
+  progressDeadlineSeconds: 300
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: akuity-agent
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+  template:
+    metadata:
+      annotations:
+        akuity.io/config-checksum: 37dbeea9926c45f7ff8dbc4a7fdbf9e092be3faaf0ec86ce8d55d1043a827926
+      labels:
+        app.kubernetes.io/name: akuity-agent
+    spec:
+      containers:
+      - args:
+        - tunnel
+        - --health-time-delta=50s
+        - --max-retry=20
+        - --agent-server=https://8thkbo5i5j5w59pu-agentsvr.cdsvcs.akuity.cloud
+        - --kube-server-port=1030
+        - --repo-server-port=1031
+        - --appset-webhook-port=1032
+        - --cluster-hostname=cluster-workshop
+        envFrom:
+        - secretRef:
+            name: agent-auth
+        image: quay.io/akuityio/agent:0.3.33
+        imagePullPolicy: IfNotPresent
+        name: akuity-agent
+        ports: []
+        readinessProbe:
+          failureThreshold: 10
+          httpGet:
+            path: /healthz
+            port: 8080
+          periodSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: akuity-agent
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: application-controller
+    app.kubernetes.io/name: argocd-application-controller
+    app.kubernetes.io/part-of: argocd
+    generation: "1"
+    label-key: label-value
+  name: argocd-application-controller
+  namespace: akuity
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-application-controller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: argocd-application-controller
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: argocd-application-controller
+              topologyKey: kubernetes.io/hostname
+            weight: 100
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/part-of: argocd
+              topologyKey: kubernetes.io/hostname
+            weight: 5
+      containers:
+      - args:
+        - syncer
+        - --generation=1
+        - --redis
+        - 8thkbo5i5j5w59pu-cache.cdsvcs.akuity.cloud:443
+        - --redis-use-tls
+        env:
+        - name: REDIS_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: USERNAME
+              name: agent-auth
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: PASSWORD
+              name: agent-auth
+        image: quay.io/akuityio/agent:0.3.33
+        imagePullPolicy: IfNotPresent
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/akuity-agent
+              - wait-for-syncer
+        name: syncer
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - mountPath: /cplane
+          name: cplane
+      - args:
+        - /usr/local/bin/argocd-application-controller
+        - --redis
+        - 8thkbo5i5j5w59pu-cache.cdsvcs.akuity.cloud:443
+        - --redis-use-tls
+        env:
+        - name: ARGOCD_CONTROLLER_REPLICAS
+          value: "1"
+        - name: ARGOCD_RECONCILIATION_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              key: timeout.reconciliation
+              name: argocd-cm
+              optional: true
+        - name: ARGOCD_HARD_RECONCILIATION_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              key: timeout.hard.reconciliation
+              name: argocd-cm
+              optional: true
+        - name: ARGOCD_APPLICATION_CONTROLLER_REPO_SERVER
+          valueFrom:
+            configMapKeyRef:
+              key: repo.server
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATION_CONTROLLER_REPO_SERVER_TIMEOUT_SECONDS
+          valueFrom:
+            configMapKeyRef:
+              key: controller.repo.server.timeout.seconds
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATION_CONTROLLER_STATUS_PROCESSORS
+          valueFrom:
+            configMapKeyRef:
+              key: controller.status.processors
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATION_CONTROLLER_OPERATION_PROCESSORS
+          valueFrom:
+            configMapKeyRef:
+              key: controller.operation.processors
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATION_CONTROLLER_LOGFORMAT
+          valueFrom:
+            configMapKeyRef:
+              key: controller.log.format
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATION_CONTROLLER_LOGLEVEL
+          valueFrom:
+            configMapKeyRef:
+              key: controller.log.level
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATION_CONTROLLER_METRICS_CACHE_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: controller.metrics.cache.expiration
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATION_CONTROLLER_SELF_HEAL_TIMEOUT_SECONDS
+          valueFrom:
+            configMapKeyRef:
+              key: controller.self.heal.timeout.seconds
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATION_CONTROLLER_REPO_SERVER_PLAINTEXT
+          valueFrom:
+            configMapKeyRef:
+              key: controller.repo.server.plaintext
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATION_CONTROLLER_REPO_SERVER_STRICT_TLS
+          valueFrom:
+            configMapKeyRef:
+              key: controller.repo.server.strict.tls
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATION_CONTROLLER_PERSIST_RESOURCE_HEALTH
+          value: "false"
+        - name: ARGOCD_APP_STATE_CACHE_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: controller.app.state.cache.expiration
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: REDIS_SERVER
+          valueFrom:
+            configMapKeyRef:
+              key: redis.server
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: REDIS_COMPRESSION
+          value: gzip
+        - name: REDISDB
+          valueFrom:
+            configMapKeyRef:
+              key: redis.db
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_DEFAULT_CACHE_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: controller.default.cache.expiration
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATION_CONTROLLER_OTLP_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: otlp.address
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATION_NAMESPACES
+          valueFrom:
+            configMapKeyRef:
+              key: application.namespaces
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATION_CONTROLLER_KUBECTL_PARALLELISM_LIMIT
+          valueFrom:
+            configMapKeyRef:
+              key: controller.kubectl.parallelism.limit
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: KUBECONFIG
+          value: /cplane/kubeconfig.yaml
+        - name: REDIS_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: USERNAME
+              name: agent-auth
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: PASSWORD
+              name: agent-auth
+        - name: ARGOCD_K8S_CLIENT_QPS
+          value: "500"
+        - name: ARGOCD_K8S_CLIENT_MAX_IDLE_CONNECTIONS
+          value: "1500"
+        image: quay.io/argoproj/argocd:v2.7.4
+        imagePullPolicy: IfNotPresent
+        name: argocd-application-controller
+        ports:
+        - containerPort: 8082
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8082
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            memory: 512Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - mountPath: /app/config/controller/tls
+          name: argocd-repo-server-tls
+        - mountPath: /home/argocd
+          name: argocd-home
+        - mountPath: /cplane
+          name: cplane
+        workingDir: /home/argocd
+      hostAliases:
+      - hostnames:
+        - cluster-workshop
+        ip: 127.0.0.1
+      serviceAccountName: argocd-application-controller
+      volumes:
+      - emptyDir: {}
+        name: argocd-home
+      - name: argocd-repo-server-tls
+        secret:
+          items:
+          - key: tls.crt
+            path: tls.crt
+          - key: tls.key
+            path: tls.key
+          - key: ca.crt
+            path: ca.crt
+          optional: true
+          secretName: argocd-repo-server-tls
+      - name: cplane
+        secret:
+          secretName: cplane
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: applicationset-controller
+    app.kubernetes.io/name: argocd-applicationset-controller
+    app.kubernetes.io/part-of: argocd
+    generation: "1"
+    label-key: label-value
+  name: argocd-applicationset-controller
+  namespace: akuity
+spec:
+  replicas: 0
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-applicationset-controller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: argocd-applicationset-controller
+    spec:
+      containers:
+      - args:
+        - /usr/local/bin/argocd-applicationset-controller
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: ARGOCD_APPLICATIONSET_CONTROLLER_ENABLE_LEADER_ELECTION
+          valueFrom:
+            configMapKeyRef:
+              key: applicationsetcontroller.enable.leader.election
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATIONSET_CONTROLLER_NAMESPACE
+          valueFrom:
+            configMapKeyRef:
+              key: applicationsetcontroller.namespace
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATIONSET_CONTROLLER_REPO_SERVER
+          valueFrom:
+            configMapKeyRef:
+              key: repo.server
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATIONSET_CONTROLLER_POLICY
+          valueFrom:
+            configMapKeyRef:
+              key: applicationsetcontroller.policy
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATIONSET_CONTROLLER_DEBUG
+          valueFrom:
+            configMapKeyRef:
+              key: applicationsetcontroller.debug
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATIONSET_CONTROLLER_LOGFORMAT
+          valueFrom:
+            configMapKeyRef:
+              key: applicationsetcontroller.log.format
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATIONSET_CONTROLLER_LOGLEVEL
+          valueFrom:
+            configMapKeyRef:
+              key: applicationsetcontroller.log.level
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATIONSET_CONTROLLER_DRY_RUN
+          valueFrom:
+            configMapKeyRef:
+              key: applicationsetcontroller.dryrun
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_GIT_MODULES_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: applicationsetcontroller.enable.git.submodule
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATIONSET_CONTROLLER_ENABLE_PROGRESSIVE_SYNCS
+          valueFrom:
+            configMapKeyRef:
+              key: applicationsetcontroller.enable.progressive.syncs
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: KUBECONFIG
+          value: /cplane/kubeconfig.yaml
+        image: quay.io/argoproj/argocd:v2.7.4
+        imagePullPolicy: IfNotPresent
+        name: argocd-applicationset-controller
+        ports:
+        - containerPort: 7000
+          name: webhook
+        - containerPort: 8080
+          name: metrics
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - mountPath: /app/config/ssh
+          name: ssh-known-hosts
+        - mountPath: /app/config/tls
+          name: tls-certs
+        - mountPath: /app/config/gpg/source
+          name: gpg-keys
+        - mountPath: /app/config/gpg/keys
+          name: gpg-keyring
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /cplane
+          name: cplane
+      hostAliases:
+      - hostnames:
+        - cluster-workshop
+        ip: 127.0.0.1
+      serviceAccountName: argocd-applicationset-controller
+      volumes:
+      - configMap:
+          name: argocd-ssh-known-hosts-cm
+        name: ssh-known-hosts
+      - configMap:
+          name: argocd-tls-certs-cm
+        name: tls-certs
+      - configMap:
+          name: argocd-gpg-keys-cm
+        name: gpg-keys
+      - emptyDir: {}
+        name: gpg-keyring
+      - emptyDir: {}
+        name: tmp
+      - name: cplane
+        secret:
+          secretName: cplane-privileged
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/name: argocd-image-updater
+    app.kubernetes.io/part-of: argocd
+    generation: "1"
+    label-key: label-value
+  name: argocd-image-updater
+  namespace: akuity
+spec:
+  replicas: 0
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-image-updater
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: argocd-image-updater
+    spec:
+      containers:
+      - command:
+        - /usr/local/bin/argocd-image-updater
+        - run
+        env:
+        - name: APPLICATIONS_API
+          valueFrom:
+            configMapKeyRef:
+              key: applications_api
+              name: argocd-image-updater-config
+              optional: true
+        - name: ARGOCD_GRPC_WEB
+          valueFrom:
+            configMapKeyRef:
+              key: argocd.grpc_web
+              name: argocd-image-updater-config
+              optional: true
+        - name: ARGOCD_SERVER
+          valueFrom:
+            configMapKeyRef:
+              key: argocd.server_addr
+              name: argocd-image-updater-config
+              optional: true
+        - name: ARGOCD_INSECURE
+          valueFrom:
+            configMapKeyRef:
+              key: argocd.insecure
+              name: argocd-image-updater-config
+              optional: true
+        - name: ARGOCD_PLAINTEXT
+          valueFrom:
+            configMapKeyRef:
+              key: argocd.plaintext
+              name: argocd-image-updater-config
+              optional: true
+        - name: ARGOCD_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: argocd.token
+              name: argocd-image-updater-secret
+              optional: true
+        - name: IMAGE_UPDATER_LOGLEVEL
+          valueFrom:
+            configMapKeyRef:
+              key: log.level
+              name: argocd-image-updater-config
+              optional: true
+        - name: GIT_COMMIT_USER
+          valueFrom:
+            configMapKeyRef:
+              key: git.user
+              name: argocd-image-updater-config
+              optional: true
+        - name: GIT_COMMIT_EMAIL
+          valueFrom:
+            configMapKeyRef:
+              key: git.email
+              name: argocd-image-updater-config
+              optional: true
+        - name: IMAGE_UPDATER_KUBE_EVENTS
+          valueFrom:
+            configMapKeyRef:
+              key: kube.events
+              name: argocd-image-updater-config
+              optional: true
+        - name: KUBECONFIG
+          value: /cplane/kubeconfig.yaml
+        image: quay.io/argoprojlabs/argocd-image-updater:v0.12.2
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 30
+        name: argocd-image-updater
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 30
+        resources:
+          requests:
+            cpu: 2m
+            memory: 32Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - mountPath: /app/config
+          name: image-updater-conf
+        - mountPath: /app/config/ssh
+          name: ssh-known-hosts
+        - mountPath: /app/.ssh
+          name: ssh-config
+        - mountPath: /cplane
+          name: cplane
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: argocd-image-updater
+      volumes:
+      - configMap:
+          items:
+          - key: registries.conf
+            path: registries.conf
+          - key: git.commit-message-template
+            path: commit.template
+          name: argocd-image-updater-config
+          optional: true
+        name: image-updater-conf
+      - configMap:
+          name: argocd-ssh-known-hosts-cm
+          optional: true
+        name: ssh-known-hosts
+      - configMap:
+          name: argocd-image-updater-ssh-config
+          optional: true
+        name: ssh-config
+      - name: cplane
+        secret:
+          secretName: cplane
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: notifications-controller
+    app.kubernetes.io/name: argocd-notifications-controller
+    app.kubernetes.io/part-of: argocd
+    generation: "1"
+    label-key: label-value
+  name: argocd-notifications-controller
+  namespace: akuity
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-notifications-controller
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        akuity.io/config-checksum: 37dbeea9926c45f7ff8dbc4a7fdbf9e092be3faaf0ec86ce8d55d1043a827926
+      labels:
+        app.kubernetes.io/name: argocd-notifications-controller
+    spec:
+      containers:
+      - args:
+        - /usr/local/bin/argocd-notifications
+        env:
+        - name: KUBECONFIG
+          value: /cplane/kubeconfig.yaml
+        image: quay.io/argoproj/argocd:v2.7.4
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          tcpSocket:
+            port: 9001
+        name: argocd-notifications-controller
+        resources:
+          requests:
+            cpu: 1m
+            memory: 32Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /app/config/tls
+          name: tls-certs
+        - mountPath: /app/config/reposerver/tls
+          name: argocd-repo-server-tls
+        - mountPath: /cplane
+          name: cplane
+        workingDir: /app
+      hostAliases:
+      - hostnames:
+        - cluster-workshop
+        ip: 127.0.0.1
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: argocd-notifications-controller
+      volumes:
+      - configMap:
+          name: argocd-tls-certs-cm
+        name: tls-certs
+      - name: argocd-repo-server-tls
+        secret:
+          items:
+          - key: tls.crt
+            path: tls.crt
+          - key: tls.key
+            path: tls.key
+          - key: ca.crt
+            path: ca.crt
+          optional: true
+          secretName: argocd-repo-server-tls
+      - name: cplane
+        secret:
+          secretName: cplane
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: redis
+    app.kubernetes.io/name: argocd-redis
+    app.kubernetes.io/part-of: argocd
+    generation: "1"
+    label-key: label-value
+  name: argocd-redis
+  namespace: akuity
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-redis
+  template:
+    metadata:
+      annotations:
+        akuity.io/config-checksum: 37dbeea9926c45f7ff8dbc4a7fdbf9e092be3faaf0ec86ce8d55d1043a827926
+      labels:
+        app.kubernetes.io/name: argocd-redis
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: argocd-redis
+              topologyKey: kubernetes.io/hostname
+            weight: 100
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/part-of: argocd
+              topologyKey: kubernetes.io/hostname
+            weight: 5
+      automountServiceAccountToken: false
+      containers:
+      - args:
+        - --save
+        - ""
+        - --appendonly
+        - "no"
+        image: quay.io/akuity/redis:7.0.8-alpine
+        imagePullPolicy: IfNotPresent
+        name: redis
+        ports:
+        - containerPort: 6379
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: argocd-redis
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: repo-server
+    app.kubernetes.io/name: argocd-repo-server
+    app.kubernetes.io/part-of: argocd
+    generation: "1"
+    label-key: label-value
+  name: argocd-repo-server
+  namespace: akuity
+spec:
+  replicas: 2
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-repo-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: argocd-repo-server
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: argocd-repo-server
+              topologyKey: kubernetes.io/hostname
+            weight: 100
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/part-of: argocd
+              topologyKey: kubernetes.io/hostname
+            weight: 5
+      automountServiceAccountToken: false
+      containers:
+      - args:
+        - /usr/local/bin/argocd-repo-server
+        env:
+        - name: ARGOCD_RECONCILIATION_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              key: timeout.reconciliation
+              name: argocd-cm
+              optional: true
+        - name: ARGOCD_REPO_SERVER_LOGFORMAT
+          valueFrom:
+            configMapKeyRef:
+              key: reposerver.log.format
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_REPO_SERVER_LOGLEVEL
+          valueFrom:
+            configMapKeyRef:
+              key: reposerver.log.level
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_REPO_SERVER_PARALLELISM_LIMIT
+          valueFrom:
+            configMapKeyRef:
+              key: reposerver.parallelism.limit
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_REPO_SERVER_DISABLE_TLS
+          valueFrom:
+            configMapKeyRef:
+              key: reposerver.disable.tls
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_TLS_MIN_VERSION
+          valueFrom:
+            configMapKeyRef:
+              key: reposerver.tls.minversion
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_TLS_MAX_VERSION
+          valueFrom:
+            configMapKeyRef:
+              key: reposerver.tls.maxversion
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_TLS_CIPHERS
+          valueFrom:
+            configMapKeyRef:
+              key: reposerver.tls.ciphers
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_REPO_CACHE_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: reposerver.repo.cache.expiration
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: REDIS_SERVER
+          valueFrom:
+            configMapKeyRef:
+              key: redis.server
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: REDIS_COMPRESSION
+          value: gzip
+        - name: REDISDB
+          valueFrom:
+            configMapKeyRef:
+              key: redis.db
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_DEFAULT_CACHE_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: reposerver.default.cache.expiration
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_REPO_SERVER_OTLP_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: otlp.address
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_REPO_SERVER_MAX_COMBINED_DIRECTORY_MANIFESTS_SIZE
+          valueFrom:
+            configMapKeyRef:
+              key: reposerver.max.combined.directory.manifests.size
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_REPO_SERVER_PLUGIN_TAR_EXCLUSIONS
+          valueFrom:
+            configMapKeyRef:
+              key: reposerver.plugin.tar.exclusions
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_REPO_SERVER_ALLOW_OUT_OF_BOUNDS_SYMLINKS
+          valueFrom:
+            configMapKeyRef:
+              key: reposerver.allow.oob.symlinks
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_REPO_SERVER_STREAMED_MANIFEST_MAX_TAR_SIZE
+          valueFrom:
+            configMapKeyRef:
+              key: reposerver.streamed.manifest.max.tar.size
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_REPO_SERVER_STREAMED_MANIFEST_MAX_EXTRACTED_SIZE
+          valueFrom:
+            configMapKeyRef:
+              key: reposerver.streamed.manifest.max.extracted.size
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_GIT_MODULES_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: reposerver.enable.git.submodule
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: HELM_CACHE_HOME
+          value: /helm-working-dir
+        - name: HELM_CONFIG_HOME
+          value: /helm-working-dir
+        - name: HELM_DATA_HOME
+          value: /helm-working-dir
+        - name: ARGOCD_REDIS_SERVICE
+          value: argocd-redis
+        image: quay.io/argoproj/argocd:v2.7.4
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz?full=true
+            port: 8084
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+        name: argocd-repo-server
+        ports:
+        - containerPort: 8081
+        - containerPort: 8084
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8084
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            memory: 256Mi
+          requests:
+            cpu: 250m
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - mountPath: /app/config/ssh
+          name: ssh-known-hosts
+        - mountPath: /app/config/tls
+          name: tls-certs
+        - mountPath: /app/config/gpg/source
+          name: gpg-keys
+        - mountPath: /app/config/gpg/keys
+          name: gpg-keyring
+        - mountPath: /app/config/reposerver/tls
+          name: argocd-repo-server-tls
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /helm-working-dir
+          name: helm-working-dir
+        - mountPath: /home/argocd/cmp-server/plugins
+          name: plugins
+      initContainers:
+      - command:
+        - /bin/cp
+        - -n
+        - /usr/local/bin/argocd
+        - /var/run/argocd/argocd-cmp-server
+        image: quay.io/argoproj/argocd:v2.7.4
+        name: copyutil
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - mountPath: /var/run/argocd
+          name: var-files
+      serviceAccountName: argocd-repo-server
+      volumes:
+      - configMap:
+          name: argocd-ssh-known-hosts-cm
+        name: ssh-known-hosts
+      - configMap:
+          name: argocd-tls-certs-cm
+        name: tls-certs
+      - configMap:
+          name: argocd-gpg-keys-cm
+        name: gpg-keys
+      - emptyDir: {}
+        name: gpg-keyring
+      - emptyDir: {}
+        name: tmp
+      - emptyDir: {}
+        name: helm-working-dir
+      - name: argocd-repo-server-tls
+        secret:
+          items:
+          - key: tls.crt
+            path: tls.crt
+          - key: tls.key
+            path: tls.key
+          - key: ca.crt
+            path: ca.crt
+          optional: true
+          secretName: argocd-repo-server-tls
+      - emptyDir: {}
+        name: var-files
+      - emptyDir: {}
+        name: plugins
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    generation: "1"
+    label-key: label-value
+  name: akuity-agent-network-policy
+  namespace: akuity
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: argocd-application-controller
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: akuity-agent
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    generation: "1"
+    label-key: label-value
+  name: argocd-application-controller-custom-network-policy
+  namespace: akuity
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-application-controller
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    generation: "1"
+    label-key: label-value
+  name: argocd-applicationset-controller-network-policy
+  namespace: akuity
+spec:
+  ingress:
+  - from:
+    - namespaceSelector: {}
+    ports:
+    - port: 7000
+      protocol: TCP
+    - port: 8080
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-applicationset-controller
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    generation: "1"
+    label-key: label-value
+  name: argocd-notifications-controller-custom-network-policy
+  namespace: akuity
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-notifications-controller
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    app.kubernetes.io/component: notifications-controller
+    app.kubernetes.io/name: argocd-notifications-controller
+    app.kubernetes.io/part-of: argocd
+    generation: "1"
+    label-key: label-value
+  name: argocd-notifications-controller-network-policy
+  namespace: akuity
+spec:
+  ingress:
+  - from:
+    - namespaceSelector: {}
+    ports:
+    - port: 9001
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-notifications-controller
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    generation: "1"
+    label-key: label-value
+  name: argocd-redis-custom-network-policy
+  namespace: akuity
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: argocd-repo-server
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-redis
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    annot-key: annot-value
+  labels:
+    akuity.io/argo-cd-cluster-name: workshop
+    akuity.io/argo-cd-instance-id: 8thkbo5i5j5w59pu
+    generation: "1"
+    label-key: label-value
+  name: repo-server-network-policy
+  namespace: akuity
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: argocd-application-controller
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: akuity-agent
+    ports:
+    - port: 8081
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-repo-server
+  policyTypes:
+  - Ingress

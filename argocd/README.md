@@ -18,7 +18,8 @@ Using a shell script we install argocd, and bootstrap app(s)
 
 
 #### Researched Resources:
-- https://github.com/rh-mobb/terraform-aro
+- https://github.com/rh-mobb/terraform-aro/blob/e2e-gitops/main.tf
 - https://github.com/akuity/awesome-argo
 - https://github.com/argoproj-labs/argocd-autopilot
+- https://www.arthurkoziel.com/setting-up-argocd-with-helm/
 

@@ -20,17 +20,28 @@ resource "shell_script" "day2ops" {
 
   lifecycle_commands {
     create = templatefile(
-      "${path.module}/templates/bootstrap.tftpl",
+      "${path.module}/templates/create.tftpl",
       {
         cluster_name        = module.eks.cluster_name,
         region              = local.region
-        configure_kubectl  = "aws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name}"
     })
     delete = templatefile(
-      "${path.module}/templates/destroy.tftpl",
+      "${path.module}/templates/delete.tftpl",
       {
         cluster_name        = module.eks.cluster_name,
-        configure_kubectl  = "aws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name}"
+        region              = local.region
+    })
+    update = templatefile(
+      "${path.module}/templates/create.tftpl",
+      {
+        cluster_name        = module.eks.cluster_name,
+        region              = local.region
+    })
+    read = templatefile(
+      "${path.module}/templates/create.tftpl",
+      {
+        cluster_name        = module.eks.cluster_name,
+        region              = local.region
     })
   }
 
@@ -41,6 +52,6 @@ resource "shell_script" "day2ops" {
 
 
 # "user" can be accessed like a normal Terraform map
-#output "user" {
-#    value = shell_script.day2ops.output["user"]
-#}
+output "user" {
+    value = shell_script.day2ops.output["London"]
+}
