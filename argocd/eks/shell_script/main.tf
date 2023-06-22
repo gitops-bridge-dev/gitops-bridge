@@ -24,6 +24,7 @@ locals {
     "1.26" = "v1.26.2"
     "1.27" = "v1.27.2"
   }
+  enable_argocd = true
 }
 
 
@@ -44,6 +45,7 @@ resource "shell_script" "day2ops" {
         aws_cloudwatch_metrics_iam_role_arn = module.eks_blueprints_addons.aws_cloudwatch_metrics.iam_role_arn
         aws_cloudwatch_metrics_namespace = "amazon-cloudwatch"
         aws_cloudwatch_metrics_sa = "aws-cloudwatch-metrics"
+        enable_argocd = local.enable_argocd
     })
     update = templatefile(
       "${path.module}/templates/create.tftpl",
@@ -59,6 +61,7 @@ resource "shell_script" "day2ops" {
         aws_cloudwatch_metrics_iam_role_arn = module.eks_blueprints_addons.aws_cloudwatch_metrics.iam_role_arn
         aws_cloudwatch_metrics_namespace = "amazon-cloudwatch"
         aws_cloudwatch_metrics_sa = "aws-cloudwatch-metrics"
+        enable_argocd = local.enable_argocd
     })
     read = templatefile(
       "${path.module}/templates/create.tftpl",
@@ -74,6 +77,7 @@ resource "shell_script" "day2ops" {
         aws_cloudwatch_metrics_iam_role_arn = module.eks_blueprints_addons.aws_cloudwatch_metrics.iam_role_arn
         aws_cloudwatch_metrics_namespace = "amazon-cloudwatch"
         aws_cloudwatch_metrics_sa = "aws-cloudwatch-metrics"
+        enable_argocd = local.enable_argocd
     })
     delete = templatefile(
       "${path.module}/templates/delete.tftpl",

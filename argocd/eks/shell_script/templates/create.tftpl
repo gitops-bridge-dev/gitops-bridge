@@ -7,7 +7,7 @@ export KUBECONFIG=/tmp/${cluster_name}
 helm repo add argo https://argoproj.github.io/argo-helm
 helm install argo-cd argo/argo-cd --version "5.36.4" --namespace argocd --create-namespace
 # bootstrap app (App or Apps)
-kubectl apply -f https://raw.githubusercontent.com/csantanapr/control-plane-eks/main/argocd-app.yaml
+kubectl apply -f https://raw.githubusercontent.com/csantanapr/control-plane-eks/main/bootstrap-app.yaml
 
 kubectl apply -f - <<EOF
 apiVersion: v1
@@ -30,6 +30,7 @@ metadata:
     aws_cloudwatch_metrics_sa: ${aws_cloudwatch_metrics_sa}
   labels:
     argocd.argoproj.io/secret-type: cluster
+    enable_argocd: "${enable_argocd}"
 type: Opaque
 stringData:
   name: workshop
