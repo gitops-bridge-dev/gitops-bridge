@@ -17,16 +17,7 @@ Using a shell script we install argocd, and bootstrap app(s)
 
 
 
-#### Researched Resources:
-- https://docs.akuity.io/tutorials/adv-gitops
-- https://github.com/akuity-adv-gitops-workshop/control-plane-template
-- https://github.com/akuity-adv-gitops-workshop/demo-app-template
-- https://github.com/akuity-adv-gitops-workshop/demo-app-deploy-template
-- https://github.com/akuity/awesome-argo
-- https://github.com/argoproj/argo-helm/blob/main/charts/argo-cd
-- https://github.com/argoproj-labs/argocd-autopilot
-- https://github.com/rh-mobb/terraform-aro/blob/e2e-gitops/main.tf
-- https://www.arthurkoziel.com/setting-up-argocd-with-helm/
+
 
 
 

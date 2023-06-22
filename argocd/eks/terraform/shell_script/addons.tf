@@ -67,14 +67,14 @@ module "eks_blueprints_addons" {
 
 
 # Only for DEBUG
-output "cert_manager" {
-    value = module.eks_blueprints_addons.cert_manager
-}
+# output "cert_manager" {
+#     value = module.eks_blueprints_addons.cert_manager
+# }
 
-output "cluster_autoscaler" {
-    value = module.eks_blueprints_addons.cluster_autoscaler
-}
+# output "cluster_autoscaler" {
+#     value = module.eks_blueprints_addons.cluster_autoscaler
+# }
 
-output "aws_cloudwatch_metrics" {
-    value = module.eks_blueprints_addons.aws_cloudwatch_metrics
-}
+# output "aws_cloudwatch_metrics" {
+#     value = module.eks_blueprints_addons.aws_cloudwatch_metrics
+# }

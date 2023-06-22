@@ -4,10 +4,11 @@ set -x
 aws eks --region ${region} update-kubeconfig --name ${cluster_name} --kubeconfig /tmp/${cluster_name}
 export KUBECONFIG=/tmp/${cluster_name}
 
+# TODO: check if repo already added
 helm repo add argo https://argoproj.github.io/argo-helm
+helm repo update
+# TODO check if argocd already installed (ie check for the argocd namespace)
 helm install argo-cd argo/argo-cd --version "5.36.4" --namespace argocd --create-namespace
-# bootstrap app (App or Apps)
-kubectl apply -f https://raw.githubusercontent.com/csantanapr/control-plane-eks/main/bootstrap-app.yaml
 
 kubectl apply -f - <<EOF
 apiVersion: v1
@@ -16,7 +17,6 @@ metadata:
   name: in-cluster
   namespace: argocd
   annotations:
-    foo: bar
     cluster_name: ${cluster_name}
     region: ${region}
     cert_manager_iam_role_arn: ${cert_manager_iam_role_arn}
@@ -39,6 +39,9 @@ stringData:
       }
     }
 EOF
+
+# bootstrap app (App or Apps)
+kubectl apply -f https://raw.githubusercontent.com/csantanapr/control-plane-eks/main/bootstrap-app.yaml
 
 
 echo "{\"London\": \"$(curl wttr.in/London?format="%l:+%c+%t")\"}"
