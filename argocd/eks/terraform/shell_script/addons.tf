@@ -14,7 +14,7 @@ data "aws_ecrpublic_authorization_token" "token" {
 ################################################################################
 
 module "eks_blueprints_addons" {
-  source = "../../../terraform-aws-eks-blueprints-addons/"
+  source = "../../../../terraform-aws-eks-blueprints-addons/"
 
   cluster_name      = module.eks.cluster_name
   cluster_endpoint  = module.eks.cluster_endpoint
