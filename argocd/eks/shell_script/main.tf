@@ -37,13 +37,10 @@ resource "shell_script" "day2ops" {
         cluster_name        = module.eks.cluster_name,
         region              = local.region
         cert_manager_iam_role_arn = module.eks_blueprints_addons.cert_manager.iam_role_arn
-        cert_manager_namespace = "cert-manager"
         cluster_autoscaler_iam_role_arn = module.eks_blueprints_addons.cluster_autoscaler.iam_role_arn
-        cluster_autoscaler_namespace = "kube-system"
         cluster_autoscaler_sa = "cluster-autoscaler-sa"
         cluster_autoscaler_image_tag = try(local.cluster_autoscaler_image_tag[module.eks.cluster_version], "v${module.eks.cluster_version}.0")
         aws_cloudwatch_metrics_iam_role_arn = module.eks_blueprints_addons.aws_cloudwatch_metrics.iam_role_arn
-        aws_cloudwatch_metrics_namespace = "amazon-cloudwatch"
         aws_cloudwatch_metrics_sa = "aws-cloudwatch-metrics"
         enable_argocd = local.enable_argocd
     })

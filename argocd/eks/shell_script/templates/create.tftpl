@@ -13,27 +13,24 @@ kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Secret
 metadata:
-  name: workshop
+  name: in-cluster
   namespace: argocd
   annotations:
     foo: bar
     cluster_name: ${cluster_name}
     region: ${region}
     cert_manager_iam_role_arn: ${cert_manager_iam_role_arn}
-    cert_manager_namespace: ${cert_manager_namespace}
     cluster_autoscaler_iam_role_arn: ${cluster_autoscaler_iam_role_arn}
-    cluster_autoscaler_namespace: ${cluster_autoscaler_namespace}
     cluster_autoscaler_sa: ${cluster_autoscaler_sa}
     cluster_autoscaler_image_tag: ${cluster_autoscaler_image_tag}
     aws_cloudwatch_metrics_iam_role_arn: ${aws_cloudwatch_metrics_iam_role_arn}
-    aws_cloudwatch_metrics_namespace: ${aws_cloudwatch_metrics_namespace}
     aws_cloudwatch_metrics_sa: ${aws_cloudwatch_metrics_sa}
   labels:
     argocd.argoproj.io/secret-type: cluster
     enable_argocd: "${enable_argocd}"
 type: Opaque
 stringData:
-  name: workshop
+  name: in-cluster
   server: https://kubernetes.default.svc
   config: |
     {
