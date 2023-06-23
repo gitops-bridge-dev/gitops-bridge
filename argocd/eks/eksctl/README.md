@@ -44,7 +44,7 @@ metadata:
     enable_argocd: "${enable_argocd}"
 type: Opaque
 stringData:
-  name: in-cluster
+  name: in-cluster-local
   server: https://kubernetes.default.svc
   config: |
     {

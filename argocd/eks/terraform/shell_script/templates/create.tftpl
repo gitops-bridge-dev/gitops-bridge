@@ -8,13 +8,13 @@ export KUBECONFIG=/tmp/${cluster_name}
 helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
 # TODO check if argocd already installed (ie check for the argocd namespace)
-helm install argo-cd argo/argo-cd --version "5.36.4" --namespace argocd --create-namespace
+helm install argo-cd argo/argo-cd --version "5.36.4" --namespace argocd --create-namespace --wait
 
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Secret
 metadata:
-  name: in-cluster
+  name: in-cluster-local
   namespace: argocd
   annotations:
     cluster_name: ${cluster_name}
@@ -30,7 +30,7 @@ metadata:
     enable_argocd: "${enable_argocd}"
 type: Opaque
 stringData:
-  name: in-cluster
+  name: in-cluster-local
   server: https://kubernetes.default.svc
   config: |
     {
