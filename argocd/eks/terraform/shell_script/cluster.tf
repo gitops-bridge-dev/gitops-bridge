@@ -6,6 +6,16 @@ data "aws_caller_identity" "current" {}
 # Cluster
 ################################################################################
 
+locals {
+  vpc_cidr = "10.0.0.0/16"
+  azs      = slice(data.aws_availability_zones.available.names, 0, 3)
+
+  tags = {
+    Blueprint  = local.name
+    GithubRepo = "github.com/csantanapr/terraform-gitops-bridge"
+  }
+}
+
 #tfsec:ignore:aws-eks-enable-control-plane-logging
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
@@ -21,9 +31,9 @@ module "eks" {
 
   eks_managed_node_groups = {
     initial = {
-      min_size     = 1
-      max_size     = 10
-      desired_size = 3
+      min_size       = 1
+      max_size       = 10
+      desired_size   = 3
       instance_types = ["t3.large"]
       capacity_type  = "SPOT"
     }

@@ -7,7 +7,7 @@ terraform {
       version = ">= 4.67.0"
     }
     shell = {
-      source = "scottwinkler/shell"
+      source  = "scottwinkler/shell"
       version = ">= 1.7.10"
     }
   }

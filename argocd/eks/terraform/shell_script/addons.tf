@@ -13,6 +13,21 @@ data "aws_ecrpublic_authorization_token" "token" {
 # Blueprints Addons
 ################################################################################
 
+# I need this info
+locals {
+  # Lookup map to pull latest cluster-autoscaler patch version given the cluster version
+  cluster_autoscaler_image_tag = {
+    "1.20" = "v1.20.3"
+    "1.21" = "v1.21.3"
+    "1.22" = "v1.22.3"
+    "1.23" = "v1.23.1"
+    "1.24" = "v1.24.1"
+    "1.25" = "v1.25.1"
+    "1.26" = "v1.26.2"
+    "1.27" = "v1.27.2"
+  }
+}
+
 module "eks_blueprints_addons" {
   source = "../../../../terraform-aws-eks-blueprints-addons/"
 
@@ -28,10 +43,10 @@ module "eks_blueprints_addons" {
   #enable_argocd                                = true # doesn't required aws resources (ie IAM), only when used as hub-cluster
   #enable_argo_rollouts                         = true # doesn't required aws resources (ie IAM)
   #enable_argo_workflows                        = true # doesn't required aws resources (ie IAM)
-  enable_aws_cloudwatch_metrics                = true
+  enable_aws_cloudwatch_metrics = true
   #enable_aws_privateca_issuer                  = true
-  enable_cert_manager                          = true
-  enable_cluster_autoscaler                    = true
+  enable_cert_manager       = true
+  enable_cluster_autoscaler = true
   #enable_secrets_store_csi_driver              = true
   #enable_secrets_store_csi_driver_provider_aws = true
   #enable_kube_prometheus_stack                 = true
