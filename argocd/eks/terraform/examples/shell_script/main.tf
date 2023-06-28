@@ -3,10 +3,10 @@ provider "aws" {
 }
 
 locals {
-  name   = "ex-${replace(basename(path.cwd), "_", "-")}"
+  name   = var.name
   region = "us-west-2"
 
-  enable_argocd = true
+  enable_argocd = var.control_plane
 
   cluster_config = {
     cluster_name = module.eks.cluster_name,

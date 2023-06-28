@@ -29,7 +29,7 @@ locals {
 }
 
 module "eks_blueprints_addons" {
-  source = "../../../../terraform-aws-eks-blueprints-addons/"
+  source = "../../../../../terraform-aws-eks-blueprints-addons/"
 
   cluster_name      = module.eks.cluster_name
   cluster_endpoint  = module.eks.cluster_endpoint
