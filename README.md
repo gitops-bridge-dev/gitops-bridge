@@ -37,7 +37,7 @@ This git repository contains the files on how to create the Kubernete Clusters a
 | Ansible        | FluxCD    |  EKS    |              |
 
 
-### Terraform and GitOps Bridge**:
+### Terraform and GitOps Bridge:
 - Terraform has providers for helm and kubernetes, the problem with these providers is that terraform is design to have control over the state
 of the Kubernetes resources, any changes to these resources outside Terraform for example using `kubectl` or GitOps (ie ArgoCD, FluxCD) would create problems in terraform state.
 
