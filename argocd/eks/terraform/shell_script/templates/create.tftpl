@@ -46,8 +46,8 @@ EOF
 
 # bootstrap app (App or Apps)
 # We are deploying both because the single cluster with argocd will be re-use to run workloads, if using akuity agent only workloads is need it
-kubectl apply -f https://raw.githubusercontent.com/csantanapr/control-plane-eks/main/bootstrap/control-plane/bootstrap.yaml
-kubectl apply -f https://raw.githubusercontent.com/csantanapr/control-plane-eks/main/bootstrap/workloads/bootstrap.yaml
+kubectl apply -f https://raw.githubusercontent.com/csantanapr/control-plane-template/main/bootstrap/control-plane/bootstrap.yaml
+kubectl apply -f https://raw.githubusercontent.com/csantanapr/control-plane-template/main/bootstrap/workloads/bootstrap.yaml
 
 kubectl config set-context --current --namespace argocd
 export ARGOCD_OPTS="--port-forward --port-forward-namespace argocd --grpc-web"

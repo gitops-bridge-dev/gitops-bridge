@@ -55,6 +55,6 @@ stringData:
 EOF
 
 # Bootstrap apps or apps
-kubectl apply -f https://raw.githubusercontent.com/csantanapr/control-plane-eks/main/bootstrap-app.yaml
+kubectl apply -f https://raw.githubusercontent.com/csantanapr/control-plane-template/main/bootstrap-app.yaml
 
 
