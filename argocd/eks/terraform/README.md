@@ -32,7 +32,7 @@ kubectl config set-context --current --namespace argocd
 argocd login --username admin --password $(kubectl get secrets argocd-initial-admin-secret -n argocd --template="{{index .data.password | base64decode}}")
 argocd app list
 argocd appset list
-argocd admin initial-password
+#argocd admin initial-password
 argocd admin dashboard
 ```
 Argo CD UI is available at http://localhost:8080
@@ -45,3 +45,4 @@ export ARGOCD_OPTS="--port-forward --port-forward-namespace argocd --grpc-web"
 argocd app list
 argocd appset list
 ```
+
