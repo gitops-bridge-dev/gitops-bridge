@@ -22,7 +22,7 @@ The GitOps Bridge should be compatible with GitOps engines that run as Saas and 
 | CloudFormation | ArgoCD    |  EKS    |              |
 | Kops           | ArgoCD    |  EKS    |              |
 | Ansible        | ArgoCD    |  EKS    |              |
-| Terraform      | FluxCD    |  EKS    |  In Progress |
+| Terraform      | FluxCD    |  EKS    |  Soon |
 | EKSCTL         | FluxCD    |  EKS    |              |
 | CDK            | FluxCD    |  EKS    |              |
 | Crossplane     | FluxCD    |  EKS    |              |
