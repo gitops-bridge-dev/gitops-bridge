@@ -17,8 +17,8 @@ metadata:
   name: in-cluster
   namespace: argocd
   annotations:
-    cluster_name: ${cluster_name}
-    region: ${region}
+    cluster_name: "${cluster_name}"
+    region: "${region}"
     cert_manager_iam_role_arn: "${cert_manager_iam_role_arn}"
     cert_manager_namespace: "${cert_manager_namespace}"
     cluster_autoscaler_iam_role_arn: "${cluster_autoscaler_iam_role_arn}"
@@ -52,5 +52,3 @@ kubectl apply -f https://raw.githubusercontent.com/csantanapr/gitops-control-pla
 kubectl config set-context --current --namespace argocd
 export ARGOCD_OPTS="--port-forward --port-forward-namespace argocd --grpc-web"
 argocd login --username admin --password $(kubectl get secrets argocd-initial-admin-secret -n argocd --template="{{index .data.password | base64decode}}")
-
-echo "{\"London\": \"$(curl wttr.in/London?format="%l:+%c+%t")\"}"

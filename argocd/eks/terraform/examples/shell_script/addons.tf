@@ -1,42 +1,14 @@
-# Required for public ECR where Karpenter artifacts are hosted
-provider "aws" {
-  region = "us-east-1"
-  alias  = "virginia"
-}
-
-data "aws_ecrpublic_authorization_token" "token" {
-  provider = aws.virginia
-}
-
-
 ################################################################################
 # Blueprints Addons
 ################################################################################
 
-# I need this info
-locals {
-  # Lookup map to pull latest cluster-autoscaler patch version given the cluster version
-  cluster_autoscaler_image_tag = {
-    "1.20" = "v1.20.3"
-    "1.21" = "v1.21.3"
-    "1.22" = "v1.22.3"
-    "1.23" = "v1.23.1"
-    "1.24" = "v1.24.1"
-    "1.25" = "v1.25.1"
-    "1.26" = "v1.26.2"
-    "1.27" = "v1.27.2"
-  }
-}
-
 module "eks_blueprints_addons" {
-  source = "../../../../../terraform-aws-eks-blueprints-addons/"
+  source = "../../../../../terraform-aws-eks-blueprints-addons/gitops"
 
   cluster_name      = module.eks.cluster_name
   cluster_endpoint  = module.eks.cluster_endpoint
   cluster_version   = module.eks.cluster_version
   oidc_provider_arn = module.eks.oidc_provider_arn
-
-  enable_gitops = true
 
   # enable_aws_efs_csi_driver                    = true
   # enable_aws_fsx_csi_driver                    = true

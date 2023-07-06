@@ -29,19 +29,19 @@ Access ArgoCD UI
 ```shell
 export ARGOCD_OPTS="--port-forward --port-forward-namespace argocd --grpc-web"
 kubectl config set-context --current --namespace argocd
-argocd login --username admin --password $(kubectl get secrets argocd-initial-admin-secret -n argocd --template="{{index .data.password | base64decode}}")
 argocd app list
 argocd appset list
-#argocd admin initial-password
 argocd admin dashboard
 ```
 Argo CD UI is available at http://localhost:8080
 
 
-Access ArgoCD CLI in a new terminal
+Access Cluster and ArgoCD CLI in a new terminal
 ```shell
 export KUBECONFIG=/tmp/gitops
-export ARGOCD_OPTS="--port-forward --port-forward-namespace argocd --grpc-web"
+export ARGOCD_OPTS="--port-forward --port-forward-namespace argocd"
+kubectl get applications -n argocd
+kubectl get applicationsets -n argocd
 argocd app list
 argocd appset list
 ```
