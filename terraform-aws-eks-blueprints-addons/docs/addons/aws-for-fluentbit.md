@@ -16,7 +16,8 @@ You can optionally customize the Helm chart that deploys AWS for Fluent Bit via 
   enable_aws_for_fluentbit = true
   aws_for_fluentbit_cw_log_group = {
     create          = true
-    use_name_prefix = "eks-cluster-logs-"
+    use_name_prefix = true # Set this to true to enable name prefix
+    name_prefix     = "eks-cluster-logs-"
     retention       = 7
   }
   aws_for_fluentbit = {

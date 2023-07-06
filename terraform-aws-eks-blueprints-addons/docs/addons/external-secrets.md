@@ -10,7 +10,7 @@ External Secrets can be deployed by enabling the add-on via the following.
 enable_external_secrets = true
 ```
 
-You can optionally customize the Helm chart that deploys External DNS via the following configuration.
+You can optionally customize the Helm chart that deploys External Secrets via the following configuration.
 
 ```hcl
   enable_external_secrets = true

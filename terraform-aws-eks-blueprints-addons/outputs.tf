@@ -143,6 +143,11 @@ output "vpa" {
   value       = module.vpa
 }
 
+output "aws_gateway_api_controller" {
+  description = "Map of attributes of the Helm release and IRSA created"
+  value       = module.aws_gateway_api_controller
+}
+
 ################################################################################
 # (Generic) Helm Release
 ################################################################################
