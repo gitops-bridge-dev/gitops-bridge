@@ -10,6 +10,25 @@ module "eks_blueprints_addons" {
   cluster_version   = module.eks.cluster_version
   oidc_provider_arn = module.eks.oidc_provider_arn
 
+  eks_addons = {
+    aws-ebs-csi-driver = {
+      most_recent              = true
+      service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
+    }
+    coredns = {
+      most_recent = true
+
+      timeouts = {
+        create = "25m"
+        delete = "10m"
+      }
+    }
+    vpc-cni = {
+      most_recent = true
+    }
+    kube-proxy = {}
+  }
+
   enable_aws_efs_csi_driver                    = true
   # enable_aws_fsx_csi_driver                    = true
   #enable_argocd                                = true # doesn't required aws resources (ie IAM), only when used as hub-cluster
@@ -53,15 +72,21 @@ module "eks_blueprints_addons" {
 }
 
 
-# Only for DEBUG
-# output "cert_manager" {
-#     value = module.eks_blueprints_addons.cert_manager
-# }
+module "ebs_csi_driver_irsa" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "~> 5.14"
 
-# output "cluster_autoscaler" {
-#     value = module.eks_blueprints_addons.cluster_autoscaler
-# }
+  role_name_prefix = "${local.name}-ebs-csi-driver-"
 
-# output "aws_cloudwatch_metrics" {
-#     value = module.eks_blueprints_addons.aws_cloudwatch_metrics
-# }
+  attach_ebs_csi_policy = true
+
+  oidc_providers = {
+    main = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
+    }
+  }
+
+  tags = local.tags
+}
+

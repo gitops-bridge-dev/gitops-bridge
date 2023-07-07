@@ -67,6 +67,46 @@ locals {
 
 
 ################################################################################
+# EKS Addons
+################################################################################
+
+data "aws_eks_addon_version" "this" {
+  for_each = var.eks_addons
+
+  addon_name         = try(each.value.name, each.key)
+  kubernetes_version = var.cluster_version
+  most_recent        = try(each.value.most_recent, true)
+}
+
+resource "aws_eks_addon" "this" {
+  for_each = var.eks_addons
+
+  cluster_name = local.cluster_name
+  addon_name   = try(each.value.name, each.key)
+
+  addon_version               = try(each.value.addon_version, data.aws_eks_addon_version.this[each.key].version)
+  configuration_values        = try(each.value.configuration_values, null)
+  preserve                    = try(each.value.preserve, true)
+  resolve_conflicts_on_create = try(each.value.resolve_conflicts, "OVERWRITE")
+  resolve_conflicts_on_update = try(each.value.resolve_conflicts, "OVERWRITE")
+  service_account_role_arn    = try(each.value.service_account_role_arn, null)
+
+  timeouts {
+    create = try(each.value.timeouts.create, var.eks_addons_timeouts.create, null)
+    update = try(each.value.timeouts.update, var.eks_addons_timeouts.update, null)
+    delete = try(each.value.timeouts.delete, var.eks_addons_timeouts.delete, null)
+  }
+
+  tags = var.tags
+
+  depends_on = [
+    module.cert_manager.name,
+    module.cert_manager.namespace,
+  ]
+}
+
+
+################################################################################
 # AWS Cloudwatch Metrics
 ################################################################################
 
