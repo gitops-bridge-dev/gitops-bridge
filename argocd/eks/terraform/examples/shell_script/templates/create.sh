@@ -36,6 +36,9 @@ metadata:
     aws_fsx_csi_driver_controller_service_account: "${aws_fsx_csi_driver_controller_service_account}"
     aws_fsx_csi_driver_node_service_account: "${aws_fsx_csi_driver_node_service_account}"
     aws_fsx_csi_driver_namespace: "${aws_fsx_csi_driver_namespace}"
+    aws_privateca_issuer_iam_role_arn: "${aws_privateca_issuer_iam_role_arn}"
+    aws_privateca_issuer_service_account: "${aws_privateca_issuer_service_account}"
+    aws_privateca_issuer_namespace: "${aws_privateca_issuer_namespace}"
   labels:
     argocd.argoproj.io/secret-type: cluster
     # This indicates this is a control-plane cluster (central management argocd) compatible with akuity in-cluster usage

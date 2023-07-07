@@ -34,6 +34,10 @@ locals {
     aws_fsx_csi_driver_node_service_account        = module.eks_blueprints_addons.aws_fsx_csi_driver.node_service_account
     aws_fsx_csi_driver_namespace                   = module.eks_blueprints_addons.aws_fsx_csi_driver.namespace
 
+    aws_privateca_issuer_iam_role_arn     = module.eks_blueprints_addons.aws_privateca_issuer.iam_role_arn
+    aws_privateca_issuer_service_account  = module.eks_blueprints_addons.aws_privateca_issuer.service_account
+    aws_privateca_issuer_namespace        = module.eks_blueprints_addons.aws_privateca_issuer.namespace
+
     enable_argocd = local.enable_argocd
   }
 }

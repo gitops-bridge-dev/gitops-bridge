@@ -35,7 +35,7 @@ module "eks_blueprints_addons" {
   #enable_argo_rollouts                         = true # doesn't required aws resources (ie IAM)
   #enable_argo_workflows                        = true # doesn't required aws resources (ie IAM)
   enable_aws_cloudwatch_metrics = true
-  #enable_aws_privateca_issuer                  = true
+  enable_aws_privateca_issuer                  = true
   enable_cert_manager       = true
   enable_cluster_autoscaler = true
   #enable_secrets_store_csi_driver              = true
@@ -43,11 +43,11 @@ module "eks_blueprints_addons" {
   #enable_kube_prometheus_stack                 = true
   #enable_external_dns                          = true
   #enable_external_secrets                      = true
-  # enable_gatekeeper                            = true
+  #enable_gatekeeper                           = true # doesn't required aws resources (ie IAM)
   #enable_ingress_nginx                = true # doesn't required aws resources (ie IAM)
   #enable_aws_load_balancer_controller = true
   #enable_metrics_server               = true # doesn't required aws resources (ie IAM)
-  #enable_vpa                          = true
+  #enable_vpa                          = true # doesn't required aws resources (ie IAM)
   #enable_aws_for_fluentbit            = true
   #enable_fargate_fluentbit            = true # doesn't required aws resources (ie IAM)
 

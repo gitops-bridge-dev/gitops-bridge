@@ -45,3 +45,12 @@ output "aws_fsx_csi_driver" {
     node_service_account = local.aws_fsx_csi_driver_node_service_account
   }
 }
+
+output "aws_privateca_issuer" {
+  description = "Map of attributes of the Helm release and IRSA created"
+  value       = {
+    namespace = local.aws_privateca_issuer_namespace
+    iam_role_arn = module.aws_privateca_issuer.iam_role_arn
+    service_account = local.aws_privateca_issuer_service_account
+  }
+}

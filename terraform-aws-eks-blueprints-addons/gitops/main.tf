@@ -419,10 +419,6 @@ module "aws_efs_csi_driver" {
   namespace = local.aws_efs_csi_driver_namespace
 
   # IAM role for service account (IRSA)
-  set_irsa_names = [
-    "controller.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn",
-    "node.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-  ]
   create_role                   = try(var.aws_efs_csi_driver.create_role, true)
   role_name                     = try(var.aws_efs_csi_driver.role_name, "aws-efs-csi-driver")
   role_name_use_prefix          = try(var.aws_efs_csi_driver.role_name_use_prefix, true)
@@ -532,10 +528,6 @@ module "aws_fsx_csi_driver" {
   namespace = local.aws_fsx_csi_driver_namespace
 
   # IAM role for service account (IRSA)
-  set_irsa_names = [
-    "controller.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn",
-    "node.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-  ]
   create_role                   = try(var.aws_fsx_csi_driver.create_role, true)
   role_name                     = try(var.aws_fsx_csi_driver.role_name, "aws-fsx-csi-driver")
   role_name_use_prefix          = try(var.aws_fsx_csi_driver.role_name_use_prefix, true)
@@ -567,4 +559,72 @@ module "aws_fsx_csi_driver" {
       service_account = local.aws_fsx_csi_driver_node_service_account
     }
   }
+}
+
+
+################################################################################
+# AWS Private CA Issuer
+################################################################################
+
+locals {
+  aws_privateca_issuer_service_account = try(var.aws_privateca_issuer.service_account_name, "aws-privateca-issuer-sa")
+  aws_privateca_issuer_namespace = try(var.aws_privateca_issuer.namespace, local.cert_manager_namespace)
+}
+
+data "aws_iam_policy_document" "aws_privateca_issuer" {
+  count = var.enable_aws_privateca_issuer ? 1 : 0
+
+  statement {
+    actions = [
+      "acm-pca:DescribeCertificateAuthority",
+      "acm-pca:GetCertificate",
+      "acm-pca:IssueCertificate",
+    ]
+    resources = [
+      try(var.aws_privateca_issuer.acmca_arn,
+      "arn:${local.partition}:acm-pca:${local.region}:${local.account_id}:certificate-authority/*")
+    ]
+  }
+}
+
+module "aws_privateca_issuer" {
+  source  = "aws-ia/eks-blueprints-addon/aws"
+  version = "1.0.0"
+
+  create = var.enable_aws_privateca_issuer
+
+  # Disable helm release
+  create_release = false
+
+  namespace = local.aws_privateca_issuer_namespace
+
+  # IAM role for service account (IRSA)
+  create_role                   = try(var.aws_privateca_issuer.create_role, true)
+  role_name                     = try(var.aws_privateca_issuer.role_name, "aws-privateca-issuer")
+  role_name_use_prefix          = try(var.aws_privateca_issuer.role_name_use_prefix, true)
+  role_path                     = try(var.aws_privateca_issuer.role_path, "/")
+  role_permissions_boundary_arn = lookup(var.aws_privateca_issuer, "role_permissions_boundary_arn", null)
+  role_description              = try(var.aws_privateca_issuer.role_description, "IRSA for AWS Private CA Issuer")
+  role_policies                 = lookup(var.aws_privateca_issuer, "role_policies", {})
+
+  source_policy_documents = compact(concat(
+    data.aws_iam_policy_document.aws_privateca_issuer[*].json,
+    lookup(var.aws_privateca_issuer, "source_policy_documents", [])
+  ))
+  override_policy_documents = lookup(var.aws_privateca_issuer, "override_policy_documents", [])
+  policy_statements         = lookup(var.aws_privateca_issuer, "policy_statements", [])
+  policy_name               = try(var.aws_privateca_issuer.policy_name, "aws-privateca-issuer")
+  policy_name_use_prefix    = try(var.aws_privateca_issuer.policy_name_use_prefix, true)
+  policy_path               = try(var.aws_privateca_issuer.policy_path, null)
+  policy_description        = try(var.aws_privateca_issuer.policy_description, "IAM Policy for AWS Private CA Issuer")
+
+  oidc_providers = {
+    controller = {
+      provider_arn = local.oidc_provider_arn
+      # namespace is inherited from chart
+      service_account = local.aws_privateca_issuer_service_account
+    }
+  }
+
+  tags = var.tags
 }
