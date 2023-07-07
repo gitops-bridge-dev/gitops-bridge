@@ -38,6 +38,10 @@ locals {
     aws_privateca_issuer_service_account  = module.eks_blueprints_addons.aws_privateca_issuer.service_account
     aws_privateca_issuer_namespace        = module.eks_blueprints_addons.aws_privateca_issuer.namespace
 
+    external_dns_iam_role_arn     = module.eks_blueprints_addons.external_dns.iam_role_arn
+    external_dns_service_account  = module.eks_blueprints_addons.external_dns.service_account
+    external_dns_namespace        = module.eks_blueprints_addons.external_dns.namespace
+
     enable_argocd = local.enable_argocd
   }
 }

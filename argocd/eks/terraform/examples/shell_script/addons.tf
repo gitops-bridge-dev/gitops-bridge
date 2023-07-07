@@ -38,10 +38,12 @@ module "eks_blueprints_addons" {
   enable_aws_privateca_issuer                  = true
   enable_cert_manager       = true
   enable_cluster_autoscaler = true
-  #enable_secrets_store_csi_driver              = true
-  #enable_secrets_store_csi_driver_provider_aws = true
-  #enable_kube_prometheus_stack                 = true
-  #enable_external_dns                          = true
+  #enable_secrets_store_csi_driver              = true # doesn't required aws resources (ie IAM)
+  #enable_secrets_store_csi_driver_provider_aws = true # doesn't required aws resources (ie IAM)
+  #enable_kube_prometheus_stack                 = true # doesn't required aws resources (ie IAM)
+  enable_external_dns                          = true
+  #external_dns_route53_zone_arns = [data.aws_route53_zone.domain_name.arn]
+  external_dns_route53_zone_arns = ["arn:aws:route53:::hostedzone/Z123456789"]
   #enable_external_secrets                      = true
   #enable_gatekeeper                           = true # doesn't required aws resources (ie IAM)
   #enable_ingress_nginx                = true # doesn't required aws resources (ie IAM)
@@ -71,6 +73,12 @@ module "eks_blueprints_addons" {
   tags = local.tags
 }
 
+/*
+data "aws_route53_zone" "domain_name" {
+  name         = "example.com"
+  private_zone = false
+}
+*/
 
 module "ebs_csi_driver_irsa" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"

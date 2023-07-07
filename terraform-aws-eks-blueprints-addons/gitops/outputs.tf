@@ -1,5 +1,5 @@
 output "aws_cloudwatch_metrics" {
-  description = "Map of attributes of the Helm release and IRSA created"
+  description = "Map of attributes of the IRSA created"
   value       = {
     namespace = local.aws_cloudwatch_metrics_namespace
     iam_role_arn = module.aws_cloudwatch_metrics.iam_role_arn
@@ -8,7 +8,7 @@ output "aws_cloudwatch_metrics" {
 }
 
 output "cert_manager" {
-  description = "Map of attributes of the Helm release and IRSA created"
+  description = "Map of attributes of the IRSA created"
   value       = {
     namespace = local.cert_manager_namespace
     iam_role_arn = module.cert_manager.iam_role_arn
@@ -17,7 +17,7 @@ output "cert_manager" {
 }
 
 output "cluster_autoscaler" {
-  description = "Map of attributes of the Helm release and IRSA created"
+  description = "Map of attributes of the IRSA created"
   value       = {
     namespace = local.cluster_autoscaler_namespace
     iam_role_arn = module.cluster_autoscaler.iam_role_arn
@@ -27,7 +27,7 @@ output "cluster_autoscaler" {
 }
 
 output "aws_efs_csi_driver" {
-  description = "Map of attributes of the Helm release and IRSA created"
+  description = "Map of attributes of the IRSA created"
   value       = {
     namespace = local.aws_efs_csi_driver_namespace
     iam_role_arn = module.aws_efs_csi_driver.iam_role_arn
@@ -37,7 +37,7 @@ output "aws_efs_csi_driver" {
 }
 
 output "aws_fsx_csi_driver" {
-  description = "Map of attributes of the Helm release and IRSA created"
+  description = "Map of attributes of the IRSA created"
   value       = {
     namespace = local.aws_fsx_csi_driver_namespace
     iam_role_arn = module.aws_fsx_csi_driver.iam_role_arn
@@ -47,10 +47,19 @@ output "aws_fsx_csi_driver" {
 }
 
 output "aws_privateca_issuer" {
-  description = "Map of attributes of the Helm release and IRSA created"
+  description = "Map of attributes of the IRSA created"
   value       = {
     namespace = local.aws_privateca_issuer_namespace
     iam_role_arn = module.aws_privateca_issuer.iam_role_arn
     service_account = local.aws_privateca_issuer_service_account
+  }
+}
+
+output "external_dns" {
+  description = "Map of attributes of the IRSA created"
+  value       = {
+    namespace = local.external_dns_namespace
+    iam_role_arn = module.external_dns.iam_role_arn
+    service_account = local.external_dns_service_account
   }
 }

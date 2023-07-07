@@ -39,6 +39,9 @@ metadata:
     aws_privateca_issuer_iam_role_arn: "${aws_privateca_issuer_iam_role_arn}"
     aws_privateca_issuer_service_account: "${aws_privateca_issuer_service_account}"
     aws_privateca_issuer_namespace: "${aws_privateca_issuer_namespace}"
+    external_dns_iam_role_arn: "${external_dns_iam_role_arn}"
+    external_dns_service_account: "${external_dns_service_account}"
+    external_dns_namespace: "${external_dns_namespace}"
   labels:
     argocd.argoproj.io/secret-type: cluster
     # This indicates this is a control-plane cluster (central management argocd) compatible with akuity in-cluster usage

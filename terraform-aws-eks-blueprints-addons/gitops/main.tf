@@ -628,3 +628,72 @@ module "aws_privateca_issuer" {
 
   tags = var.tags
 }
+
+
+################################################################################
+# External DNS
+################################################################################
+
+locals {
+  external_dns_service_account = try(var.external_dns.service_account_name, "external-dns-sa")
+  external_dns_namespace = try(var.external_dns.namespace, "external-dns")
+}
+
+data "aws_iam_policy_document" "external_dns" {
+  count = var.enable_external_dns && length(var.external_dns_route53_zone_arns) > 0 ? 1 : 0
+
+  statement {
+    actions   = ["route53:ChangeResourceRecordSets"]
+    resources = var.external_dns_route53_zone_arns
+  }
+
+  statement {
+    actions = [
+      "route53:ListHostedZones",
+      "route53:ListResourceRecordSets",
+    ]
+    resources = ["*"]
+  }
+}
+
+module "external_dns" {
+  source  = "aws-ia/eks-blueprints-addon/aws"
+  version = "1.0.0"
+
+  create = var.enable_external_dns
+
+  # Disable helm release
+  create_release = false
+
+  namespace = local.external_dns_namespace
+
+  # IAM role for service account (IRSA)
+  create_role                   = try(var.external_dns.create_role, true) && length(var.external_dns_route53_zone_arns) > 0
+  role_name                     = try(var.external_dns.role_name, "external-dns")
+  role_name_use_prefix          = try(var.external_dns.role_name_use_prefix, true)
+  role_path                     = try(var.external_dns.role_path, "/")
+  role_permissions_boundary_arn = lookup(var.external_dns, "role_permissions_boundary_arn", null)
+  role_description              = try(var.external_dns.role_description, "IRSA for external-dns operator")
+  role_policies                 = lookup(var.external_dns, "role_policies", {})
+
+  source_policy_documents = compact(concat(
+    data.aws_iam_policy_document.external_dns[*].json,
+    lookup(var.external_dns, "source_policy_documents", [])
+  ))
+  override_policy_documents = lookup(var.external_dns, "override_policy_documents", [])
+  policy_statements         = lookup(var.external_dns, "policy_statements", [])
+  policy_name               = try(var.external_dns.policy_name, null)
+  policy_name_use_prefix    = try(var.external_dns.policy_name_use_prefix, true)
+  policy_path               = try(var.external_dns.policy_path, null)
+  policy_description        = try(var.external_dns.policy_description, "IAM Policy for external-dns operator")
+
+  oidc_providers = {
+    this = {
+      provider_arn = local.oidc_provider_arn
+      # namespace is inherited from chart
+      service_account = local.external_dns_service_account
+    }
+  }
+
+  tags = var.tags
+}
