@@ -63,3 +63,12 @@ output "external_dns" {
     service_account = local.external_dns_service_account
   }
 }
+
+output "external_secrets" {
+  description = "Map of attributes of the IRSA created"
+  value       = {
+    namespace = local.external_secrets_namespace
+    iam_role_arn = module.external_secrets.iam_role_arn
+    service_account = local.external_secrets_service_account
+  }
+}

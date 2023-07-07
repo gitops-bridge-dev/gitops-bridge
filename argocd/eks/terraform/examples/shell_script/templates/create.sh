@@ -42,6 +42,9 @@ metadata:
     external_dns_iam_role_arn: "${external_dns_iam_role_arn}"
     external_dns_service_account: "${external_dns_service_account}"
     external_dns_namespace: "${external_dns_namespace}"
+    external_secrets_iam_role_arn: "${external_secrets_iam_role_arn}"
+    external_secrets_service_account: "${external_secrets_service_account}"
+    external_secrets_namespace: "${external_secrets_namespace}"
   labels:
     argocd.argoproj.io/secret-type: cluster
     # This indicates this is a control-plane cluster (central management argocd) compatible with akuity in-cluster usage

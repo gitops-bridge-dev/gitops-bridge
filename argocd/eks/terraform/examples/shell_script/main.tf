@@ -42,6 +42,10 @@ locals {
     external_dns_service_account  = module.eks_blueprints_addons.external_dns.service_account
     external_dns_namespace        = module.eks_blueprints_addons.external_dns.namespace
 
+    external_secrets_iam_role_arn     = module.eks_blueprints_addons.external_secrets.iam_role_arn
+    external_secrets_service_account  = module.eks_blueprints_addons.external_secrets.service_account
+    external_secrets_namespace        = module.eks_blueprints_addons.external_secrets.namespace
+
     enable_argocd = local.enable_argocd
   }
 }

@@ -697,3 +697,112 @@ module "external_dns" {
 
   tags = var.tags
 }
+
+
+################################################################################
+# External Secrets
+################################################################################
+
+locals {
+  external_secrets_service_account  = try(var.external_secrets.service_account_name, "external-secrets-sa")
+  external_secrets_namespace        = try(var.external_secrets.namespace, "external-secrets")
+}
+
+data "aws_iam_policy_document" "external_secrets" {
+  count = var.enable_external_secrets ? 1 : 0
+
+  dynamic "statement" {
+    for_each = length(var.external_secrets_ssm_parameter_arns) > 0 ? [1] : []
+
+    content {
+      actions   = ["ssm:DescribeParameters"]
+      resources = ["*"]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = length(var.external_secrets_ssm_parameter_arns) > 0 ? [1] : []
+
+    content {
+      actions = [
+        "ssm:GetParameter",
+        "ssm:GetParameters",
+      ]
+      resources = var.external_secrets_ssm_parameter_arns
+    }
+  }
+
+  dynamic "statement" {
+    for_each = length(var.external_secrets_secrets_manager_arns) > 0 ? [1] : []
+
+    content {
+      actions   = ["secretsmanager:ListSecrets"]
+      resources = ["*"]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = length(var.external_secrets_secrets_manager_arns) > 0 ? [1] : []
+
+    content {
+      actions = [
+        "secretsmanager:GetResourcePolicy",
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:ListSecretVersionIds",
+      ]
+      resources = var.external_secrets_secrets_manager_arns
+    }
+  }
+
+  dynamic "statement" {
+    for_each = length(var.external_secrets_kms_key_arns) > 0 ? [1] : []
+
+    content {
+      actions   = ["kms:Decrypt"]
+      resources = var.external_secrets_kms_key_arns
+    }
+  }
+}
+
+module "external_secrets" {
+  source  = "aws-ia/eks-blueprints-addon/aws"
+  version = "1.0.0"
+
+  create = var.enable_external_secrets
+
+  # Disable helm release
+  create_release = false
+
+  namespace = local.external_secrets_namespace
+
+  # IAM role for service account (IRSA)
+  create_role                   = try(var.external_secrets.create_role, true)
+  role_name                     = try(var.external_secrets.role_name, "external-secrets")
+  role_name_use_prefix          = try(var.external_secrets.role_name_use_prefix, true)
+  role_path                     = try(var.external_secrets.role_path, "/")
+  role_permissions_boundary_arn = lookup(var.external_secrets, "role_permissions_boundary_arn", null)
+  role_description              = try(var.external_secrets.role_description, "IRSA for external-secrets operator")
+  role_policies                 = lookup(var.external_secrets, "role_policies", {})
+
+  source_policy_documents = compact(concat(
+    data.aws_iam_policy_document.external_secrets[*].json,
+    lookup(var.external_secrets, "source_policy_documents", [])
+  ))
+  override_policy_documents = lookup(var.external_secrets, "override_policy_documents", [])
+  policy_statements         = lookup(var.external_secrets, "policy_statements", [])
+  policy_name               = try(var.external_secrets.policy_name, null)
+  policy_name_use_prefix    = try(var.external_secrets.policy_name_use_prefix, true)
+  policy_path               = try(var.external_secrets.policy_path, null)
+  policy_description        = try(var.external_secrets.policy_description, "IAM Policy for external-secrets operator")
+
+  oidc_providers = {
+    this = {
+      provider_arn = local.oidc_provider_arn
+      # namespace is inherited from chart
+      service_account = local.external_secrets_service_account
+    }
+  }
+
+  tags = var.tags
+}
