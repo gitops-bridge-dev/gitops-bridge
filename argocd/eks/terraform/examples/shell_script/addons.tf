@@ -47,7 +47,7 @@ module "eks_blueprints_addons" {
   enable_external_secrets                      = true
   #enable_gatekeeper                           = true # doesn't required aws resources (ie IAM)
   #enable_ingress_nginx                = true # doesn't required aws resources (ie IAM)
-  #enable_aws_load_balancer_controller = true
+  enable_aws_load_balancer_controller = true
   #enable_metrics_server               = true # doesn't required aws resources (ie IAM)
   #enable_vpa                          = true # doesn't required aws resources (ie IAM)
   #enable_aws_for_fluentbit            = true

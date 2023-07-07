@@ -46,6 +46,10 @@ locals {
     external_secrets_service_account  = module.eks_blueprints_addons.external_secrets.service_account
     external_secrets_namespace        = module.eks_blueprints_addons.external_secrets.namespace
 
+    aws_load_balancer_controller_iam_role_arn     = module.eks_blueprints_addons.aws_load_balancer_controller.iam_role_arn
+    aws_load_balancer_controller_service_account  = module.eks_blueprints_addons.aws_load_balancer_controller.service_account
+    aws_load_balancer_controller_namespace        = module.eks_blueprints_addons.aws_load_balancer_controller.namespace
+
     enable_argocd = local.enable_argocd
   }
 }

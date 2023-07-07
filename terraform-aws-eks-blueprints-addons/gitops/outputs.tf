@@ -72,3 +72,12 @@ output "external_secrets" {
     service_account = local.external_secrets_service_account
   }
 }
+
+output "aws_load_balancer_controller" {
+  description = "Map of attributes of the IRSA created"
+  value       = {
+    namespace = local.aws_load_balancer_controller_namespace
+    iam_role_arn = module.aws_load_balancer_controller.iam_role_arn
+    service_account = local.aws_load_balancer_controller_service_account
+  }
+}
