@@ -10,7 +10,7 @@ module "eks_blueprints_addons" {
   cluster_version   = module.eks.cluster_version
   oidc_provider_arn = module.eks.oidc_provider_arn
 
-  # enable_aws_efs_csi_driver                    = true
+  enable_aws_efs_csi_driver                    = true
   # enable_aws_fsx_csi_driver                    = true
   #enable_argocd                                = true # doesn't required aws resources (ie IAM), only when used as hub-cluster
   #enable_argo_rollouts                         = true # doesn't required aws resources (ie IAM)

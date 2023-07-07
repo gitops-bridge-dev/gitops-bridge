@@ -40,6 +40,7 @@ Access Cluster and ArgoCD CLI in a new terminal
 ```shell
 export KUBECONFIG=/tmp/gitops
 export ARGOCD_OPTS="--port-forward --port-forward-namespace argocd"
+kubectl config set-context --current --namespace argocd
 kubectl get applications -n argocd
 kubectl get applicationsets -n argocd
 argocd app list

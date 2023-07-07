@@ -28,6 +28,10 @@ metadata:
     aws_cloudwatch_metrics_iam_role_arn: "${aws_cloudwatch_metrics_iam_role_arn}"
     aws_cloudwatch_metrics_sa: "${aws_cloudwatch_metrics_sa}"
     aws_cloudwatch_namespace: "${aws_cloudwatch_namespace}"
+    aws_efs_csi_driver_iam_role_arn: "${aws_efs_csi_driver_iam_role_arn}"
+    aws_efs_csi_driver_controller_service_account: "${aws_efs_csi_driver_controller_service_account}"
+    aws_efs_csi_driver_node_service_account: "${aws_efs_csi_driver_node_service_account}"
+    aws_efs_csi_driver_namespace: "${aws_efs_csi_driver_namespace}"
   labels:
     argocd.argoproj.io/secret-type: cluster
     # This indicates this is a control-plane cluster (central management argocd) compatible with akuity in-cluster usage
