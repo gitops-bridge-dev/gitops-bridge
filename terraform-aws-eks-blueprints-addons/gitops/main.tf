@@ -418,7 +418,6 @@ module "aws_efs_csi_driver" {
 
   namespace = local.aws_efs_csi_driver_namespace
 
-
   # IAM role for service account (IRSA)
   set_irsa_names = [
     "controller.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn",
@@ -457,4 +456,115 @@ module "aws_efs_csi_driver" {
   }
 
   tags = var.tags
+}
+
+
+
+################################################################################
+# AWS FSX CSI DRIVER
+################################################################################
+
+locals {
+  aws_fsx_csi_driver_controller_service_account = try(var.aws_fsx_csi_driver.controller_service_account_name, "aws-fsx-csi-controller-sa")
+  aws_fsx_csi_driver_node_service_account       = try(var.aws_fsx_csi_driver.node_service_account_name, "aws-fsx-csi-node-sa")
+  aws_fsx_csi_driver_namespace = try(var.aws_fsx_csi_driver.namespace, "kube-system")
+}
+
+data "aws_iam_policy_document" "aws_fsx_csi_driver" {
+  statement {
+    sid       = "AllowCreateServiceLinkedRoles"
+    resources = ["arn:${local.partition}:iam::*:role/aws-service-role/s3.data-source.lustre.fsx.${local.dns_suffix}/*"]
+
+    actions = [
+      "iam:CreateServiceLinkedRole",
+      "iam:AttachRolePolicy",
+      "iam:PutRolePolicy",
+    ]
+  }
+
+  statement {
+    sid       = "AllowCreateServiceLinkedRole"
+    resources = ["arn:${local.partition}:iam::${local.account_id}:role/*"]
+    actions   = ["iam:CreateServiceLinkedRole"]
+
+    condition {
+      test     = "StringLike"
+      variable = "iam:AWSServiceName"
+      values   = ["fsx.${local.dns_suffix}"]
+    }
+  }
+
+  statement {
+    sid       = "AllowListBuckets"
+    resources = ["arn:${local.partition}:s3:::*"]
+    actions = [
+      "s3:ListBucket"
+    ]
+  }
+
+  statement {
+    resources = ["arn:${local.partition}:fsx:${local.region}:${local.account_id}:file-system/*"]
+    actions = [
+      "fsx:CreateFileSystem",
+      "fsx:DeleteFileSystem",
+      "fsx:UpdateFileSystem",
+    ]
+  }
+
+  statement {
+    resources = ["arn:${local.partition}:fsx:${local.region}:${local.account_id}:*"]
+    actions = [
+      "fsx:DescribeFileSystems",
+      "fsx:TagResource"
+    ]
+  }
+}
+
+module "aws_fsx_csi_driver" {
+  source  = "aws-ia/eks-blueprints-addon/aws"
+  version = "1.0.0"
+
+  create = var.enable_aws_fsx_csi_driver
+
+  # Disable helm release
+  create_release = false
+
+  namespace = local.aws_fsx_csi_driver_namespace
+
+  # IAM role for service account (IRSA)
+  set_irsa_names = [
+    "controller.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn",
+    "node.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
+  ]
+  create_role                   = try(var.aws_fsx_csi_driver.create_role, true)
+  role_name                     = try(var.aws_fsx_csi_driver.role_name, "aws-fsx-csi-driver")
+  role_name_use_prefix          = try(var.aws_fsx_csi_driver.role_name_use_prefix, true)
+  role_path                     = try(var.aws_fsx_csi_driver.role_path, "/")
+  role_permissions_boundary_arn = lookup(var.aws_fsx_csi_driver, "role_permissions_boundary_arn", null)
+  role_description              = try(var.aws_fsx_csi_driver.role_description, "IRSA for aws-fsx-csi-driver")
+  role_policies                 = lookup(var.aws_fsx_csi_driver, "role_policies", {})
+
+  source_policy_documents = compact(concat(
+    data.aws_iam_policy_document.aws_fsx_csi_driver[*].json,
+    lookup(var.aws_fsx_csi_driver, "source_policy_documents", [])
+  ))
+  override_policy_documents = lookup(var.aws_fsx_csi_driver, "override_policy_documents", [])
+  policy_statements         = lookup(var.aws_fsx_csi_driver, "policy_statements", [])
+  policy_name               = try(var.aws_fsx_csi_driver.policy_name, "aws-fsx-csi-driver")
+  policy_name_use_prefix    = try(var.aws_fsx_csi_driver.policy_name_use_prefix, true)
+  policy_path               = try(var.aws_fsx_csi_driver.policy_path, null)
+  policy_description        = try(var.aws_fsx_csi_driver.policy_description, "IAM Policy for AWS FSX CSI Driver")
+
+  oidc_providers = {
+    controller = {
+      provider_arn = local.oidc_provider_arn
+      # namespace is inherited from chart
+      service_account = local.aws_fsx_csi_driver_controller_service_account
+    }
+    node = {
+      provider_arn = local.oidc_provider_arn
+      # namespace is inherited from chart
+      service_account = local.aws_fsx_csi_driver_node_service_account
+    }
+  }
 }
