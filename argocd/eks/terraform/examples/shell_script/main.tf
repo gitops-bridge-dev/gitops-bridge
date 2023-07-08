@@ -51,6 +51,15 @@ locals {
     aws_load_balancer_controller_namespace        = module.eks_blueprints_addons.aws_load_balancer_controller.namespace
     aws_load_balancer_controller_service_account  = module.eks_blueprints_addons.aws_load_balancer_controller.service_account
 
+    aws_for_fluentbit_iam_role_arn     = module.eks_blueprints_addons.aws_for_fluentbit.iam_role_arn
+    aws_for_fluentbit_namespace        = module.eks_blueprints_addons.aws_for_fluentbit.namespace
+    aws_for_fluentbit_service_account  = module.eks_blueprints_addons.aws_for_fluentbit.service_account
+    aws_for_fluentbit_log_group_name  = module.eks_blueprints_addons.aws_for_fluentbit.log_group_name
+
+    aws_node_termination_handler_iam_role_arn     = module.eks_blueprints_addons.aws_node_termination_handler.iam_role_arn
+    aws_node_termination_handler_namespace        = module.eks_blueprints_addons.aws_node_termination_handler.namespace
+    aws_node_termination_handler_service_account  = module.eks_blueprints_addons.aws_node_termination_handler.service_account
+    aws_node_termination_handler_sqs_queue_url    = module.eks_blueprints_addons.aws_node_termination_handler.sqs_queue_url
 
     enable_argocd = local.enable_argocd
   }

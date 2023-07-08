@@ -31,11 +31,22 @@ module "eks" {
 
   eks_managed_node_groups = {
     initial = {
-      min_size       = 1
-      max_size       = 10
-      desired_size   = 3
-      instance_types = ["t3.medium"]
-      capacity_type  = "ON_DEMAND"
+      instance_types = ["t3.medium", "t3.large"]
+
+      min_size     = 2
+      max_size     = 10
+      desired_size = 4
+      capacity_type  = "SPOT"
+    }
+  }
+
+  self_managed_node_groups = {
+    default = {
+      instance_type = "t3.small"
+
+      min_size     = 1
+      max_size     = 10
+      desired_size = 3
     }
   }
 

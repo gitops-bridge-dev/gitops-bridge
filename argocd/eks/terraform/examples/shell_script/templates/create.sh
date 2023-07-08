@@ -59,6 +59,16 @@ metadata:
     aws_load_balancer_controller_namespace: "${aws_load_balancer_controller_namespace}"
     aws_load_balancer_controller_service_account: "${aws_load_balancer_controller_service_account}"
 
+    aws_for_fluentbit_iam_role_arn: "${aws_for_fluentbit_iam_role_arn}"
+    aws_for_fluentbit_namespace: "${aws_for_fluentbit_namespace}"
+    aws_for_fluentbit_service_account: "${aws_for_fluentbit_service_account}"
+    aws_for_fluentbit_log_group_name: "${aws_for_fluentbit_log_group_name}"
+
+    aws_node_termination_handler_iam_role_arn: "${aws_node_termination_handler_iam_role_arn}"
+    aws_node_termination_handler_namespace: "${aws_node_termination_handler_namespace}"
+    aws_node_termination_handler_service_account: "${aws_node_termination_handler_service_account}"
+    aws_node_termination_handler_sqs_queue_url: "${aws_node_termination_handler_sqs_queue_url}"
+
   labels:
     argocd.argoproj.io/secret-type: cluster
     # This indicates this is a control-plane cluster (central management argocd) compatible with akuity in-cluster usage

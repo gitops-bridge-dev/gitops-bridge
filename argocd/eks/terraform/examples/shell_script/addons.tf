@@ -50,11 +50,15 @@ module "eks_blueprints_addons" {
   enable_aws_load_balancer_controller = true
   #enable_metrics_server               = true # doesn't required aws resources (ie IAM)
   #enable_vpa                          = true # doesn't required aws resources (ie IAM)
-  #enable_aws_for_fluentbit            = true
+  enable_aws_for_fluentbit            = true
+  aws_for_fluentbit_cw_log_group = {
+    use_name_prefix = true
+    name_prefix = "/aws/eks/${module.eks.cluster_name}/aws-fluentbit-logs"
+  }
   #enable_fargate_fluentbit            = true # doesn't required aws resources (ie IAM)
 
-  #enable_aws_node_termination_handler   = true
-  #aws_node_termination_handler_asg_arns = [for asg in module.eks.self_managed_node_groups : asg.autoscaling_group_arn]
+  enable_aws_node_termination_handler   = true
+  aws_node_termination_handler_asg_arns = [for asg in module.eks.self_managed_node_groups : asg.autoscaling_group_arn]
 
   #enable_karpenter = true
   # ECR login required
