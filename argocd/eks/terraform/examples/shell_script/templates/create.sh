@@ -19,35 +19,46 @@ metadata:
   annotations:
     cluster_name: "${cluster_name}"
     region: "${region}"
+
     cert_manager_iam_role_arn: "${cert_manager_iam_role_arn}"
     cert_manager_namespace: "${cert_manager_namespace}"
+    cert_manager_service_account: "${cert_manager_service_account}"
+
     cluster_autoscaler_iam_role_arn: "${cluster_autoscaler_iam_role_arn}"
-    cluster_autoscaler_sa: "${cluster_autoscaler_sa}"
-    cluster_autoscaler_image_tag: "${cluster_autoscaler_image_tag}"
     cluster_autoscaler_namespace: "${cluster_autoscaler_namespace}"
+    cluster_autoscaler_service_account: "${cluster_autoscaler_service_account}"
+    cluster_autoscaler_image_tag: "${cluster_autoscaler_image_tag}"
+
     aws_cloudwatch_metrics_iam_role_arn: "${aws_cloudwatch_metrics_iam_role_arn}"
-    aws_cloudwatch_metrics_sa: "${aws_cloudwatch_metrics_sa}"
     aws_cloudwatch_namespace: "${aws_cloudwatch_namespace}"
+    aws_cloudwatch_metrics_service_account: "${aws_cloudwatch_metrics_service_account}"
+
     aws_efs_csi_driver_iam_role_arn: "${aws_efs_csi_driver_iam_role_arn}"
+    aws_efs_csi_driver_namespace: "${aws_efs_csi_driver_namespace}"
     aws_efs_csi_driver_controller_service_account: "${aws_efs_csi_driver_controller_service_account}"
     aws_efs_csi_driver_node_service_account: "${aws_efs_csi_driver_node_service_account}"
-    aws_efs_csi_driver_namespace: "${aws_efs_csi_driver_namespace}"
+
     aws_fsx_csi_driver_iam_role_arn: "${aws_fsx_csi_driver_iam_role_arn}"
+    aws_fsx_csi_driver_namespace: "${aws_fsx_csi_driver_namespace}"
     aws_fsx_csi_driver_controller_service_account: "${aws_fsx_csi_driver_controller_service_account}"
     aws_fsx_csi_driver_node_service_account: "${aws_fsx_csi_driver_node_service_account}"
-    aws_fsx_csi_driver_namespace: "${aws_fsx_csi_driver_namespace}"
+
     aws_privateca_issuer_iam_role_arn: "${aws_privateca_issuer_iam_role_arn}"
-    aws_privateca_issuer_service_account: "${aws_privateca_issuer_service_account}"
     aws_privateca_issuer_namespace: "${aws_privateca_issuer_namespace}"
+    aws_privateca_issuer_service_account: "${aws_privateca_issuer_service_account}"
+
     external_dns_iam_role_arn: "${external_dns_iam_role_arn}"
-    external_dns_service_account: "${external_dns_service_account}"
     external_dns_namespace: "${external_dns_namespace}"
+    external_dns_service_account: "${external_dns_service_account}"
+
     external_secrets_iam_role_arn: "${external_secrets_iam_role_arn}"
-    external_secrets_service_account: "${external_secrets_service_account}"
     external_secrets_namespace: "${external_secrets_namespace}"
+    external_secrets_service_account: "${external_secrets_service_account}"
+
     aws_load_balancer_controller_iam_role_arn: "${aws_load_balancer_controller_iam_role_arn}"
-    aws_load_balancer_controller_service_account: "${aws_load_balancer_controller_service_account}"
     aws_load_balancer_controller_namespace: "${aws_load_balancer_controller_namespace}"
+    aws_load_balancer_controller_service_account: "${aws_load_balancer_controller_service_account}"
+
   labels:
     argocd.argoproj.io/secret-type: cluster
     # This indicates this is a control-plane cluster (central management argocd) compatible with akuity in-cluster usage

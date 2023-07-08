@@ -35,7 +35,7 @@ module "eks" {
       max_size       = 10
       desired_size   = 3
       instance_types = ["t3.medium"]
-      capacity_type  = "SPOT"
+      capacity_type  = "ON_DEMAND"
     }
   }
 
