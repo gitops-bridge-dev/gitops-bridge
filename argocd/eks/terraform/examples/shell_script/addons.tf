@@ -1,3 +1,12 @@
+# Required for public ECR where Karpenter artifacts are hosted
+provider "aws" {
+  region = "us-east-1"
+  alias  = "virginia"
+}
+data "aws_ecrpublic_authorization_token" "token" {
+  provider = aws.virginia
+}
+
 ################################################################################
 # Blueprints Addons
 ################################################################################
@@ -60,12 +69,12 @@ module "eks_blueprints_addons" {
   enable_aws_node_termination_handler   = true
   aws_node_termination_handler_asg_arns = [for asg in module.eks.self_managed_node_groups : asg.autoscaling_group_arn]
 
-  #enable_karpenter = true
+  enable_karpenter = true
   # ECR login required
-  #karpenter = {
-  #  repository_username = data.aws_ecrpublic_authorization_token.token.user_name
-  #  repository_password = data.aws_ecrpublic_authorization_token.token.password
-  #}
+  karpenter = {
+    repository_username = data.aws_ecrpublic_authorization_token.token.user_name
+    repository_password = data.aws_ecrpublic_authorization_token.token.password
+  }
 
   #enable_velero = true
   ## An S3 Bucket ARN is required. This can be declared with or without a Prefix.

@@ -26,8 +26,6 @@ locals {
   cluster_name      = time_sleep.this.triggers["cluster_name"]
   oidc_provider_arn = time_sleep.this.triggers["oidc_provider_arn"]
 
-  iam_role_policy_prefix = "arn:${local.partition}:iam::aws:policy"
-
 }
 
 
@@ -1381,6 +1379,258 @@ module "aws_node_termination_handler" {
       provider_arn = local.oidc_provider_arn
       # namespace is inherited from chart
       service_account = local.aws_node_termination_handler_service_account
+    }
+  }
+
+  tags = var.tags
+}
+
+
+################################################################################
+# Karpenter
+################################################################################
+
+locals {
+  iam_role_policy_prefix = "arn:${local.partition}:iam::aws:policy"
+
+  karpenter_service_account_name    = try(var.karpenter.service_account_name, "karpenter")
+  karpenter_enable_spot_termination = var.enable_karpenter && var.karpenter_enable_spot_termination
+
+  create_karpenter_node_iam_role = var.enable_karpenter && try(var.karpenter_node.create_iam_role, true)
+  karpenter_node_iam_role_arn    = try(aws_iam_role.karpenter[0].arn, var.karpenter_node.iam_role_arn, "")
+  karpenter_node_iam_role_name   = try(var.karpenter_node.iam_role_name, "karpenter-${var.cluster_name}")
+  karpenter_node_instance_profile_name =  try(aws_iam_instance_profile.karpenter[0].name, var.karpenter_node.instance_profile_name, "")
+  karpenter_namespace            = try(var.karpenter.namespace, "karpenter")
+}
+
+data "aws_iam_policy_document" "karpenter" {
+  count = var.enable_karpenter ? 1 : 0
+
+  statement {
+    actions = [
+      "ec2:DescribeAvailabilityZones",
+      "ec2:DescribeImages",
+      "ec2:DescribeInstances",
+      "ec2:DescribeInstanceTypeOfferings",
+      "ec2:DescribeInstanceTypes",
+      "ec2:DescribeLaunchTemplates",
+      "ec2:DescribeSecurityGroups",
+      "ec2:DescribeSpotPriceHistory",
+      "ec2:DescribeSubnets",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "ec2:CreateFleet",
+      "ec2:CreateLaunchTemplate",
+      "ec2:CreateTags",
+      "ec2:DeleteLaunchTemplate",
+      "ec2:RunInstances"
+    ]
+    resources = [
+      "arn:${local.partition}:ec2:${local.region}:${local.account_id}:*",
+      "arn:${local.partition}:ec2:${local.region}::image/*"
+    ]
+  }
+
+  statement {
+    actions   = ["iam:PassRole"]
+    resources = [local.karpenter_node_iam_role_arn]
+  }
+
+  statement {
+    actions   = ["pricing:GetProducts"]
+    resources = ["*"]
+  }
+
+  statement {
+    actions   = ["ssm:GetParameter"]
+    resources = ["arn:${local.partition}:ssm:${local.region}::parameter/*"]
+  }
+
+  statement {
+    actions   = ["eks:DescribeCluster"]
+    resources = ["arn:${local.partition}:eks:*:${local.account_id}:cluster/${var.cluster_name}"]
+  }
+
+  statement {
+    actions   = ["ec2:TerminateInstances"]
+    resources = ["arn:${local.partition}:ec2:${local.region}:${local.account_id}:instance/*"]
+
+    condition {
+      test     = "StringLike"
+      variable = "ec2:ResourceTag/Name"
+      values   = ["*karpenter*"]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = var.karpenter_enable_spot_termination ? [1] : []
+
+    content {
+      actions = [
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:GetQueueUrl",
+        "sqs:ReceiveMessage",
+      ]
+      resources = [module.karpenter_sqs.queue_arn]
+    }
+  }
+}
+
+module "karpenter_sqs" {
+  source  = "terraform-aws-modules/sqs/aws"
+  version = "4.0.1"
+
+  create = local.karpenter_enable_spot_termination
+
+  name = try(var.karpenter_sqs.queue_name, "karpenter-${var.cluster_name}")
+
+  message_retention_seconds         = try(var.karpenter_sqs.message_retention_seconds, 300)
+  sqs_managed_sse_enabled           = try(var.karpenter_sqs.sse_enabled, true)
+  kms_master_key_id                 = try(var.karpenter_sqs.kms_master_key_id, null)
+  kms_data_key_reuse_period_seconds = try(var.karpenter_sqs.kms_data_key_reuse_period_seconds, null)
+
+  create_queue_policy = true
+  queue_policy_statements = {
+    account = {
+      sid     = "SendEventsToQueue"
+      actions = ["sqs:SendMessage"]
+      principals = [
+        {
+          type = "Service"
+          identifiers = [
+            "events.${local.dns_suffix}",
+            "sqs.${local.dns_suffix}",
+          ]
+        }
+      ]
+    }
+  }
+
+  tags = merge(var.tags, try(var.karpenter_sqs.tags, {}))
+}
+
+resource "aws_cloudwatch_event_rule" "karpenter" {
+  for_each = { for k, v in local.ec2_events : k => v if local.karpenter_enable_spot_termination }
+
+  name_prefix   = "Karpenter-${each.value.name}-"
+  description   = each.value.description
+  event_pattern = jsonencode(each.value.event_pattern)
+
+  tags = merge(
+    { "ClusterName" : var.cluster_name },
+    var.tags,
+  )
+}
+
+resource "aws_cloudwatch_event_target" "karpenter" {
+  for_each = { for k, v in local.ec2_events : k => v if local.karpenter_enable_spot_termination }
+
+  rule      = aws_cloudwatch_event_rule.karpenter[each.key].name
+  target_id = "KarpenterQueueTarget"
+  arn       = module.karpenter_sqs.queue_arn
+}
+
+data "aws_iam_policy_document" "karpenter_assume_role" {
+  count = local.create_karpenter_node_iam_role ? 1 : 0
+
+  statement {
+    sid     = "KarpenterNodeAssumeRole"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.${local.dns_suffix}"]
+    }
+  }
+}
+
+resource "aws_iam_role" "karpenter" {
+  count = local.create_karpenter_node_iam_role ? 1 : 0
+
+  name        = try(var.karpenter_node.iam_role_use_name_prefix, true) ? null : local.karpenter_node_iam_role_name
+  name_prefix = try(var.karpenter_node.iam_role_use_name_prefix, true) ? "${local.karpenter_node_iam_role_name}-" : null
+  path        = try(var.karpenter_node.iam_role_path, null)
+  description = try(var.karpenter_node.iam_role_description, "Karpenter EC2 node IAM role")
+
+  assume_role_policy    = try(data.aws_iam_policy_document.karpenter_assume_role[0].json, "")
+  max_session_duration  = try(var.karpenter_node.iam_role_max_session_duration, null)
+  permissions_boundary  = try(var.karpenter_node.iam_role_permissions_boundary, null)
+  force_detach_policies = true
+
+  tags = merge(var.tags, try(var.karpenter_node.iam_role_tags, {}))
+}
+
+resource "aws_iam_role_policy_attachment" "karpenter" {
+  for_each = { for k, v in {
+    AmazonEKSWorkerNodePolicy          = "${local.iam_role_policy_prefix}/AmazonEKSWorkerNodePolicy",
+    AmazonEC2ContainerRegistryReadOnly = "${local.iam_role_policy_prefix}/AmazonEC2ContainerRegistryReadOnly",
+    AmazonEKS_CNI_Policy               = "${local.iam_role_policy_prefix}/AmazonEKS_CNI_Policy"
+  } : k => v if local.create_karpenter_node_iam_role }
+
+  policy_arn = each.value
+  role       = aws_iam_role.karpenter[0].name
+}
+
+resource "aws_iam_role_policy_attachment" "additional" {
+  for_each = { for k, v in try(var.karpenter_node.iam_role_additional_policies, {}) : k => v if local.create_karpenter_node_iam_role }
+
+  policy_arn = each.value
+  role       = aws_iam_role.karpenter[0].name
+}
+
+resource "aws_iam_instance_profile" "karpenter" {
+  count = var.enable_karpenter && try(var.karpenter_node.create_instance_profile, true) ? 1 : 0
+
+  name        = try(var.karpenter_node.iam_role_use_name_prefix, true) ? null : local.karpenter_node_iam_role_name
+  name_prefix = try(var.karpenter_node.iam_role_use_name_prefix, true) ? "${local.karpenter_node_iam_role_name}-" : null
+  path        = try(var.karpenter_node.iam_role_path, null)
+  role        = try(aws_iam_role.karpenter[0].name, var.karpenter_node.iam_role_name, "")
+
+  tags = merge(var.tags, try(var.karpenter_node.instance_profile_tags, {}))
+}
+
+module "karpenter" {
+  source  = "aws-ia/eks-blueprints-addon/aws"
+  version = "1.0.0"
+
+  create = var.enable_karpenter
+
+  # Disable helm release
+  create_release = false
+
+  namespace = local.karpenter_namespace
+
+  # IAM role for service account (IRSA)
+
+  create_role                   = try(var.karpenter.create_role, true)
+  role_name                     = try(var.karpenter.role_name, "karpenter")
+  role_name_use_prefix          = try(var.karpenter.role_name_use_prefix, true)
+  role_path                     = try(var.karpenter.role_path, "/")
+  role_permissions_boundary_arn = lookup(var.karpenter, "role_permissions_boundary_arn", null)
+  role_description              = try(var.karpenter.role_description, "IRSA for Karpenter")
+  role_policies                 = lookup(var.karpenter, "role_policies", {})
+
+  source_policy_documents = compact(concat(
+    data.aws_iam_policy_document.karpenter[*].json,
+    lookup(var.karpenter, "source_policy_documents", [])
+  ))
+  override_policy_documents = lookup(var.karpenter, "override_policy_documents", [])
+  policy_statements         = lookup(var.karpenter, "policy_statements", [])
+  policy_name               = try(var.karpenter.policy_name, null)
+  policy_name_use_prefix    = try(var.karpenter.policy_name_use_prefix, true)
+  policy_path               = try(var.karpenter.policy_path, null)
+  policy_description        = try(var.karpenter.policy_description, "IAM Policy for karpenter")
+
+  oidc_providers = {
+    this = {
+      provider_arn = local.oidc_provider_arn
+      # namespace is inherited from chart
+      service_account = local.karpenter_service_account_name
     }
   }
 

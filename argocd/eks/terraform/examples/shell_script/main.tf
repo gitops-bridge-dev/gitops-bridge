@@ -61,6 +61,13 @@ locals {
     aws_node_termination_handler_service_account  = module.eks_blueprints_addons.aws_node_termination_handler.service_account
     aws_node_termination_handler_sqs_queue_url    = module.eks_blueprints_addons.aws_node_termination_handler.sqs_queue_url
 
+    aws_karpenter_iam_role_arn     = module.eks_blueprints_addons.karpenter.iam_role_arn
+    aws_karpenter_namespace        = module.eks_blueprints_addons.karpenter.namespace
+    aws_karpenter_service_account  = module.eks_blueprints_addons.karpenter.service_account
+    aws_karpenter_sqs_queue_name    = module.eks_blueprints_addons.karpenter.sqs_queue_name
+    aws_karpenter_cluster_endpoint = module.eks_blueprints_addons.karpenter.cluster_endpoint
+    aws_karpenter_node_instance_profile_name = module.eks_blueprints_addons.karpenter.node_instance_profile_name
+
     enable_argocd = local.enable_argocd
   }
 }

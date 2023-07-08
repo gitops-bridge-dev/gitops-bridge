@@ -69,6 +69,14 @@ metadata:
     aws_node_termination_handler_service_account: "${aws_node_termination_handler_service_account}"
     aws_node_termination_handler_sqs_queue_url: "${aws_node_termination_handler_sqs_queue_url}"
 
+    aws_karpenter_iam_role_arn: "${aws_karpenter_iam_role_arn}"
+    aws_karpenter_namespace: "${aws_karpenter_namespace}"
+    aws_karpenter_service_account: "${aws_karpenter_service_account}"
+    aws_karpenter_sqs_queue_name: "${aws_karpenter_sqs_queue_name}"
+    aws_karpenter_cluster_endpoint: "${aws_karpenter_cluster_endpoint}"
+    aws_karpenter_node_instance_profile_name: "${aws_karpenter_node_instance_profile_name}"
+
+
   labels:
     argocd.argoproj.io/secret-type: cluster
     # This indicates this is a control-plane cluster (central management argocd) compatible with akuity in-cluster usage
