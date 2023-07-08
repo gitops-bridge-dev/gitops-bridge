@@ -76,11 +76,11 @@ module "eks_blueprints_addons" {
     repository_password = data.aws_ecrpublic_authorization_token.token.password
   }
 
-  #enable_velero = true
-  ## An S3 Bucket ARN is required. This can be declared with or without a Prefix.
-  #velero = {
-  #  s3_backup_location = "${module.velero_backup_s3_bucket.s3_bucket_arn}/backups"
-  #}
+  enable_velero = true
+  ## An S3 Bucket ARN is required. This can be declared with or without a Suffix.
+  velero = {
+    s3_backup_location = "${module.velero_backup_s3_bucket.s3_bucket_arn}/backups"
+  }
 
 
   tags = local.tags
@@ -92,6 +92,47 @@ data "aws_route53_zone" "domain_name" {
   private_zone = false
 }
 */
+
+
+module "velero_backup_s3_bucket" {
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "~> 3.0"
+
+  bucket_prefix = "${local.name}-"
+
+  # Allow deletion of non-empty bucket
+  # NOTE: This is enabled for example usage only, you should not enable this for production workloads
+  force_destroy = true
+
+  attach_deny_insecure_transport_policy = true
+  attach_require_latest_tls_policy      = true
+
+  acl = "private"
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+
+  control_object_ownership = true
+  object_ownership         = "BucketOwnerPreferred"
+
+  versioning = {
+    status     = true
+    mfa_delete = false
+  }
+
+  server_side_encryption_configuration = {
+    rule = {
+      apply_server_side_encryption_by_default = {
+        sse_algorithm = "AES256"
+      }
+    }
+  }
+
+  tags = local.tags
+}
+
 
 module "ebs_csi_driver_irsa" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
@@ -110,4 +151,5 @@ module "ebs_csi_driver_irsa" {
 
   tags = local.tags
 }
+
 

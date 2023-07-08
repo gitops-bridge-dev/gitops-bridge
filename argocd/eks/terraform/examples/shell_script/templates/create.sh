@@ -76,6 +76,11 @@ metadata:
     aws_karpenter_cluster_endpoint: "${aws_karpenter_cluster_endpoint}"
     aws_karpenter_node_instance_profile_name: "${aws_karpenter_node_instance_profile_name}"
 
+    aws_velero_iam_role_arn: "${aws_velero_iam_role_arn}"
+    aws_velero_namespace: "${aws_velero_namespace}"
+    aws_velero_service_account: "${aws_velero_service_account}"
+    aws_velero_backup_s3_bucket_prefix: "${aws_velero_backup_s3_bucket_prefix}"
+    aws_velero_backup_s3_bucket_name: "${aws_velero_backup_s3_bucket_name}"
 
   labels:
     argocd.argoproj.io/secret-type: cluster

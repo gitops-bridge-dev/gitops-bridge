@@ -1636,3 +1636,105 @@ module "karpenter" {
 
   tags = var.tags
 }
+
+
+################################################################################
+# Velero
+################################################################################
+
+locals {
+  velero_name                    = "velero"
+  velero_service_account         = try(var.velero.service_account_name, "${local.velero_name}-server")
+  velero_backup_s3_bucket        = try(split(":", var.velero.s3_backup_location), [])
+  velero_backup_s3_bucket_arn    = try(split("/", var.velero.s3_backup_location)[0], var.velero.s3_backup_location, "")
+  velero_backup_s3_bucket_name   = try(split("/", local.velero_backup_s3_bucket[5])[0], local.velero_backup_s3_bucket[5], "")
+  velero_backup_s3_bucket_prefix = try(split("/", var.velero.s3_backup_location)[1], "")
+  velero_namespace               = try(var.velero.namespace, "velero")
+}
+
+# https://github.com/vmware-tanzu/velero-plugin-for-aws#option-1-set-permissions-with-an-iam-user
+data "aws_iam_policy_document" "velero" {
+  count = var.enable_velero ? 1 : 0
+
+  statement {
+    actions = [
+      "ec2:CreateSnapshot",
+      "ec2:CreateSnapshots",
+      "ec2:CreateTags",
+      "ec2:CreateVolume",
+      "ec2:DeleteSnapshot"
+    ]
+    resources = [
+      "arn:${local.partition}:ec2:${local.region}:${local.account_id}:instance/*",
+      "arn:${local.partition}:ec2:${local.region}::snapshot/*",
+      "arn:${local.partition}:ec2:${local.region}:${local.account_id}:volume/*"
+    ]
+  }
+
+  statement {
+    actions = [
+      "ec2:DescribeSnapshots",
+      "ec2:DescribeVolumes"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "s3:AbortMultipartUpload",
+      "s3:DeleteObject",
+      "s3:GetObject",
+      "s3:ListMultipartUploadParts",
+      "s3:PutObject",
+    ]
+    resources = ["${var.velero.s3_backup_location}/*"]
+  }
+
+  statement {
+    actions   = ["s3:ListBucket"]
+    resources = [local.velero_backup_s3_bucket_arn]
+  }
+}
+
+module "velero" {
+  source  = "aws-ia/eks-blueprints-addon/aws"
+  version = "1.0.0"
+
+  create = var.enable_velero
+
+  # Disable helm release
+  create_release = false
+
+  namespace = local.velero_namespace
+
+  # IAM role for service account (IRSA)
+
+  create_role                   = try(var.velero.create_role, true)
+  role_name                     = try(var.velero.role_name, "velero")
+  role_name_use_prefix          = try(var.velero.role_name_use_prefix, true)
+  role_path                     = try(var.velero.role_path, "/")
+  role_permissions_boundary_arn = lookup(var.velero, "role_permissions_boundary_arn", null)
+  role_description              = try(var.velero.role_description, "IRSA for Velero")
+  role_policies                 = lookup(var.velero, "role_policies", {})
+
+  source_policy_documents = compact(concat(
+    data.aws_iam_policy_document.velero[*].json,
+    lookup(var.velero, "source_policy_documents", [])
+  ))
+  override_policy_documents = lookup(var.velero, "override_policy_documents", [])
+  policy_statements         = lookup(var.velero, "policy_statements", [])
+  policy_name               = try(var.velero.policy_name, "velero")
+  policy_name_use_prefix    = try(var.velero.policy_name_use_prefix, true)
+  policy_path               = try(var.velero.policy_path, null)
+  policy_description        = try(var.velero.policy_description, "IAM Policy for Velero")
+
+  oidc_providers = {
+    controller = {
+      provider_arn = local.oidc_provider_arn
+      # namespace is inherited from chart
+      service_account = local.velero_service_account
+    }
+  }
+
+  tags = var.tags
+}

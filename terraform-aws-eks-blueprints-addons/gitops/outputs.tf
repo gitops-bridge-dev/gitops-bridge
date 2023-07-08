@@ -140,3 +140,16 @@ output "karpenter" {
     }
   )
 }
+
+output "velero" {
+  description = "Map of attributes of the IRSA created"
+  value = merge(
+    module.velero,
+    {
+      namespace               = local.velero_namespace
+      service_account         = local.velero_service_account
+      backup_s3_bucket_prefix = local.velero_backup_s3_bucket_prefix
+      backup_s3_bucket_name   = local.velero_backup_s3_bucket_name
+    }
+  )
+}

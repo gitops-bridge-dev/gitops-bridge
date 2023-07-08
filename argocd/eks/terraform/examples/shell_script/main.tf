@@ -68,9 +68,17 @@ locals {
     aws_karpenter_cluster_endpoint = module.eks_blueprints_addons.karpenter.cluster_endpoint
     aws_karpenter_node_instance_profile_name = module.eks_blueprints_addons.karpenter.node_instance_profile_name
 
+    aws_velero_iam_role_arn            = module.eks_blueprints_addons.velero.iam_role_arn
+    aws_velero_namespace               = module.eks_blueprints_addons.velero.namespace
+    aws_velero_service_account         = module.eks_blueprints_addons.velero.service_account
+    aws_velero_backup_s3_bucket_prefix = module.eks_blueprints_addons.velero.backup_s3_bucket_prefix
+    aws_velero_backup_s3_bucket_name   = module.eks_blueprints_addons.velero.backup_s3_bucket_name
+
+
     enable_argocd = local.enable_argocd
   }
 }
+
 
 
 resource "shell_script" "gitops_bridge" {
