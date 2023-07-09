@@ -34,6 +34,7 @@ module "gitops_bridge" {
   eks_blueprints_addons = module.eks_blueprints_addons # optional
   addons = local.addons
 }
+
 ################################################################################
 # Blueprints Addons
 ################################################################################

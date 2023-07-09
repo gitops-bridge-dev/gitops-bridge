@@ -7,18 +7,19 @@ locals {
   region = "us-west-2"
   environment = "staging"
   addons = {
-    enable_kyverno                               = false # doesn't required aws resources (ie IAM)
-    enable_argocd                                = false # doesn't required aws resources (ie IAM), only when used as hub-cluster
-    enable_argo_rollouts                         = false # doesn't required aws resources (ie IAM)
-    enable_argo_workflows                        = false # doesn't required aws resources (ie IAM)
-    enable_secrets_store_csi_driver              = false # doesn't required aws resources (ie IAM)
-    enable_secrets_store_csi_driver_provider_aws = false # doesn't required aws resources (ie IAM)
-    enable_kube_prometheus_stack                 = false # doesn't required aws resources (ie IAM)
-    enable_gatekeeper                            = false # doesn't required aws resources (ie IAM)
-    enable_ingress_nginx                         = false # doesn't required aws resources (ie IAM)
+    #enable_kyverno                               = true # doesn't required aws resources (ie IAM)
+    #enable_argocd                                = true # doesn't required aws resources (ie IAM), only when used as hub-cluster
+    #enable_argo_rollouts                         = true # doesn't required aws resources (ie IAM)
+    enable_argo_workflows                        = true # doesn't required aws resources (ie IAM)
+    #enable_secrets_store_csi_driver              = true # doesn't required aws resources (ie IAM)
+    #enable_secrets_store_csi_driver_provider_aws = true # doesn't required aws resources (ie IAM)
+    #enable_kube_prometheus_stack                 = true # doesn't required aws resources (ie IAM)
+    #enable_gatekeeper                            = true # doesn't required aws resources (ie IAM)
+    #enable_ingress_nginx                         = true # doesn't required aws resources (ie IAM)
     enable_metrics_server                        = true # doesn't required aws resources (ie IAM)
-    enable_vpa                                   = false # doesn't required aws resources (ie IAM)
-    enable_foo = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
+    enable_vpa                                   = true # doesn't required aws resources (ie IAM)
+
+    #enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
 }
 

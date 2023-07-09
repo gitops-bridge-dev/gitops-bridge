@@ -3,120 +3,168 @@ provider "aws" {
 }
 
 locals {
-  name   = "cluster-1-prod"
+  name = "cluster-1-prod"
   region = "us-west-2"
   environment = "prod"
+  addons = {
+    #enable_kyverno                               = true # doesn't required aws resources (ie IAM)
+    #enable_argocd                                = true # doesn't required aws resources (ie IAM), only when used as hub-cluster
+    #enable_argo_rollouts                         = true # doesn't required aws resources (ie IAM)
+    #enable_argo_workflows                        = true # doesn't required aws resources (ie IAM)
+    enable_secrets_store_csi_driver              = true # doesn't required aws resources (ie IAM)
+    enable_secrets_store_csi_driver_provider_aws = true # doesn't required aws resources (ie IAM)
+    #enable_kube_prometheus_stack                 = true # doesn't required aws resources (ie IAM)
+    #enable_gatekeeper                            = true # doesn't required aws resources (ie IAM)
+    #enable_ingress_nginx                         = true # doesn't required aws resources (ie IAM)
+    enable_metrics_server                        = true # doesn't required aws resources (ie IAM)
+    #enable_vpa                                   = true # doesn't required aws resources (ie IAM)
 
-  cluster_config = {
-    cluster_name = module.eks.cluster_name,
-    region       = local.region
-    environment = local.environment
-
-
-    aws_enable_cert_manager = module.eks_blueprints_addons.options.enable_cert_manager
-    aws_cert_manager_iam_role_arn    = module.eks_blueprints_addons.cert_manager.iam_role_arn
-    aws_cert_manager_namespace       = module.eks_blueprints_addons.cert_manager.namespace
-    aws_cert_manager_service_account = module.eks_blueprints_addons.cert_manager.service_account
-
-    aws_enable_cluster_autoscaler = module.eks_blueprints_addons.options.enable_cluster_autoscaler
-    aws_cluster_autoscaler_iam_role_arn    = module.eks_blueprints_addons.cluster_autoscaler.iam_role_arn
-    aws_cluster_autoscaler_namespace       = module.eks_blueprints_addons.cluster_autoscaler.namespace
-    aws_cluster_autoscaler_service_account = module.eks_blueprints_addons.cluster_autoscaler.service_account
-    aws_cluster_autoscaler_image_tag       = module.eks_blueprints_addons.cluster_autoscaler.image_tag
-
-    aws_enable_aws_cloudwatch_metrics = module.eks_blueprints_addons.options.enable_aws_cloudwatch_metrics
-    aws_cloudwatch_metrics_iam_role_arn    = module.eks_blueprints_addons.aws_cloudwatch_metrics.iam_role_arn
-    aws_cloudwatch_metrics_namespace               = module.eks_blueprints_addons.aws_cloudwatch_metrics.namespace
-    aws_cloudwatch_metrics_service_account = module.eks_blueprints_addons.aws_cloudwatch_metrics.service_account
-
-    aws_enable_aws_efs_csi_driver = module.eks_blueprints_addons.options.enable_aws_efs_csi_driver
-    aws_efs_csi_driver_iam_role_arn                = module.eks_blueprints_addons.aws_efs_csi_driver.iam_role_arn
-    aws_efs_csi_driver_namespace                   = module.eks_blueprints_addons.aws_efs_csi_driver.namespace
-    aws_efs_csi_driver_controller_service_account  = module.eks_blueprints_addons.aws_efs_csi_driver.controller_service_account
-    aws_efs_csi_driver_node_service_account        = module.eks_blueprints_addons.aws_efs_csi_driver.node_service_account
-
-    aws_enable_aws_fsx_csi_driver = module.eks_blueprints_addons.options.enable_aws_fsx_csi_driver
-    aws_fsx_csi_driver_iam_role_arn                = module.eks_blueprints_addons.aws_fsx_csi_driver.iam_role_arn
-    aws_fsx_csi_driver_namespace                   = module.eks_blueprints_addons.aws_fsx_csi_driver.namespace
-    aws_fsx_csi_driver_controller_service_account  = module.eks_blueprints_addons.aws_fsx_csi_driver.controller_service_account
-    aws_fsx_csi_driver_node_service_account        = module.eks_blueprints_addons.aws_fsx_csi_driver.node_service_account
-
-    aws_enable_aws_privateca_issuer = module.eks_blueprints_addons.options.enable_aws_privateca_issuer
-    aws_privateca_issuer_iam_role_arn     = module.eks_blueprints_addons.aws_privateca_issuer.iam_role_arn
-    aws_privateca_issuer_namespace        = module.eks_blueprints_addons.aws_privateca_issuer.namespace
-    aws_privateca_issuer_service_account  = module.eks_blueprints_addons.aws_privateca_issuer.service_account
-
-    aws_enable_external_dns = module.eks_blueprints_addons.options.enable_external_dns
-    aws_external_dns_iam_role_arn     = module.eks_blueprints_addons.external_dns.iam_role_arn
-    aws_external_dns_namespace        = module.eks_blueprints_addons.external_dns.namespace
-    aws_external_dns_service_account  = module.eks_blueprints_addons.external_dns.service_account
-
-    aws_enable_external_secrets = module.eks_blueprints_addons.options.enable_external_secrets
-    aws_external_secrets_iam_role_arn     = module.eks_blueprints_addons.external_secrets.iam_role_arn
-    aws_external_secrets_namespace        = module.eks_blueprints_addons.external_secrets.namespace
-    aws_external_secrets_service_account  = module.eks_blueprints_addons.external_secrets.service_account
-
-    aws_enable_aws_load_balancer_controller = module.eks_blueprints_addons.options.enable_aws_load_balancer_controller
-    aws_load_balancer_controller_iam_role_arn     = module.eks_blueprints_addons.aws_load_balancer_controller.iam_role_arn
-    aws_load_balancer_controller_namespace        = module.eks_blueprints_addons.aws_load_balancer_controller.namespace
-    aws_load_balancer_controller_service_account  = module.eks_blueprints_addons.aws_load_balancer_controller.service_account
-
-    aws_enable_aws_for_fluentbit = module.eks_blueprints_addons.options.enable_aws_for_fluentbit
-    aws_for_fluentbit_iam_role_arn     = module.eks_blueprints_addons.aws_for_fluentbit.iam_role_arn
-    aws_for_fluentbit_namespace        = module.eks_blueprints_addons.aws_for_fluentbit.namespace
-    aws_for_fluentbit_service_account  = module.eks_blueprints_addons.aws_for_fluentbit.service_account
-    aws_for_fluentbit_log_group_name  = module.eks_blueprints_addons.aws_for_fluentbit.log_group_name
-
-    aws_enable_aws_node_termination_handler = module.eks_blueprints_addons.options.enable_aws_node_termination_handler
-    aws_node_termination_handler_iam_role_arn     = module.eks_blueprints_addons.aws_node_termination_handler.iam_role_arn
-    aws_node_termination_handler_namespace        = module.eks_blueprints_addons.aws_node_termination_handler.namespace
-    aws_node_termination_handler_service_account  = module.eks_blueprints_addons.aws_node_termination_handler.service_account
-    aws_node_termination_handler_sqs_queue_url    = module.eks_blueprints_addons.aws_node_termination_handler.sqs_queue_url
-
-    aws_enable_karpenter = module.eks_blueprints_addons.options.enable_karpenter
-    aws_karpenter_iam_role_arn     = module.eks_blueprints_addons.karpenter.iam_role_arn
-    aws_karpenter_namespace        = module.eks_blueprints_addons.karpenter.namespace
-    aws_karpenter_service_account  = module.eks_blueprints_addons.karpenter.service_account
-    aws_karpenter_sqs_queue_name    = module.eks_blueprints_addons.karpenter.sqs_queue_name
-    aws_karpenter_cluster_endpoint = module.eks_blueprints_addons.karpenter.cluster_endpoint
-    aws_karpenter_node_instance_profile_name = module.eks_blueprints_addons.karpenter.node_instance_profile_name
-
-    aws_enable_velero = module.eks_blueprints_addons.options.enable_velero
-    aws_velero_iam_role_arn            = module.eks_blueprints_addons.velero.iam_role_arn
-    aws_velero_namespace               = module.eks_blueprints_addons.velero.namespace
-    aws_velero_service_account         = module.eks_blueprints_addons.velero.service_account
-    aws_velero_backup_s3_bucket_prefix = module.eks_blueprints_addons.velero.backup_s3_bucket_prefix
-    aws_velero_backup_s3_bucket_name   = module.eks_blueprints_addons.velero.backup_s3_bucket_name
-
-    enable_argocd = module.eks_blueprints_addons.options.enable_argocd
-    enable_argo_rollouts = module.eks_blueprints_addons.options.enable_argo_rollouts
-    enable_argo_workflows = module.eks_blueprints_addons.options.enable_argo_workflows
-    enable_secrets_store_csi_driver = module.eks_blueprints_addons.options.enable_secrets_store_csi_driver
-    enable_secrets_store_csi_driver_provider_aws = module.eks_blueprints_addons.options.enable_secrets_store_csi_driver_provider_aws
-    enable_kube_prometheus_stack = module.eks_blueprints_addons.options.enable_kube_prometheus_stack
-    enable_gatekeeper = module.eks_blueprints_addons.options.enable_gatekeeper
-    enable_ingress_nginx = module.eks_blueprints_addons.options.enable_ingress_nginx
-    enable_metrics_server = module.eks_blueprints_addons.options.enable_metrics_server
-    enable_vpa = module.eks_blueprints_addons.options.enable_vpa
-    enable_fargate_fluentbit = module.eks_blueprints_addons.options.enable_fargate_fluentbit
-    enable_kyverno = module.eks_blueprints_addons.options.enable_kyverno
+    #enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
 }
 
+################################################################################
+# GitOps Bridge Addons
+################################################################################
 
+module "gitops_bridge" {
+  source = "../../gitops-bridge-cluster"
 
-resource "shell_script" "gitops_bridge" {
+  cluster_name = module.eks.cluster_name
+  environment = local.environment
+  eks_blueprints_addons = module.eks_blueprints_addons
+  addons = local.addons
+}
 
-  lifecycle_commands {
-    create = file("${path.module}/templates/create.sh")
-    update = file("${path.module}/templates/create.sh")
-    read = file("${path.module}/templates/create.sh")
-    delete = file("${path.module}/templates/delete.sh")
+################################################################################
+# Blueprints Addons
+################################################################################
+
+module "eks_blueprints_addons" {
+  source = "../../../../../terraform-aws-eks-blueprints-addons/gitops"
+
+  cluster_name      = module.eks.cluster_name
+  cluster_endpoint  = module.eks.cluster_endpoint
+  cluster_version   = module.eks.cluster_version
+  oidc_provider_arn = module.eks.oidc_provider_arn
+
+  eks_addons = {
+    aws-ebs-csi-driver = {
+      most_recent              = true
+      service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
+    }
   }
 
-  environment = local.cluster_config
+  #enable_aws_efs_csi_driver                    = true
+  #enable_aws_fsx_csi_driver                    = true
+  #enable_aws_cloudwatch_metrics = true
+  #enable_aws_privateca_issuer                  = true
+  enable_cert_manager       = true
+  #enable_cluster_autoscaler = true
+  #enable_external_dns                          = true
+  #external_dns_route53_zone_arns = ["arn:aws:route53:::hostedzone/Z123456789"]
+  #enable_external_secrets                      = true
+  enable_aws_load_balancer_controller = true
+  #enable_aws_for_fluentbit            = true
+  #enable_fargate_fluentbit            = true # doesn't required aws resources (ie IAM)
+  #enable_aws_node_termination_handler   = true
+  #aws_node_termination_handler_asg_arns = [for asg in module.eks.self_managed_node_groups : asg.autoscaling_group_arn]
+  #enable_karpenter = true
+  #enable_velero = true
+  ## An S3 Bucket ARN is required. This can be declared with or without a Suffix.
+  #velero = {
+  #  s3_backup_location = "${module.velero_backup_s3_bucket.s3_bucket_arn}/backups"
+  #}
 
-  depends_on = [
-    module.eks
-  ]
+  tags = local.tags
+}
+
+module "ebs_csi_driver_irsa" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "~> 5.14"
+
+  role_name_prefix = "${local.name}-ebs-csi-driver-"
+
+  attach_ebs_csi_policy = true
+
+  oidc_providers = {
+    main = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
+    }
+  }
+
+  tags = local.tags
+}
+
+
+################################################################################
+# Cluster
+################################################################################
+data "aws_availability_zones" "available" {}
+data "aws_caller_identity" "current" {}
+
+locals {
+  vpc_cidr = "10.0.0.0/16"
+  azs      = slice(data.aws_availability_zones.available.names, 0, 3)
+
+  tags = {
+    Blueprint  = local.name
+    GithubRepo = "github.com/csantanapr/terraform-gitops-bridge"
+  }
+}
+
+#tfsec:ignore:aws-eks-enable-control-plane-logging
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 19.13"
+
+  cluster_name                   = local.name
+  cluster_version                = "1.27"
+  cluster_endpoint_public_access = true
+
+
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
+
+  eks_managed_node_groups = {
+    initial = {
+      instance_types = ["t3.large"]
+
+      min_size     = 4
+      max_size     = 10
+      desired_size = 4
+    }
+  }
+
+  tags = local.tags
+}
+
+################################################################################
+# Supporting Resources
+################################################################################
+
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.0"
+
+  name = local.name
+  cidr = local.vpc_cidr
+
+  azs             = local.azs
+  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
+  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
+
+  enable_nat_gateway = true
+  single_nat_gateway = true
+
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = 1
+  }
+
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb" = 1
+  }
+
+  tags = local.tags
 }

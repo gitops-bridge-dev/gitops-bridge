@@ -115,11 +115,7 @@ stringData:
 EOF
 
 # iterate over all environments variables that start with enable_
-# then create secret name in-cluster with all the variables as labels in the single kubernetes secret
-# for example:
-# enable_argocd=true
-# enable_argo_rollouts=true
-# using env
+# then create secret name in-cluster with all the variables as labels
 for var in $(env | grep ^enable_); do
     kubectl label secret in-cluster -n argocd ${var} --overwrite=true
 done

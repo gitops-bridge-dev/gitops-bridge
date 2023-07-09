@@ -6,10 +6,6 @@ terraform {
       source  = "hashicorp/aws"
       version = ">= 4.67.0"
     }
-    shell = {
-      source  = "scottwinkler/shell"
-      version = ">= 1.7.10"
-    }
   }
 
   # ##  Used for end-to-end testing on project; update to suit your needs
