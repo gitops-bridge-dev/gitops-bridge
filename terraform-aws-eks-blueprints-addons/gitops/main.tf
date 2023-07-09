@@ -1087,7 +1087,7 @@ module "aws_load_balancer_controller" {
 locals {
   aws_for_fluentbit_service_account   = try(var.aws_for_fluentbit.service_account_name, "aws-for-fluent-bit-sa")
   aws_for_fluentbit_namespace = try(var.aws_for_fluentbit.namespace, "kube-system")
-  aws_for_fluentbit_cw_log_group_name = try(var.aws_for_fluentbit_cw_log_group.create, true) ? try(var.aws_for_fluentbit_cw_log_group.name, "/${var.cluster_name}/aws-fluentbit-logs") : null
+  aws_for_fluentbit_cw_log_group_name = try(var.aws_for_fluentbit_cw_log_group.create, true) ? try(var.aws_for_fluentbit_cw_log_group.name, "/aws/eks/${var.cluster_name}/aws-fluentbit-logs") : null
 }
 
 resource "aws_cloudwatch_log_group" "aws_for_fluentbit" {
@@ -1351,7 +1351,7 @@ module "aws_node_termination_handler" {
   # Disable helm release
   create_release = false
 
-  namespace = local.aws_load_balancer_controller_namespace
+  namespace = local.aws_node_termination_handler_namespace
 
   # IAM role for service account (IRSA)
 

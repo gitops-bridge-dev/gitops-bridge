@@ -107,7 +107,7 @@ output "aws_for_fluentbit" {
     {
       namespace = local.aws_for_fluentbit_namespace
       service_account = local.aws_for_fluentbit_service_account
-      log_group_name = aws_cloudwatch_log_group.aws_for_fluentbit[0].name
+      log_group_name = try(aws_cloudwatch_log_group.aws_for_fluentbit[0].name, "")
     }
   )
 }

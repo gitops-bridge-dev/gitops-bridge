@@ -1,12 +1,3 @@
-# Required for public ECR where Karpenter artifacts are hosted
-provider "aws" {
-  region = "us-east-1"
-  alias  = "virginia"
-}
-data "aws_ecrpublic_authorization_token" "token" {
-  provider = aws.virginia
-}
-
 ################################################################################
 # Blueprints Addons
 ################################################################################
@@ -42,7 +33,7 @@ module "eks_blueprints_addons" {
   enable_aws_fsx_csi_driver                    = true
   enable_kyverno = true
   #enable_argocd                                = true # doesn't required aws resources (ie IAM), only when used as hub-cluster
-  #enable_argo_rollouts                         = true # doesn't required aws resources (ie IAM)
+  enable_argo_rollouts                         = true # doesn't required aws resources (ie IAM)
   #enable_argo_workflows                        = true # doesn't required aws resources (ie IAM)
   enable_aws_cloudwatch_metrics = true
   enable_aws_privateca_issuer                  = true
@@ -61,21 +52,12 @@ module "eks_blueprints_addons" {
   #enable_metrics_server               = true # doesn't required aws resources (ie IAM)
   #enable_vpa                          = true # doesn't required aws resources (ie IAM)
   enable_aws_for_fluentbit            = true
-  aws_for_fluentbit_cw_log_group = {
-    use_name_prefix = true
-    name_prefix = "/aws/eks/${module.eks.cluster_name}/aws-fluentbit-logs"
-  }
   #enable_fargate_fluentbit            = true # doesn't required aws resources (ie IAM)
 
   enable_aws_node_termination_handler   = true
   aws_node_termination_handler_asg_arns = [for asg in module.eks.self_managed_node_groups : asg.autoscaling_group_arn]
 
   enable_karpenter = true
-  # ECR login required
-  karpenter = {
-    repository_username = data.aws_ecrpublic_authorization_token.token.user_name
-    repository_password = data.aws_ecrpublic_authorization_token.token.password
-  }
 
   enable_velero = true
   ## An S3 Bucket ARN is required. This can be declared with or without a Suffix.
