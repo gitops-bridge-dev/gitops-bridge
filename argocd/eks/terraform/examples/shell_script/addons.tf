@@ -40,6 +40,7 @@ module "eks_blueprints_addons" {
 
   enable_aws_efs_csi_driver                    = true
   enable_aws_fsx_csi_driver                    = true
+  enable_kyverno = true
   #enable_argocd                                = true # doesn't required aws resources (ie IAM), only when used as hub-cluster
   #enable_argo_rollouts                         = true # doesn't required aws resources (ie IAM)
   #enable_argo_workflows                        = true # doesn't required aws resources (ie IAM)

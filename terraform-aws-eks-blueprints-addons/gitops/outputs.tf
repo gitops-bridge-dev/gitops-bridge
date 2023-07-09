@@ -153,3 +153,36 @@ output "velero" {
     }
   )
 }
+
+#passthru variables to keep interface the same
+output "options" {
+  value = {
+    enable_aws_efs_csi_driver = var.enable_aws_efs_csi_driver
+    enable_aws_fsx_csi_driver = var.enable_aws_fsx_csi_driver
+    enable_aws_cloudwatch_metrics = var.enable_aws_cloudwatch_metrics
+    enable_aws_privateca_issuer = var.enable_aws_privateca_issuer
+    enable_cert_manager = var.enable_cert_manager
+    enable_cluster_autoscaler = var.enable_cluster_autoscaler
+    enable_external_dns = var.enable_external_dns
+    enable_external_secrets  = var.enable_external_secrets
+    enable_aws_load_balancer_controller = var.enable_aws_load_balancer_controller
+    enable_aws_for_fluentbit = var.enable_aws_for_fluentbit
+    enable_aws_node_termination_handler  = var.enable_aws_node_termination_handler
+    enable_karpenter = var.enable_karpenter
+    enable_velero = var.enable_velero
+
+    enable_argocd = var.enable_argocd
+    enable_argo_rollouts = var.enable_argo_rollouts
+    enable_argo_workflows = var.enable_argo_workflows
+    enable_secrets_store_csi_driver = var.enable_secrets_store_csi_driver
+    enable_secrets_store_csi_driver_provider_aws = var.enable_secrets_store_csi_driver_provider_aws
+    enable_kube_prometheus_stack = var.enable_kube_prometheus_stack
+    enable_gatekeeper = var.enable_gatekeeper
+    enable_ingress_nginx = var.enable_ingress_nginx
+    enable_metrics_server = var.enable_metrics_server
+    enable_vpa = var.enable_vpa
+    enable_fargate_fluentbit = var.enable_fargate_fluentbit
+    enable_kyverno = var.enable_kyverno
+  }
+}
+

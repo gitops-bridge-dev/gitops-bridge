@@ -20,17 +20,17 @@ metadata:
     cluster_name: "${cluster_name}"
     region: "${region}"
 
-    cert_manager_iam_role_arn: "${cert_manager_iam_role_arn}"
-    cert_manager_namespace: "${cert_manager_namespace}"
-    cert_manager_service_account: "${cert_manager_service_account}"
+    aws_cert_manager_iam_role_arn: "${aws_cert_manager_iam_role_arn}"
+    aws_cert_manager_namespace: "${aws_cert_manager_namespace}"
+    aws_cert_manager_service_account: "${aws_cert_manager_service_account}"
 
-    cluster_autoscaler_iam_role_arn: "${cluster_autoscaler_iam_role_arn}"
-    cluster_autoscaler_namespace: "${cluster_autoscaler_namespace}"
-    cluster_autoscaler_service_account: "${cluster_autoscaler_service_account}"
-    cluster_autoscaler_image_tag: "${cluster_autoscaler_image_tag}"
+    aws_cluster_autoscaler_iam_role_arn: "${aws_cluster_autoscaler_iam_role_arn}"
+    aws_cluster_autoscaler_namespace: "${aws_cluster_autoscaler_namespace}"
+    aws_cluster_autoscaler_service_account: "${aws_cluster_autoscaler_service_account}"
+    aws_cluster_autoscaler_image_tag: "${aws_cluster_autoscaler_image_tag}"
 
     aws_cloudwatch_metrics_iam_role_arn: "${aws_cloudwatch_metrics_iam_role_arn}"
-    aws_cloudwatch_namespace: "${aws_cloudwatch_namespace}"
+    aws_cloudwatch_metrics_namespace: "${aws_cloudwatch_metrics_namespace}"
     aws_cloudwatch_metrics_service_account: "${aws_cloudwatch_metrics_service_account}"
 
     aws_efs_csi_driver_iam_role_arn: "${aws_efs_csi_driver_iam_role_arn}"
@@ -47,13 +47,13 @@ metadata:
     aws_privateca_issuer_namespace: "${aws_privateca_issuer_namespace}"
     aws_privateca_issuer_service_account: "${aws_privateca_issuer_service_account}"
 
-    external_dns_iam_role_arn: "${external_dns_iam_role_arn}"
-    external_dns_namespace: "${external_dns_namespace}"
-    external_dns_service_account: "${external_dns_service_account}"
+    aws_external_dns_iam_role_arn: "${aws_external_dns_iam_role_arn}"
+    aws_external_dns_namespace: "${aws_external_dns_namespace}"
+    aws_external_dns_service_account: "${aws_external_dns_service_account}"
 
-    external_secrets_iam_role_arn: "${external_secrets_iam_role_arn}"
-    external_secrets_namespace: "${external_secrets_namespace}"
-    external_secrets_service_account: "${external_secrets_service_account}"
+    aws_external_secrets_iam_role_arn: "${aws_external_secrets_iam_role_arn}"
+    aws_external_secrets_namespace: "${aws_external_secrets_namespace}"
+    aws_external_secrets_service_account: "${aws_external_secrets_service_account}"
 
     aws_load_balancer_controller_iam_role_arn: "${aws_load_balancer_controller_iam_role_arn}"
     aws_load_balancer_controller_namespace: "${aws_load_balancer_controller_namespace}"
@@ -84,8 +84,35 @@ metadata:
 
   labels:
     argocd.argoproj.io/secret-type: cluster
-    # This indicates this is a control-plane cluster (central management argocd) compatible with akuity in-cluster usage
-    akuity.io/argo-cd-cluster-name: in-cluster
+    environment: "${environment}" # control-plane, dev, qa, staging, prod
+    aws_enable_aws_efs_csi_driver: "${aws_enable_aws_efs_csi_driver}"
+    aws_enable_aws_fsx_csi_driver: "${aws_enable_aws_fsx_csi_driver}"
+    aws_enable_aws_cloudwatch_metrics: "${aws_enable_aws_cloudwatch_metrics}"
+    aws_enable_aws_privateca_issuer: "${aws_enable_aws_privateca_issuer}"
+    aws_enable_cert_manager: "${aws_enable_cert_manager}"
+    aws_enable_cluster_autoscaler: "${aws_enable_cluster_autoscaler}"
+    aws_enable_external_dns: "${aws_enable_external_dns}"
+    aws_enable_external_secrets: "${aws_enable_external_secrets}"
+    aws_enable_aws_load_balancer_controller: "${aws_enable_aws_load_balancer_controller}"
+    aws_enable_aws_for_fluentbit: "${aws_enable_aws_for_fluentbit}"
+    aws_enable_aws_node_termination_handler: "${aws_enable_aws_node_termination_handler}"
+    aws_enable_karpenter: "${aws_enable_karpenter}"
+    aws_enable_velero: "${aws_enable_velero}"
+
+    enable_argocd: "${enable_argocd}"
+    enable_argo_rollouts: "${enable_argo_rollouts}"
+    enable_argo_workflows: "${enable_argo_workflows}"
+    enable_secrets_store_csi_driver: "${enable_secrets_store_csi_driver}"
+    enable_secrets_store_csi_driver_provider_aws: "${enable_secrets_store_csi_driver_provider_aws}"
+    enable_kube_prometheus_stack: "${enable_kube_prometheus_stack}"
+    enable_gatekeeper: "${enable_gatekeeper}"
+    enable_ingress_nginx: "${enable_ingress_nginx}"
+    enable_metrics_server: "${enable_metrics_server}"
+    enable_vpa: "${enable_vpa}"
+    enable_fargate_fluentbit: "${enable_fargate_fluentbit}"
+    enable_kyverno: "${enable_kyverno}"
+
+
 type: Opaque
 stringData:
   name: in-cluster

@@ -27,6 +27,7 @@ export KUBECONFIG=/tmp/gitops
 
 Access ArgoCD UI
 ```shell
+export KUBECONFIG=/tmp/gitops
 export ARGOCD_OPTS="--port-forward --port-forward-namespace argocd --grpc-web"
 kubectl config set-context --current --namespace argocd
 argocd app list
