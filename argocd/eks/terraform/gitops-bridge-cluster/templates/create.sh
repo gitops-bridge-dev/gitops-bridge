@@ -99,18 +99,7 @@ metadata:
     aws_enable_karpenter: "${aws_enable_karpenter}"
     aws_enable_velero: "${aws_enable_velero}"
 
-    enable_argocd: "${enable_argocd}"
-    enable_argo_rollouts: "${enable_argo_rollouts}"
-    enable_argo_workflows: "${enable_argo_workflows}"
-    enable_secrets_store_csi_driver: "${enable_secrets_store_csi_driver}"
-    enable_secrets_store_csi_driver_provider_aws: "${enable_secrets_store_csi_driver_provider_aws}"
-    enable_kube_prometheus_stack: "${enable_kube_prometheus_stack}"
-    enable_gatekeeper: "${enable_gatekeeper}"
-    enable_ingress_nginx: "${enable_ingress_nginx}"
-    enable_metrics_server: "${enable_metrics_server}"
-    enable_vpa: "${enable_vpa}"
-    enable_fargate_fluentbit: "${enable_fargate_fluentbit}"
-    enable_kyverno: "${enable_kyverno}"
+
 
 
 type: Opaque
@@ -125,11 +114,31 @@ stringData:
     }
 EOF
 
+# iterate over all environments variables that start with enable_
+# then create secret name in-cluster with all the variables as labels in the single kubernetes secret
+# for example:
+# enable_argocd=true
+# enable_argo_rollouts=true
+# using env
+for var in $(env | grep ^enable_); do
+    kubectl label secret in-cluster -n argocd ${var} --overwrite=true
+done
+
+
+
+
+
+
+
+
+
+
 # bootstrap app (App or Apps)
-# We are deploying both because the single cluster with argocd will be re-use to run workloads, if using akuity agent only workloads is need it
+# TODO override the bootstrap app with the one provided by the user
 kubectl apply -f https://raw.githubusercontent.com/csantanapr/gitops-control-plane/main/bootstrap/control-plane/exclude/bootstrap.yaml
 kubectl apply -f https://raw.githubusercontent.com/csantanapr/gitops-control-plane/main/bootstrap/workloads/exclude/bootstrap.yaml
 
 kubectl config set-context --current --namespace argocd
 export ARGOCD_OPTS="--port-forward --port-forward-namespace argocd --grpc-web"
 argocd login --username admin --password $(kubectl get secrets argocd-initial-admin-secret -n argocd --template="{{index .data.password | base64decode}}")
+argocd repo add public.ecr.aws --type helm --name aws-public-ecr --enable-oci

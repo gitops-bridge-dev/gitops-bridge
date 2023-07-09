@@ -10,7 +10,7 @@ brew install argocd
 Clone the repo
 ```shell
 git clone github.com/csantanapr/gitops-bridge
-cd gitops-bridge/argocd/eks/terraform/test
+cd gitops-bridge/argocd/eks/terraform/example/in-cluster
 ```
 
 Run terraform
