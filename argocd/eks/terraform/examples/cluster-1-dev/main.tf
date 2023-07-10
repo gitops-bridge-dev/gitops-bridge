@@ -74,6 +74,7 @@ module "eks_blueprints_addons" {
   #velero = {
   #  s3_backup_location = "${module.velero_backup_s3_bucket.s3_bucket_arn}/backups"
   #}
+  enable_aws_gateway_api_controller = true
 
   tags = local.tags
 }

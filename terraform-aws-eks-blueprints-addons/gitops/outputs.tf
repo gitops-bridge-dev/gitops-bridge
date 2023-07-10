@@ -154,6 +154,18 @@ output "velero" {
   )
 }
 
+output "aws_gateway_api_controller" {
+  description = "Map of attributes of the IRSA created"
+  value       = merge(
+  module.aws_gateway_api_controller, var.enable_aws_gateway_api_controller ?
+    {
+      namespace               = local.aws_gateway_api_controller_namespace
+      service_account         = local.aws_gateway_api_controller_service_account
+      vpc_id                  = local.aws_gateway_api_controller_vpc_id
+    }: null
+  )
+}
+
 
 output "addons" {
   value = {
@@ -170,6 +182,7 @@ output "addons" {
     aws_enable_aws_node_termination_handler  = var.enable_aws_node_termination_handler ? true : null
     aws_enable_karpenter = var.enable_karpenter ? true : null
     aws_enable_velero = var.enable_velero ? true : null
+    aws_enable_aws_gateway_api_controller = var.enable_aws_gateway_api_controller ? true : null
 
     #passthru variables to keep interface the same
     # TBD not sure to remove this variables
@@ -187,3 +200,6 @@ output "addons" {
   }
 }
 
+output "account_id" {
+  value = local.account_id
+}

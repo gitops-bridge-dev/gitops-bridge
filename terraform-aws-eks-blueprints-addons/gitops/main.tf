@@ -1738,3 +1738,74 @@ module "velero" {
 
   tags = var.tags
 }
+
+
+################################################################################
+# AWS Gateway API Controller
+################################################################################
+data "aws_eks_cluster" "my_cluster" {
+  name = var.cluster_name
+}
+
+locals {
+  aws_gateway_api_controller_service_account = try(var.aws_gateway_api_controller.service_account_name, "gateway-api-controller")
+  aws_gateway_api_controller_namespace        = try(var.aws_gateway_api_controller.namespace, "aws-application-networking-system")
+  aws_gateway_api_controller_vpc_id = data.aws_eks_cluster.my_cluster.vpc_config[0].vpc_id
+}
+
+data "aws_iam_policy_document" "aws_gateway_api_controller" {
+  count = var.enable_aws_gateway_api_controller ? 1 : 0
+
+  statement {
+    actions = [
+      "vpc-lattice:*",
+      "iam:CreateServiceLinkedRole",
+      "ec2:DescribeVpcs",
+      "ec2:DescribeSubnets"
+    ]
+    resources = ["*"]
+  }
+}
+
+module "aws_gateway_api_controller" {
+  source  = "aws-ia/eks-blueprints-addon/aws"
+  version = "1.0.0"
+
+  create = var.enable_aws_gateway_api_controller
+
+  # Disable helm release
+  create_release = false
+
+  namespace = local.aws_gateway_api_controller_namespace
+
+  # IAM role for service account (IRSA)
+
+  create_role                   = try(var.aws_gateway_api_controller.create_role, true)
+  role_name                     = try(var.aws_gateway_api_controller.role_name, "aws-gateway-api-controller")
+  role_name_use_prefix          = try(var.aws_gateway_api_controller.role_name_use_prefix, true)
+  role_path                     = try(var.aws_gateway_api_controller.role_path, "/")
+  role_permissions_boundary_arn = lookup(var.aws_gateway_api_controller, "role_permissions_boundary_arn", null)
+  role_description              = try(var.aws_gateway_api_controller.role_description, "IRSA for aws-gateway-api-controller")
+  role_policies                 = lookup(var.aws_gateway_api_controller, "role_policies", {})
+
+  source_policy_documents = compact(concat(
+    data.aws_iam_policy_document.aws_gateway_api_controller[*].json,
+    lookup(var.aws_gateway_api_controller, "source_policy_documents", [])
+  ))
+  override_policy_documents = lookup(var.aws_gateway_api_controller, "override_policy_documents", [])
+  policy_statements         = lookup(var.aws_gateway_api_controller, "policy_statements", [])
+  policy_name               = try(var.aws_gateway_api_controller.policy_name, null)
+  policy_name_use_prefix    = try(var.aws_gateway_api_controller.policy_name_use_prefix, true)
+  policy_path               = try(var.aws_gateway_api_controller.policy_path, null)
+  policy_description        = try(var.aws_gateway_api_controller.policy_description, "IAM Policy for aws-gateway-api-controller")
+
+  oidc_providers = {
+    this = {
+      provider_arn = local.oidc_provider_arn
+      # namespace is inherited from chart
+      service_account = local.aws_gateway_api_controller_service_account
+    }
+  }
+
+  tags = var.tags
+}

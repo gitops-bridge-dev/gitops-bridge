@@ -7,6 +7,7 @@ locals {
     region       = data.aws_region.current.name
     environment  = var.environment
   },{
+    aws_account_id = try(var.metadata.account_id,null)
     aws_cert_manager_iam_role_arn    = try(var.metadata.cert_manager.iam_role_arn,null)
     aws_cert_manager_namespace       = try(var.metadata.cert_manager.namespace,null)
     aws_cert_manager_service_account = try(var.metadata.cert_manager.service_account,null)
@@ -72,6 +73,13 @@ locals {
     aws_velero_service_account         = try(var.metadata.velero.service_account,null)
     aws_velero_backup_s3_bucket_prefix = try(var.metadata.velero.backup_s3_bucket_prefix,null)
     aws_velero_backup_s3_bucket_name   = try(var.metadata.velero.backup_s3_bucket_name,null)
+
+    aws_gateway_api_controller_iam_role_arn            = try(var.metadata.aws_gateway_api_controller.iam_role_arn,null)
+    aws_gateway_api_controller_namespace               = try(var.metadata.aws_gateway_api_controller.namespace,null)
+    aws_gateway_api_controller_service_account         = try(var.metadata.aws_gateway_api_controller.service_account,null)
+    aws_gateway_api_controller_vpc_id = try(var.metadata.aws_gateway_api_controller.vpc_id,null)
+
+
   },
   {
     for k, v in try(var.metadata.addons,{}) :
