@@ -7,80 +7,76 @@ locals {
     region       = data.aws_region.current.name
     environment  = var.environment
   },{
-    aws_enable_cert_manager = var.eks_blueprints_addons.options.enable_cert_manager
-    aws_cert_manager_iam_role_arn    = var.eks_blueprints_addons.cert_manager.iam_role_arn
-    aws_cert_manager_namespace       = var.eks_blueprints_addons.cert_manager.namespace
-    aws_cert_manager_service_account = var.eks_blueprints_addons.cert_manager.service_account
+    aws_cert_manager_iam_role_arn    = try(var.metadata.cert_manager.iam_role_arn,null)
+    aws_cert_manager_namespace       = try(var.metadata.cert_manager.namespace,null)
+    aws_cert_manager_service_account = try(var.metadata.cert_manager.service_account,null)
 
-    aws_enable_cluster_autoscaler = var.eks_blueprints_addons.options.enable_cluster_autoscaler
-    aws_cluster_autoscaler_iam_role_arn    = var.eks_blueprints_addons.cluster_autoscaler.iam_role_arn
-    aws_cluster_autoscaler_namespace       = var.eks_blueprints_addons.cluster_autoscaler.namespace
-    aws_cluster_autoscaler_service_account = var.eks_blueprints_addons.cluster_autoscaler.service_account
-    aws_cluster_autoscaler_image_tag       = var.eks_blueprints_addons.cluster_autoscaler.image_tag
+    aws_cluster_autoscaler_iam_role_arn    = try(var.metadata.cluster_autoscaler.iam_role_arn,null)
+    aws_cluster_autoscaler_namespace       = try(var.metadata.cluster_autoscaler.namespace,null)
+    aws_cluster_autoscaler_service_account = try(var.metadata.cluster_autoscaler.service_account,null)
+    aws_cluster_autoscaler_image_tag       = try(var.metadata.cluster_autoscaler.image_tag,null)
 
-    aws_enable_aws_cloudwatch_metrics = var.eks_blueprints_addons.options.enable_aws_cloudwatch_metrics
-    aws_cloudwatch_metrics_iam_role_arn    = var.eks_blueprints_addons.aws_cloudwatch_metrics.iam_role_arn
-    aws_cloudwatch_metrics_namespace               = var.eks_blueprints_addons.aws_cloudwatch_metrics.namespace
-    aws_cloudwatch_metrics_service_account = var.eks_blueprints_addons.aws_cloudwatch_metrics.service_account
+    aws_cloudwatch_metrics_iam_role_arn    = try(var.metadata.aws_cloudwatch_metrics.iam_role_arn,null)
+    aws_cloudwatch_metrics_namespace               = try(var.metadata.aws_cloudwatch_metrics.namespace,null)
+    aws_cloudwatch_metrics_service_account = try(var.metadata.aws_cloudwatch_metrics.service_account,null)
 
-    aws_enable_aws_efs_csi_driver = var.eks_blueprints_addons.options.enable_aws_efs_csi_driver
-    aws_efs_csi_driver_iam_role_arn                = var.eks_blueprints_addons.aws_efs_csi_driver.iam_role_arn
-    aws_efs_csi_driver_namespace                   = var.eks_blueprints_addons.aws_efs_csi_driver.namespace
-    aws_efs_csi_driver_controller_service_account  = var.eks_blueprints_addons.aws_efs_csi_driver.controller_service_account
-    aws_efs_csi_driver_node_service_account        = var.eks_blueprints_addons.aws_efs_csi_driver.node_service_account
+    aws_efs_csi_driver_iam_role_arn                = try(var.metadata.aws_efs_csi_driver.iam_role_arn,null)
+    aws_efs_csi_driver_namespace                   = try(var.metadata.aws_efs_csi_driver.namespace,null)
+    aws_efs_csi_driver_controller_service_account  = try(var.metadata.aws_efs_csi_driver.controller_service_account,null)
+    aws_efs_csi_driver_node_service_account        = try(var.metadata.aws_efs_csi_driver.node_service_account,null)
 
-    aws_enable_aws_fsx_csi_driver = var.eks_blueprints_addons.options.enable_aws_fsx_csi_driver
-    aws_fsx_csi_driver_iam_role_arn                = var.eks_blueprints_addons.aws_fsx_csi_driver.iam_role_arn
-    aws_fsx_csi_driver_namespace                   = var.eks_blueprints_addons.aws_fsx_csi_driver.namespace
-    aws_fsx_csi_driver_controller_service_account  = var.eks_blueprints_addons.aws_fsx_csi_driver.controller_service_account
-    aws_fsx_csi_driver_node_service_account        = var.eks_blueprints_addons.aws_fsx_csi_driver.node_service_account
 
-    aws_enable_aws_privateca_issuer = var.eks_blueprints_addons.options.enable_aws_privateca_issuer
-    aws_privateca_issuer_iam_role_arn     = var.eks_blueprints_addons.aws_privateca_issuer.iam_role_arn
-    aws_privateca_issuer_namespace        = var.eks_blueprints_addons.aws_privateca_issuer.namespace
-    aws_privateca_issuer_service_account  = var.eks_blueprints_addons.aws_privateca_issuer.service_account
+    aws_fsx_csi_driver_iam_role_arn                = try(var.metadata.aws_fsx_csi_driver.iam_role_arn,null)
+    aws_fsx_csi_driver_namespace                   = try(var.metadata.aws_fsx_csi_driver.namespace,null)
+    aws_fsx_csi_driver_controller_service_account  = try(var.metadata.aws_fsx_csi_driver.controller_service_account,null)
+    aws_fsx_csi_driver_node_service_account        = try(var.metadata.aws_fsx_csi_driver.node_service_account,null)
 
-    aws_enable_external_dns = var.eks_blueprints_addons.options.enable_external_dns
-    aws_external_dns_iam_role_arn     = var.eks_blueprints_addons.external_dns.iam_role_arn
-    aws_external_dns_namespace        = var.eks_blueprints_addons.external_dns.namespace
-    aws_external_dns_service_account  = var.eks_blueprints_addons.external_dns.service_account
 
-    aws_enable_external_secrets = var.eks_blueprints_addons.options.enable_external_secrets
-    aws_external_secrets_iam_role_arn     = var.eks_blueprints_addons.external_secrets.iam_role_arn
-    aws_external_secrets_namespace        = var.eks_blueprints_addons.external_secrets.namespace
-    aws_external_secrets_service_account  = var.eks_blueprints_addons.external_secrets.service_account
+    aws_privateca_issuer_iam_role_arn     = try(var.metadata.aws_privateca_issuer.iam_role_arn,null)
+    aws_privateca_issuer_namespace        = try(var.metadata.aws_privateca_issuer.namespace,null)
+    aws_privateca_issuer_service_account  = try(var.metadata.aws_privateca_issuer.service_account,null)
 
-    aws_enable_aws_load_balancer_controller = var.eks_blueprints_addons.options.enable_aws_load_balancer_controller
-    aws_load_balancer_controller_iam_role_arn     = var.eks_blueprints_addons.aws_load_balancer_controller.iam_role_arn
-    aws_load_balancer_controller_namespace        = var.eks_blueprints_addons.aws_load_balancer_controller.namespace
-    aws_load_balancer_controller_service_account  = var.eks_blueprints_addons.aws_load_balancer_controller.service_account
 
-    aws_enable_aws_for_fluentbit = var.eks_blueprints_addons.options.enable_aws_for_fluentbit
-    aws_for_fluentbit_iam_role_arn     = var.eks_blueprints_addons.aws_for_fluentbit.iam_role_arn
-    aws_for_fluentbit_namespace        = var.eks_blueprints_addons.aws_for_fluentbit.namespace
-    aws_for_fluentbit_service_account  = var.eks_blueprints_addons.aws_for_fluentbit.service_account
-    aws_for_fluentbit_log_group_name  = var.eks_blueprints_addons.aws_for_fluentbit.log_group_name
+    aws_external_dns_iam_role_arn     = try(var.metadata.external_dns.iam_role_arn,null)
+    aws_external_dns_namespace        = try(var.metadata.external_dns.namespace,null)
+    aws_external_dns_service_account  = try(var.metadata.external_dns.service_account,null)
 
-    aws_enable_aws_node_termination_handler = var.eks_blueprints_addons.options.enable_aws_node_termination_handler
-    aws_node_termination_handler_iam_role_arn     = var.eks_blueprints_addons.aws_node_termination_handler.iam_role_arn
-    aws_node_termination_handler_namespace        = var.eks_blueprints_addons.aws_node_termination_handler.namespace
-    aws_node_termination_handler_service_account  = var.eks_blueprints_addons.aws_node_termination_handler.service_account
-    aws_node_termination_handler_sqs_queue_url    = var.eks_blueprints_addons.aws_node_termination_handler.sqs_queue_url
 
-    aws_enable_karpenter = var.eks_blueprints_addons.options.enable_karpenter
-    aws_karpenter_iam_role_arn     = var.eks_blueprints_addons.karpenter.iam_role_arn
-    aws_karpenter_namespace        = var.eks_blueprints_addons.karpenter.namespace
-    aws_karpenter_service_account  = var.eks_blueprints_addons.karpenter.service_account
-    aws_karpenter_sqs_queue_name    = var.eks_blueprints_addons.karpenter.sqs_queue_name
-    aws_karpenter_cluster_endpoint = var.eks_blueprints_addons.karpenter.cluster_endpoint
-    aws_karpenter_node_instance_profile_name = var.eks_blueprints_addons.karpenter.node_instance_profile_name
+    aws_external_secrets_iam_role_arn     = try(var.metadata.external_secrets.iam_role_arn,null)
+    aws_external_secrets_namespace        = try(var.metadata.external_secrets.namespace,null)
+    aws_external_secrets_service_account  = try(var.metadata.external_secrets.service_account,null)
 
-    aws_enable_velero = var.eks_blueprints_addons.options.enable_velero
-    aws_velero_iam_role_arn            = var.eks_blueprints_addons.velero.iam_role_arn
-    aws_velero_namespace               = var.eks_blueprints_addons.velero.namespace
-    aws_velero_service_account         = var.eks_blueprints_addons.velero.service_account
-    aws_velero_backup_s3_bucket_prefix = var.eks_blueprints_addons.velero.backup_s3_bucket_prefix
-    aws_velero_backup_s3_bucket_name   = var.eks_blueprints_addons.velero.backup_s3_bucket_name
+    aws_load_balancer_controller_iam_role_arn     = try(var.metadata.aws_load_balancer_controller.iam_role_arn,null)
+    aws_load_balancer_controller_namespace        = try(var.metadata.aws_load_balancer_controller.namespace,null)
+    aws_load_balancer_controller_service_account  = try(var.metadata.aws_load_balancer_controller.service_account,null)
+
+    aws_for_fluentbit_iam_role_arn     = try(var.metadata.aws_for_fluentbit.iam_role_arn,null)
+    aws_for_fluentbit_namespace        = try(var.metadata.aws_for_fluentbit.namespace,null)
+    aws_for_fluentbit_service_account  = try(var.metadata.aws_for_fluentbit.service_account,null)
+    aws_for_fluentbit_log_group_name  = try(var.metadata.aws_for_fluentbit.log_group_name,null)
+
+    aws_node_termination_handler_iam_role_arn     = try(var.metadata.aws_node_termination_handler.iam_role_arn,null)
+    aws_node_termination_handler_namespace        = try(var.metadata.aws_node_termination_handler.namespace,null)
+    aws_node_termination_handler_service_account  = try(var.metadata.aws_node_termination_handler.service_account,null)
+    aws_node_termination_handler_sqs_queue_url    = try(var.metadata.aws_node_termination_handler.sqs_queue_url,null)
+
+    aws_karpenter_iam_role_arn     = try(var.metadata.karpenter.iam_role_arn,null)
+    aws_karpenter_namespace        = try(var.metadata.karpenter.namespace,null)
+    aws_karpenter_service_account  = try(var.metadata.karpenter.service_account,null)
+    aws_karpenter_sqs_queue_name    = try(var.metadata.karpenter.sqs_queue_name,null)
+    aws_karpenter_cluster_endpoint = try(var.metadata.karpenter.cluster_endpoint,null)
+    aws_karpenter_node_instance_profile_name = try(var.metadata.karpenter.node_instance_profile_name,null)
+
+    aws_velero_iam_role_arn            = try(var.metadata.velero.iam_role_arn,null)
+    aws_velero_namespace               = try(var.metadata.velero.namespace,null)
+    aws_velero_service_account         = try(var.metadata.velero.service_account,null)
+    aws_velero_backup_s3_bucket_prefix = try(var.metadata.velero.backup_s3_bucket_prefix,null)
+    aws_velero_backup_s3_bucket_name   = try(var.metadata.velero.backup_s3_bucket_name,null)
+  },
+  {
+    for k, v in try(var.metadata.addons,{}) :
+    k => v
+    if startswith(k, "aws_enable_")
   },
   { for k, v in var.addons : k => v }
   )
@@ -91,7 +87,7 @@ resource "shell_script" "gitops_bridge" {
   lifecycle_commands {
     create = file("${path.module}/templates/create.sh")
     update = file("${path.module}/templates/create.sh")
-    read = file("${path.module}/templates/create.sh")
+    read = file("${path.module}/templates/read.sh")
     delete = file("${path.module}/templates/delete.sh")
   }
 

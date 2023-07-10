@@ -3,23 +3,12 @@ provider "aws" {
 }
 
 locals {
-  name = "cluster-1-staging"
+  name = "cluster-1-dev"
   region = "us-west-2"
   environment = "staging"
   addons = {
-    #enable_kyverno                               = true # doesn't required aws resources (ie IAM)
-    #enable_argocd                                = true # doesn't required aws resources (ie IAM), only when used as hub-cluster
-    #enable_argo_rollouts                         = true # doesn't required aws resources (ie IAM)
-    enable_argo_workflows                        = true # doesn't required aws resources (ie IAM)
-    #enable_secrets_store_csi_driver              = true # doesn't required aws resources (ie IAM)
-    #enable_secrets_store_csi_driver_provider_aws = true # doesn't required aws resources (ie IAM)
-    #enable_kube_prometheus_stack                 = true # doesn't required aws resources (ie IAM)
-    #enable_gatekeeper                            = true # doesn't required aws resources (ie IAM)
-    #enable_ingress_nginx                         = true # doesn't required aws resources (ie IAM)
-    enable_metrics_server                        = true # doesn't required aws resources (ie IAM)
-    enable_vpa                                   = true # doesn't required aws resources (ie IAM)
-
-    #enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
+    enable_kyverno                               = true # doesn't required aws resources (ie IAM)
+    enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
 }
 
@@ -54,6 +43,16 @@ module "eks_blueprints_addons" {
       service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
     }
   }
+
+  #enable_argo_rollouts                         = true # doesn't required aws resources (ie IAM)
+  #enable_argo_workflows                        = true # doesn't required aws resources (ie IAM)
+  #enable_secrets_store_csi_driver              = true # doesn't required aws resources (ie IAM)
+  #enable_secrets_store_csi_driver_provider_aws = true # doesn't required aws resources (ie IAM)
+  #enable_kube_prometheus_stack                 = true # doesn't required aws resources (ie IAM)
+  #enable_gatekeeper                            = true # doesn't required aws resources (ie IAM)
+  #enable_ingress_nginx                         = true # doesn't required aws resources (ie IAM)
+  enable_metrics_server                         = true # doesn't required aws resources (ie IAM)
+  #enable_vpa                                   = true # doesn't required aws resources (ie IAM)
 
   #enable_aws_efs_csi_driver                    = true
   #enable_aws_fsx_csi_driver                    = true
@@ -129,11 +128,28 @@ module "eks" {
 
   eks_managed_node_groups = {
     initial = {
-      instance_types = ["t3.large"]
+      instance_types = ["t3.medium"]
 
       min_size     = 3
       max_size     = 10
       desired_size = 3
+    }
+  }
+    # EKS Addons
+  cluster_addons = {
+    vpc-cni = {
+      # Specify the VPC CNI addon should be deployed before compute to ensure
+      # the addon is configured before data plane compute resources are created
+      # See README for further details
+      before_compute = true
+      most_recent    = true # To ensure access to the latest settings provided
+      configuration_values = jsonencode({
+        env = {
+          # Reference docs https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html
+          ENABLE_PREFIX_DELEGATION = "true"
+          WARM_PREFIX_TARGET       = "1"
+        }
+      })
     }
   }
 

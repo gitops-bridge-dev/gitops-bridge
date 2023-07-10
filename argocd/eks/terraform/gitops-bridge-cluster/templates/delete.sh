@@ -2,5 +2,4 @@
 
 set -x
 
-echo "running delete script"
-
+echo "{\"output\": \"done delete.sh\"}"

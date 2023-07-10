@@ -549,13 +549,3 @@ variable "aws_gateway_api_controller" {
   type        = any
   default     = {}
 }
-
-################################################################################
-# Kyverno
-################################################################################
-
-variable "enable_kyverno" {
-  description = "Enable Kyverno add-on"
-  type        = bool
-  default     = false
-}

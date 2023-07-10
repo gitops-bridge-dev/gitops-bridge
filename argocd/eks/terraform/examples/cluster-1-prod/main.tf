@@ -32,7 +32,7 @@ module "gitops_bridge" {
 
   cluster_name = module.eks.cluster_name
   environment = local.environment
-  eks_blueprints_addons = module.eks_blueprints_addons
+  metadata = module.eks_blueprints_addons
   addons = local.addons
 }
 
@@ -129,11 +129,11 @@ module "eks" {
 
   eks_managed_node_groups = {
     initial = {
-      instance_types = ["t3.large"]
+      instance_types = ["m5.large"]
 
-      min_size     = 4
+      min_size     = 3
       max_size     = 10
-      desired_size = 4
+      desired_size = 3
     }
   }
 

@@ -2,7 +2,7 @@ provider "aws" {
   region = local.region
 }
 locals {
-  name = "gitops-bridge"
+  name = "cluster-1-cp"
   region = "us-west-2"
   environment = "control-plane"
   addons = {
@@ -14,7 +14,7 @@ locals {
     #enable_secrets_store_csi_driver_provider_aws = true # doesn't required aws resources (ie IAM)
     #enable_kube_prometheus_stack                 = true # doesn't required aws resources (ie IAM)
     #enable_gatekeeper                            = true # doesn't required aws resources (ie IAM)
-    enable_ingress_nginx                         = true # doesn't required aws resources (ie IAM)
+    #enable_ingress_nginx                         = true # doesn't required aws resources (ie IAM)
     enable_metrics_server                        = true # doesn't required aws resources (ie IAM)
     #enable_vpa                                   = true # doesn't required aws resources (ie IAM)
 
@@ -31,7 +31,7 @@ module "gitops_bridge" {
 
   cluster_name = module.eks.cluster_name
   environment = local.environment
-  eks_blueprints_addons = module.eks_blueprints_addons # optional
+  metadata = module.eks_blueprints_addons # optional
   addons = local.addons
 }
 
@@ -59,9 +59,6 @@ module "eks_blueprints_addons" {
         create = "25m"
         delete = "10m"
       }
-    }
-    vpc-cni = {
-      most_recent = true
     }
     kube-proxy = {}
   }
@@ -209,6 +206,20 @@ module "eks" {
       desired_size = 1
     }
   }
+  vpc-cni = {
+      # Specify the VPC CNI addon should be deployed before compute to ensure
+      # the addon is configured before data plane compute resources are created
+      # See README for further details
+      before_compute = true
+      most_recent    = true # To ensure access to the latest settings provided
+      configuration_values = jsonencode({
+        env = {
+          # Reference docs https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html
+          ENABLE_PREFIX_DELEGATION = "true"
+          WARM_PREFIX_TARGET       = "1"
+        }
+      })
+    }
 
   tags = local.tags
 }

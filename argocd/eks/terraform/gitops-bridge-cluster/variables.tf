@@ -6,7 +6,7 @@ variable "environment" {
   default = null
 }
 
-variable "eks_blueprints_addons" {
+variable "metadata" {
   default = {}
 }
 
