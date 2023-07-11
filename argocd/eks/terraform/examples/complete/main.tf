@@ -17,7 +17,7 @@ locals {
     enable_ingress_nginx                         = true # doesn't required aws resources (ie IAM)
     enable_metrics_server                        = true # doesn't required aws resources (ie IAM)
     enable_vpa                                   = true # doesn't required aws resources (ie IAM)
-
+    aws_enable_ebs_csi_resources                 = true # generate gp2 and gp3 storage classes for ebs-csi
     #enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
 }

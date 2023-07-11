@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 locals {
-  name = "cluster-1-dev"
+  name = "cluster-2-dev"
   region = "us-west-2"
   environment = "dev"
   addons = {
@@ -44,7 +44,7 @@ module "eks_blueprints_addons" {
   #enable_secrets_store_csi_driver              = true # doesn't required aws resources (ie IAM)
   #enable_secrets_store_csi_driver_provider_aws = true # doesn't required aws resources (ie IAM)
   #enable_kube_prometheus_stack                 = true # doesn't required aws resources (ie IAM)
-  #enable_gatekeeper                            = true # doesn't required aws resources (ie IAM)
+  enable_gatekeeper                            = true # doesn't required aws resources (ie IAM)
   #enable_ingress_nginx                         = true # doesn't required aws resources (ie IAM)
   enable_metrics_server                         = true # doesn't required aws resources (ie IAM)
   #enable_vpa                                   = true # doesn't required aws resources (ie IAM)
