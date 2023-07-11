@@ -549,3 +549,9 @@ variable "aws_gateway_api_controller" {
   type        = any
   default     = {}
 }
+
+variable "vpc_id" {
+  description = "Cluster VPC Id"
+  type        = string
+  default     = null
+}

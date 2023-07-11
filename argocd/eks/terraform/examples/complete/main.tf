@@ -6,17 +6,17 @@ locals {
   region = "us-west-2"
   environment = "control-plane"
   addons = {
-    #enable_kyverno                               = true # doesn't required aws resources (ie IAM)
-    #enable_argocd                                = true # doesn't required aws resources (ie IAM), only when used as hub-cluster
-    #enable_argo_rollouts                         = true # doesn't required aws resources (ie IAM)
-    #enable_argo_workflows                        = true # doesn't required aws resources (ie IAM)
-    #enable_secrets_store_csi_driver              = true # doesn't required aws resources (ie IAM)
-    #enable_secrets_store_csi_driver_provider_aws = true # doesn't required aws resources (ie IAM)
-    #enable_kube_prometheus_stack                 = true # doesn't required aws resources (ie IAM)
-    #enable_gatekeeper                            = true # doesn't required aws resources (ie IAM)
-    #enable_ingress_nginx                         = true # doesn't required aws resources (ie IAM)
+    enable_kyverno                               = true # doesn't required aws resources (ie IAM)
+    enable_argocd                                = true # doesn't required aws resources (ie IAM), only when used as hub-cluster
+    enable_argo_rollouts                         = true # doesn't required aws resources (ie IAM)
+    enable_argo_workflows                        = true # doesn't required aws resources (ie IAM)
+    enable_secrets_store_csi_driver              = true # doesn't required aws resources (ie IAM)
+    enable_secrets_store_csi_driver_provider_aws = true # doesn't required aws resources (ie IAM)
+    enable_kube_prometheus_stack                 = true # doesn't required aws resources (ie IAM)
+    enable_gatekeeper                            = true # doesn't required aws resources (ie IAM)
+    enable_ingress_nginx                         = true # doesn't required aws resources (ie IAM)
     enable_metrics_server                        = true # doesn't required aws resources (ie IAM)
-    #enable_vpa                                   = true # doesn't required aws resources (ie IAM)
+    enable_vpa                                   = true # doesn't required aws resources (ie IAM)
 
     #enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
@@ -46,6 +46,7 @@ module "eks_blueprints_addons" {
   cluster_endpoint  = module.eks.cluster_endpoint
   cluster_version   = module.eks.cluster_version
   oidc_provider_arn = module.eks.oidc_provider_arn
+  vpc_id            = module.vpc.vpc_id
 
   eks_addons = {
     aws-ebs-csi-driver = {
@@ -86,6 +87,7 @@ module "eks_blueprints_addons" {
   velero = {
     s3_backup_location = "${module.velero_backup_s3_bucket.s3_bucket_arn}/backups"
   }
+  enable_aws_gateway_api_controller = true
 
 
   tags = local.tags

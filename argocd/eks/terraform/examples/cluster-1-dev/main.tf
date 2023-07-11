@@ -5,7 +5,7 @@ provider "aws" {
 locals {
   name = "cluster-1-dev"
   region = "us-west-2"
-  environment = "staging"
+  environment = "dev"
   addons = {
     enable_kyverno                               = true # doesn't required aws resources (ie IAM)
     enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
@@ -36,13 +36,8 @@ module "eks_blueprints_addons" {
   cluster_endpoint  = module.eks.cluster_endpoint
   cluster_version   = module.eks.cluster_version
   oidc_provider_arn = module.eks.oidc_provider_arn
+  vpc_id            = module.vpc.vpc_id
 
-  eks_addons = {
-    aws-ebs-csi-driver = {
-      most_recent              = true
-      service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
-    }
-  }
 
   #enable_argo_rollouts                         = true # doesn't required aws resources (ie IAM)
   #enable_argo_workflows                        = true # doesn't required aws resources (ie IAM)
@@ -63,7 +58,7 @@ module "eks_blueprints_addons" {
   #enable_external_dns                          = true
   #external_dns_route53_zone_arns = ["arn:aws:route53:::hostedzone/Z123456789"]
   #enable_external_secrets                      = true
-  enable_aws_load_balancer_controller = true
+  #enable_aws_load_balancer_controller = true
   #enable_aws_for_fluentbit            = true
   #enable_fargate_fluentbit            = true # doesn't required aws resources (ie IAM)
   #enable_aws_node_termination_handler   = true
@@ -74,7 +69,7 @@ module "eks_blueprints_addons" {
   #velero = {
   #  s3_backup_location = "${module.velero_backup_s3_bucket.s3_bucket_arn}/backups"
   #}
-  enable_aws_gateway_api_controller = true
+  #enable_aws_gateway_api_controller = true
 
   tags = local.tags
 }

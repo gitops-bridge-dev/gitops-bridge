@@ -161,7 +161,6 @@ output "aws_gateway_api_controller" {
     {
       namespace               = local.aws_gateway_api_controller_namespace
       service_account         = local.aws_gateway_api_controller_service_account
-      vpc_id                  = local.aws_gateway_api_controller_vpc_id
     }: null
   )
 }
@@ -202,4 +201,12 @@ output "addons" {
 
 output "account_id" {
   value = local.account_id
+}
+
+output "region" {
+  value = local.region
+}
+
+output "vpc_id" {
+  value = var.vpc_id
 }

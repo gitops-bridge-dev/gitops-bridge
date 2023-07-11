@@ -1,12 +1,12 @@
-data "aws_region" "current" {}
 
 locals {
 
   cluster_config = merge ({
     cluster_name = var.cluster_name,
-    region       = data.aws_region.current.name
     environment  = var.environment
   },{
+    aws_vpc_id      = try(var.metadata.vpc_id,null)
+    aws_region       = try(var.metadata.region,null)
     aws_account_id = try(var.metadata.account_id,null)
     aws_cert_manager_iam_role_arn    = try(var.metadata.cert_manager.iam_role_arn,null)
     aws_cert_manager_namespace       = try(var.metadata.cert_manager.namespace,null)

@@ -11,7 +11,7 @@ argocd_helm_protocol=${argocd_helm_protocol:-https://}
 argocd_helm_registry=${argocd_helm_registry:-argoproj.github.io}
 argocd_helm_repository=${argocd_helm_protocol:-argo-helm}
 
-aws eks --region ${region} update-kubeconfig --name ${cluster_name} --kubeconfig /tmp/${cluster_name}
+aws eks --region ${aws_region} update-kubeconfig --name ${cluster_name} --kubeconfig /tmp/${cluster_name}
 export KUBECONFIG=/tmp/${cluster_name}
 
 helm repo list  | grep argo-helm || helm repo add argo "${argocd_helm_protocol}${argocd_helm_registry}/${argocd_helm_repository}"
@@ -29,7 +29,6 @@ metadata:
   namespace: "${argocd_namespace}"
   annotations:
     cluster_name: "${cluster_name}"
-    region: "${region}"
 
   labels:
     argocd.argoproj.io/secret-type: cluster

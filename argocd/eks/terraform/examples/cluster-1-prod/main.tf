@@ -47,6 +47,7 @@ module "eks_blueprints_addons" {
   cluster_endpoint  = module.eks.cluster_endpoint
   cluster_version   = module.eks.cluster_version
   oidc_provider_arn = module.eks.oidc_provider_arn
+  vpc_id            = module.vpc.vpc_id
 
   eks_addons = {
     aws-ebs-csi-driver = {
@@ -75,6 +76,7 @@ module "eks_blueprints_addons" {
   #velero = {
   #  s3_backup_location = "${module.velero_backup_s3_bucket.s3_bucket_arn}/backups"
   #}
+  #enable_aws_gateway_api_controller = true
 
   tags = local.tags
 }

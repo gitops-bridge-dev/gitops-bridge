@@ -1743,14 +1743,10 @@ module "velero" {
 ################################################################################
 # AWS Gateway API Controller
 ################################################################################
-data "aws_eks_cluster" "my_cluster" {
-  name = var.cluster_name
-}
 
 locals {
   aws_gateway_api_controller_service_account = try(var.aws_gateway_api_controller.service_account_name, "gateway-api-controller")
   aws_gateway_api_controller_namespace        = try(var.aws_gateway_api_controller.namespace, "aws-application-networking-system")
-  aws_gateway_api_controller_vpc_id = data.aws_eks_cluster.my_cluster.vpc_config[0].vpc_id
 }
 
 data "aws_iam_policy_document" "aws_gateway_api_controller" {
