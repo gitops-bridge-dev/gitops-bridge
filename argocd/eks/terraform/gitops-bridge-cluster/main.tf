@@ -2,6 +2,7 @@
 locals {
 
   cluster_config = merge ({
+    enable_argocd = true
     cluster_name = var.cluster_name,
     environment  = var.environment
   },{
