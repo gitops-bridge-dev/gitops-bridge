@@ -9,7 +9,7 @@ argocd_bootstrap_control_plane=${argocd_bootstrap_cp:-https://raw.githubusercont
 argocd_bootstrap_workloads=${argocd_bootstrap_cp:-https://raw.githubusercontent.com/csantanapr/gitops-control-plane/main/bootstrap/workloads/exclude/bootstrap.yaml}
 argocd_helm_protocol=${argocd_helm_protocol:-https://}
 argocd_helm_registry=${argocd_helm_registry:-argoproj.github.io}
-argocd_helm_repository=${argocd_helm_protocol:-argo-helm}
+argocd_helm_repository=${argocd_helm_repository:-argo-helm}
 
 aws eks --region ${aws_region} update-kubeconfig --name ${cluster_name} --kubeconfig /tmp/${cluster_name}
 export KUBECONFIG=/tmp/${cluster_name}
