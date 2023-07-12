@@ -1813,7 +1813,6 @@ module "aws_gateway_api_controller" {
 
 locals {
   fargate_fluentbit_policy_name = try(var.fargate_fluentbit_cw_log_group.create, true) ? try(var.fargate_fluentbit.policy_name, "${var.cluster_name}-fargate-fluentbit-logs") : null
-  fargate_fluentbit_log_group_name = try(var.fargate_fluentbit.cwlog_group, aws_cloudwatch_log_group.fargate_fluentbit[0].name)
   fargate_fluentbit_cwlog_stream_prefix = try(var.fargate_fluentbit.cwlog_stream_prefix, "fargate-logs-")
 }
 

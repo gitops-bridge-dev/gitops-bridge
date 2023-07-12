@@ -170,7 +170,7 @@ output "fargate_fluentbit" {
   description = "Map of attributes of the configmap and IAM policy created"
   value = {
     iam_policy = aws_iam_policy.fargate_fluentbit
-    log_group_name = local.fargate_fluentbit_log_group_name
+    log_group_name = try(var.fargate_fluentbit.cwlog_group, aws_cloudwatch_log_group.fargate_fluentbit[0].name,null)
     log_stream_prefix = local.fargate_fluentbit_cwlog_stream_prefix
   }
 }
