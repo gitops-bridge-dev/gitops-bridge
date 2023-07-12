@@ -30,8 +30,6 @@ Access ArgoCD UI
 export KUBECONFIG=/tmp/$(terraform output -raw cluster_name)
 export ARGOCD_OPTS="--port-forward --port-forward-namespace argocd --grpc-web"
 kubectl config set-context --current --namespace argocd
-argocd app list
-argocd appset list
 argocd admin dashboard
 ```
 Argo CD UI is available at http://localhost:8080

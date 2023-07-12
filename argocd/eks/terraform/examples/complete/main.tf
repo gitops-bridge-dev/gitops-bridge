@@ -7,7 +7,7 @@ locals {
   environment = "control-plane"
   addons = {
     enable_kyverno                               = true # doesn't required aws resources (ie IAM)
-    enable_argocd                                = true # doesn't required aws resources (ie IAM), only when used as hub-cluster
+    enable_argocd                                = true # doesn't required aws resources (ie IAM)
     enable_argo_rollouts                         = true # doesn't required aws resources (ie IAM)
     enable_argo_workflows                        = true # doesn't required aws resources (ie IAM)
     enable_secrets_store_csi_driver              = true # doesn't required aws resources (ie IAM)
@@ -18,7 +18,9 @@ locals {
     enable_metrics_server                        = true # doesn't required aws resources (ie IAM)
     enable_vpa                                   = true # doesn't required aws resources (ie IAM)
     aws_enable_ebs_csi_resources                 = true # generate gp2 and gp3 storage classes for ebs-csi
-    #enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
+    enable_prometheus_adapter                    = true # doesn't required aws resources (ie IAM)
+    enable_gpu_operator                          = true # doesn't required aws resources (ie IAM)
+    enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
 }
 
