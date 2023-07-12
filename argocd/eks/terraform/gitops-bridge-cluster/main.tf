@@ -80,6 +80,8 @@ locals {
     aws_gateway_api_controller_service_account         = try(var.metadata.aws_gateway_api_controller.service_account,null)
     aws_gateway_api_controller_vpc_id = try(var.metadata.aws_gateway_api_controller.vpc_id,null)
 
+    aws_fargate_fluentbit_log_group_name            = try(var.metadata.fargate_fluentbit.log_group_name,null)
+    aws_fargate_fluentbit_log_stream_prefix       = try(var.metadata.fargate_fluentbit.log_stream_prefix,null)
 
   },
   {

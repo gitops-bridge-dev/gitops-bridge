@@ -166,6 +166,15 @@ output "aws_gateway_api_controller" {
 }
 
 
+output "fargate_fluentbit" {
+  description = "Map of attributes of the configmap and IAM policy created"
+  value = {
+    iam_policy = aws_iam_policy.fargate_fluentbit
+    log_group_name = local.fargate_fluentbit_log_group_name
+    log_stream_prefix = local.fargate_fluentbit_cwlog_stream_prefix
+  }
+}
+
 output "addons" {
   value = {
     aws_enable_aws_efs_csi_driver = var.enable_aws_efs_csi_driver ? true : null
@@ -182,6 +191,7 @@ output "addons" {
     aws_enable_karpenter = var.enable_karpenter ? true : null
     aws_enable_velero = var.enable_velero ? true : null
     aws_enable_aws_gateway_api_controller = var.enable_aws_gateway_api_controller ? true : null
+    aws_enable_fargate_fluentbit = var.enable_fargate_fluentbit ? true : null
 
     #passthru variables to keep interface the same
     # TBD not sure to remove this variables

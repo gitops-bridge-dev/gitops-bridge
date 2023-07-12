@@ -1805,3 +1805,54 @@ module "aws_gateway_api_controller" {
 
   tags = var.tags
 }
+
+
+################################################################################
+# Fargate Fluentbit
+################################################################################
+
+locals {
+  fargate_fluentbit_policy_name = try(var.fargate_fluentbit_cw_log_group.create, true) ? try(var.fargate_fluentbit.policy_name, "${var.cluster_name}-fargate-fluentbit-logs") : null
+  fargate_fluentbit_log_group_name = try(var.fargate_fluentbit.cwlog_group, aws_cloudwatch_log_group.fargate_fluentbit[0].name)
+  fargate_fluentbit_cwlog_stream_prefix = try(var.fargate_fluentbit.cwlog_stream_prefix, "fargate-logs-")
+}
+
+resource "aws_cloudwatch_log_group" "fargate_fluentbit" {
+  count = try(var.fargate_fluentbit_cw_log_group.create, true) && var.enable_fargate_fluentbit ? 1 : 0
+
+  name              = try(var.fargate_fluentbit_cw_log_group.name, null)
+  name_prefix       = try(var.fargate_fluentbit_cw_log_group.name_prefix, "/eks/${var.cluster_name}/fargate-fluentbit-logs")
+  retention_in_days = try(var.fargate_fluentbit_cw_log_group.retention, 90)
+  kms_key_id        = try(var.fargate_fluentbit_cw_log_group.kms_key_arn, null)
+  skip_destroy      = try(var.fargate_fluentbit_cw_log_group.skip_destroy, false)
+  tags              = merge(var.tags, try(var.fargate_fluentbit_cw_log_group.tags, {}))
+}
+
+resource "aws_iam_policy" "fargate_fluentbit" {
+  count = try(var.fargate_fluentbit_cw_log_group.create, true) && var.enable_fargate_fluentbit ? 1 : 0
+
+  name        = try(var.fargate_fluentbit.policy_name_use_prefix, true) ? null : local.fargate_fluentbit_policy_name
+  name_prefix = try(var.fargate_fluentbit.policy_name_use_prefix, true) ? try(var.fargate_fluentbit.policy_name_prefix, "${local.fargate_fluentbit_policy_name}-") : null
+  description = try(var.fargate_fluentbit.policy_description, null)
+  policy      = data.aws_iam_policy_document.fargate_fluentbit[0].json
+}
+
+data "aws_iam_policy_document" "fargate_fluentbit" {
+  count = try(var.fargate_fluentbit_cw_log_group.create, true) && var.enable_fargate_fluentbit ? 1 : 0
+
+  statement {
+    sid    = "PutLogEvents"
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogStream",
+      "logs:CreateLogGroup",
+      "logs:DescribeLogStreams",
+      "logs:PutLogEvents"
+    ]
+    resources = [
+      try("${var.fargate_fluentbit.cwlog_arn}:*", "${aws_cloudwatch_log_group.fargate_fluentbit[0].arn}:*"),
+      try("${var.fargate_fluentbit.cwlog_arn}:logstream:*", "${aws_cloudwatch_log_group.fargate_fluentbit[0].arn}:logstream:*")
+    ]
+  }
+}
+
