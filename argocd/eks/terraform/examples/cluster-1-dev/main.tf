@@ -131,7 +131,7 @@ module "eks" {
       desired_size = 3
     }
   }
-    # EKS Addons
+  # EKS Addons
   cluster_addons = {
     vpc-cni = {
       # Specify the VPC CNI addon should be deployed before compute to ensure

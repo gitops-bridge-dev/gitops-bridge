@@ -138,6 +138,23 @@ module "eks" {
       desired_size = 3
     }
   }
+  # EKS Addons
+  cluster_addons = {
+    vpc-cni = {
+      # Specify the VPC CNI addon should be deployed before compute to ensure
+      # the addon is configured before data plane compute resources are created
+      # See README for further details
+      before_compute = true
+      most_recent    = true # To ensure access to the latest settings provided
+      configuration_values = jsonencode({
+        env = {
+          # Reference docs https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html
+          ENABLE_PREFIX_DELEGATION = "true"
+          WARM_PREFIX_TARGET       = "1"
+        }
+      })
+    }
+  }
 
   tags = local.tags
 }
