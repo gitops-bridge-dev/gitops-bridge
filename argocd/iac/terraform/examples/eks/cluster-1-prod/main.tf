@@ -33,7 +33,7 @@ locals {
 ################################################################################
 
 module "gitops_bridge_metadata" {
-  source = "../../../modules/gitops-bridge-metadata"
+  source = "../../../modules/gitops-bridge-metadata/gitops"
 
   cluster_name = module.eks.cluster_name
   environment = local.environment
