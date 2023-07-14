@@ -13,3 +13,12 @@ variable "metadata" {
 variable "addons" {
   default = {}
 }
+
+
+variable "options" {
+  default = {}
+}
+variable "enable_argocd" {
+  default = true
+}
+
