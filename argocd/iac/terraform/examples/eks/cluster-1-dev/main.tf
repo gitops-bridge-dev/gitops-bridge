@@ -33,7 +33,7 @@ locals {
 ################################################################################
 
 module "gitops_bridge_metadata" {
-  source = "../../gitops-bridge-metadata"
+  source = "../../../modules/gitops-bridge-metadata"
 
   cluster_name = module.eks.cluster_name
   environment = local.environment
@@ -161,7 +161,7 @@ resource "shell_script" "argocd_bootstrap" {
 ################################################################################
 
 module "eks_blueprints_addons" {
-  source = "../../../../../terraform-aws-eks-blueprints-addons/gitops"
+  source = "../../../../../../terraform-aws-eks-blueprints-addons"
 
   cluster_name      = module.eks.cluster_name
   cluster_endpoint  = module.eks.cluster_endpoint

@@ -12,7 +12,7 @@ The GitOps Bridge should be compatible with GitOps engines that run as Saas and 
 
 | Tool           | GitOps    | Kubernetes | Status |
 | :---           |    :----: |   :----:   | ---:     |
-| [Terraform](argocd/eks/terraform/)      | ArgoCD    |  EKS    |  In Progress |
+| [Terraform](argocd/iac/terraform/examples/eks/)      | ArgoCD    |  EKS    |  In Progress |
 | EKSCTL         | ArgoCD    |  EKS    |              |
 | CDK            | ArgoCD    |  EKS    |              |
 | Crossplane     | ArgoCD    |  EKS    |              |

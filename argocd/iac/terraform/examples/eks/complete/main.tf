@@ -1,27 +1,26 @@
 provider "aws" {
   region = local.region
 }
-
 locals {
-  name = "cluster-1-staging"
+  name = "cluster-1-cp"
   region = "us-west-2"
-  environment = "staging"
+  environment = "control-plane"
   addons = {
-    #enable_prometheus_adapter                    = true # doesn't required aws resources (ie IAM)
-    #enable_gpu_operator                          = true # doesn't required aws resources (ie IAM)
-    #enable_kyverno                               = true # doesn't required aws resources (ie IAM)
-    #enable_argo_rollouts                         = true # doesn't required aws resources (ie IAM)
-    #enable_argo_workflows                        = true # doesn't required aws resources (ie IAM)
-    #enable_secrets_store_csi_driver              = true # doesn't required aws resources (ie IAM)
-    #enable_secrets_store_csi_driver_provider_aws = true # doesn't required aws resources (ie IAM)
-    #enable_kube_prometheus_stack                 = true # doesn't required aws resources (ie IAM)
-    #enable_gatekeeper                            = true # doesn't required aws resources (ie IAM)
+    enable_prometheus_adapter                    = true # doesn't required aws resources (ie IAM)
+    enable_gpu_operator                          = true # doesn't required aws resources (ie IAM)
+    enable_kyverno                               = true # doesn't required aws resources (ie IAM)
+    enable_argo_rollouts                         = true # doesn't required aws resources (ie IAM)
+    enable_argo_workflows                        = true # doesn't required aws resources (ie IAM)
+    enable_secrets_store_csi_driver              = true # doesn't required aws resources (ie IAM)
+    enable_secrets_store_csi_driver_provider_aws = true # doesn't required aws resources (ie IAM)
+    enable_kube_prometheus_stack                 = true # doesn't required aws resources (ie IAM)
+    enable_gatekeeper                            = true # doesn't required aws resources (ie IAM)
     #enable_ingress_nginx                         = true # doesn't required aws resources (ie IAM)
     enable_metrics_server                        = true # doesn't required aws resources (ie IAM)
-    #enable_vpa                                   = true # doesn't required aws resources (ie IAM)
-    #aws_enable_ebs_csi_resources                 = true # generate gp2 and gp3 storage classes for ebs-csi
-    #enable_prometheus_adapter                    = true # doesn't required aws resources (ie IAM)
-    #enable_gpu_operator                          = true # doesn't required aws resources (ie IAM)
+    enable_vpa                                   = true # doesn't required aws resources (ie IAM)
+    aws_enable_ebs_csi_resources                 = true # generate gp2 and gp3 storage classes for ebs-csi
+    enable_prometheus_adapter                    = true # doesn't required aws resources (ie IAM)
+    enable_gpu_operator                          = true # doesn't required aws resources (ie IAM)
     enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
   argocd_bootstrap_control_plane = "https://raw.githubusercontent.com/csantanapr/gitops-control-plane/main/bootstrap/control-plane/exclude/bootstrap.yaml"
@@ -33,7 +32,7 @@ locals {
 ################################################################################
 
 module "gitops_bridge_metadata" {
-  source = "../../gitops-bridge-metadata"
+  source = "../../../modules/gitops-bridge-metadata"
 
   cluster_name = module.eks.cluster_name
   environment = local.environment
@@ -160,7 +159,7 @@ resource "shell_script" "argocd_bootstrap" {
 ################################################################################
 
 module "eks_blueprints_addons" {
-  source = "../../../../../terraform-aws-eks-blueprints-addons/gitops"
+  source = "../../../../../../terraform-aws-eks-blueprints-addons"
 
   cluster_name      = module.eks.cluster_name
   cluster_endpoint  = module.eks.cluster_endpoint
@@ -173,32 +172,94 @@ module "eks_blueprints_addons" {
       most_recent              = true
       service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
     }
+    coredns = {
+      most_recent = true
+
+      timeouts = {
+        create = "25m"
+        delete = "10m"
+      }
+    }
+    kube-proxy = {}
   }
 
-  #enable_aws_efs_csi_driver                    = true
-  #enable_aws_fsx_csi_driver                    = true
-  #enable_aws_cloudwatch_metrics = true
-  #enable_aws_privateca_issuer                  = true
+  enable_aws_efs_csi_driver                    = true
+  enable_aws_fsx_csi_driver                    = true
+  enable_aws_cloudwatch_metrics = true
+  enable_aws_privateca_issuer                  = true
   enable_cert_manager       = true
-  #enable_cluster_autoscaler = true
-  #enable_external_dns                          = true
-  #external_dns_route53_zone_arns = ["arn:aws:route53:::hostedzone/Z123456789"]
-  #enable_external_secrets                      = true
+  enable_cluster_autoscaler = true
+  enable_external_dns                          = true
+  external_dns_route53_zone_arns = ["arn:aws:route53:::hostedzone/Z123456789"] # fake value for testing
+  #external_dns_route53_zone_arns = [data.aws_route53_zone.domain_name.arn]
+  enable_external_secrets                      = true
   enable_aws_load_balancer_controller = true
-  #enable_aws_for_fluentbit            = true
-  #enable_fargate_fluentbit            = true
-  #enable_aws_node_termination_handler   = true
-  #aws_node_termination_handler_asg_arns = [for asg in module.eks.self_managed_node_groups : asg.autoscaling_group_arn]
-  #enable_karpenter = true
-  #enable_velero = true
+  enable_aws_for_fluentbit            = true
+  enable_fargate_fluentbit            = true
+
+  enable_aws_node_termination_handler   = true
+  aws_node_termination_handler_asg_arns = [for asg in module.eks.self_managed_node_groups : asg.autoscaling_group_arn]
+
+  enable_karpenter = true
+
+  enable_velero = true
   ## An S3 Bucket ARN is required. This can be declared with or without a Suffix.
-  #velero = {
-  #  s3_backup_location = "${module.velero_backup_s3_bucket.s3_bucket_arn}/backups"
-  #}
-  #enable_aws_gateway_api_controller = true
+  velero = {
+    s3_backup_location = "${module.velero_backup_s3_bucket.s3_bucket_arn}/backups"
+  }
+  enable_aws_gateway_api_controller = true
+
 
   tags = local.tags
 }
+
+/*
+data "aws_route53_zone" "domain_name" {
+  name         = "example.com"
+  private_zone = false
+}
+*/
+
+
+module "velero_backup_s3_bucket" {
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "~> 3.0"
+
+  bucket_prefix = "${local.name}-"
+
+  # Allow deletion of non-empty bucket
+  # NOTE: This is enabled for example usage only, you should not enable this for production workloads
+  force_destroy = true
+
+  attach_deny_insecure_transport_policy = true
+  attach_require_latest_tls_policy      = true
+
+  acl = "private"
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+
+  control_object_ownership = true
+  object_ownership         = "BucketOwnerPreferred"
+
+  versioning = {
+    status     = true
+    mfa_delete = false
+  }
+
+  server_side_encryption_configuration = {
+    rule = {
+      apply_server_side_encryption_by_default = {
+        sse_algorithm = "AES256"
+      }
+    }
+  }
+
+  tags = local.tags
+}
+
 
 module "ebs_csi_driver_irsa" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
@@ -250,11 +311,21 @@ module "eks" {
 
   eks_managed_node_groups = {
     initial = {
-      instance_types = ["t3.large"]
+      instance_types = ["m5.large"]
 
-      min_size     = 3
+      min_size     = 4
       max_size     = 10
-      desired_size = 3
+      desired_size = 4
+    }
+  }
+
+  self_managed_node_groups = {
+    default = {
+      instance_type = "t3.small"
+
+      min_size     = 1
+      max_size     = 10
+      desired_size = 1
     }
   }
   # EKS Addons
