@@ -161,7 +161,7 @@ resource "shell_script" "argocd_bootstrap" {
 ################################################################################
 
 module "eks_blueprints_addons" {
-  source = "../../../../../../terraform-aws-eks-blueprints-addons"
+  source = "../../../../../../terraform-aws-eks-blueprints-addons/gitops"
 
   cluster_name      = module.eks.cluster_name
   cluster_endpoint  = module.eks.cluster_endpoint
