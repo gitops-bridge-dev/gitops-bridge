@@ -20,7 +20,7 @@ variable "argocd_namespace" {
 variable "argocd_create_cluster_secret" {
   default = true
 }
-variable "argocd_add_cluster" {
+variable "argocd_cluster" {
   default = ""
 }
 

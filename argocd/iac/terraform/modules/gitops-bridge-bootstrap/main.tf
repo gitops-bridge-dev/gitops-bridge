@@ -29,9 +29,15 @@ locals {
   argocd_cluster_secret_script = <<-EOF
     set -x
     ${var.kubeconfig_command}
-    ${var.argocd_add_cluster}
-    echo "{\"cluster\": \"${var.argocd_add_cluster}\"}"
+    kubectl apply -f ${local.argocd_cluster_manifest}
+    echo "{\"cluster\": \"${local.argocd_cluster_manifest}\"}"
   EOF
+  argocd_cluster_manifest = "${path.root}/.terraform/tmp/${timestamp()}.yaml"
+}
+
+resource "local_file" "argocd_cluster_manifest" {
+  content  = yamlencode(var.argocd_cluster)
+  filename = local.argocd_cluster_manifest
 }
 
 resource "shell_script" "argocd_cluster" {
@@ -42,7 +48,7 @@ resource "shell_script" "argocd_cluster" {
     //read = local.argocd_cluster_secret_script
     delete = "echo gitops ftw!"
   }
-  depends_on = [ shell_script.argocd_install ]
+  depends_on = [ shell_script.argocd_install, local_file.argocd_cluster_manifest ]
 }
 
 ################################################################################
