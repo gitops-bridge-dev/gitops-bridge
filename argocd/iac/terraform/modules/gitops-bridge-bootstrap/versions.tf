@@ -1,6 +1,13 @@
 terraform {
   required_version = ">= 1.0"
 
+  required_providers {
+    shell = {
+      source  = "scottwinkler/shell"
+      version = ">= 1.7.10"
+    }
+  }
+
   # ##  Used for end-to-end testing on project; update to suit your needs
   # backend "s3" {
   #   bucket = "terraform-ssp-github-actions-state"
