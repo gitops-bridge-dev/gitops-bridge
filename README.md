@@ -2,7 +2,7 @@
 
 The GitOps Bridge is a community project to show best practices and patterms on how to bridge the process of creating a Kubernetes Cluster to then delegate everything after that to GitOps using [ArgoCD](https://www.cncf.io/projects/argo/) or [FluxCD](https://www.cncf.io/projects/flux/) both CNCF graduated projects.
 
-See the git repository [GitOps Control Plane](https://github.com/csantanapr/gitops-control-plane) for an example template on bootstrapping ArgoCD
+See the git repository [GitOps Control Plane](https://github.com/gitops-bridge-dev/gitops-bridge-argocd-control-plane-template) for an example template on bootstrapping ArgoCD
 
 There are many tools to create Kubernetes clusters, this include roll your own like kubeadmin/minikube/kind or a cloud managed service like Amazon EKS. It should not matter how the the cluster is created in terms of GitOps, GitOps engines should be compatible with any tool that the user choose to use to create the cluster include cases using Kubernetes to create other Kubernetes clusters like CAPI/CAPA, Crossplane, ACK, or any tool running inside Kubernetes to deploy Kubernetes.
 
@@ -35,7 +35,7 @@ The GitOps Bridge should be compatible with GitOps engines that run as Saas and 
 
 ### ArgoCD
 
-This git repository contains the files on how to create the Kubernete Clusters and how to bridge the metadata to the GitOps engine, there is an additiona git repository [GitOps Control Plane](https://github.com/csantanapr/gitops-control-plane) that contains the ArgoCD App of Apps to bootstrap and manage the Application Sets for the clusters intended to be use as template to get started.
+This git repository contains the files on how to create the Kubernete Clusters and how to bridge the metadata to the GitOps engine, there is an additiona git repository [GitOps Control Plane](https://github.com/gitops-bridge-dev/gitops-bridge-argocd-control-plane-template) that contains the ArgoCD App of Apps to bootstrap and manage the Application Sets for the clusters intended to be use as template to get started.
 
 
 ### Terraform and GitOps Bridge:

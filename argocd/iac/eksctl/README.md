@@ -55,6 +55,6 @@ stringData:
 EOF
 
 # Bootstrap apps or apps
-kubectl apply -f https://raw.githubusercontent.com/csantanapr/gitops-control-plane/main/bootstrap-app.yaml
+kubectl apply -f https://raw.githubusercontent.com/gitops-bridge-dev/gitops-bridge-argocd-control-plane-template/main/bootstrap-app.yaml
 
 

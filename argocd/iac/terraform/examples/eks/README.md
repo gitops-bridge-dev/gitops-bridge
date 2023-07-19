@@ -9,7 +9,7 @@ brew install argocd
 
 Clone the repo
 ```shell
-git clone github.com/csantanapr/gitops-bridge
+git clone github.com/gitops-bridge-dev/gitops-bridge
 cd gitops-bridge/argocd/iac/terraform/examples/eks/hello-world
 ```
 

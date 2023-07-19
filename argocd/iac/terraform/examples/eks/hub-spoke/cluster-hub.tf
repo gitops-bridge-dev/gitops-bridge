@@ -21,8 +21,8 @@ module "gitops_bridge_metadata_hub" {
 ################################################################################
 locals {
   kubeconfig = "/tmp/${module.eks_hub.cluster_name}"
-  argocd_bootstrap_control_plane = "https://raw.githubusercontent.com/csantanapr/gitops-control-plane/main/bootstrap/control-plane/exclude/bootstrap.yaml"
-  argocd_bootstrap_workloads = "https://raw.githubusercontent.com/csantanapr/gitops-control-plane/main/bootstrap/workloads/exclude/bootstrap.yaml"
+  argocd_bootstrap_control_plane = "https://raw.githubusercontent.com/gitops-bridge-dev/gitops-bridge-argocd-control-plane-template/main/bootstrap/control-plane/exclude/bootstrap.yaml"
+  argocd_bootstrap_workloads = "https://raw.githubusercontent.com/gitops-bridge-dev/gitops-bridge-argocd-control-plane-template/main/bootstrap/workloads/exclude/bootstrap.yaml"
 }
 module "gitops_bridge_bootstrap_hub" {
   source = "../../../modules/gitops-bridge-bootstrap"
