@@ -512,34 +512,60 @@ resource "aws_cloudwatch_log_group" "aws_for_fluentbit" {
 }
 
 data "aws_iam_policy_document" "aws_for_fluentbit" {
-  count = try(var.aws_for_fluentbit_cw_log_group.create, true) && var.enable_aws_for_fluentbit ? 1 : 0
+  count = (try(var.aws_for_fluentbit_cw_log_group.create, true) || length(lookup(var.aws_for_fluentbit, "s3_bucket_arns", [])) > 0) && var.enable_aws_for_fluentbit ? 1 : 0
 
-  statement {
-    sid    = "PutLogEvents"
-    effect = "Allow"
-    resources = [
-      "arn:${local.partition}:logs:${local.region}:${local.account_id}:log-group:${try(var.aws_for_fluentbit_cw_log_group.name, "*")}:log-stream:*",
-    ]
+  dynamic "statement" {
+    for_each = try(var.aws_for_fluentbit_cw_log_group.create, true) ? [1] : []
 
-    actions = [
-      "logs:PutLogEvents"
-    ]
+    content {
+      sid    = "PutLogEvents"
+      effect = "Allow"
+      resources = [
+        "arn:${local.partition}:logs:${local.region}:${local.account_id}:log-group:${try(var.aws_for_fluentbit_cw_log_group.name, "*")}:log-stream:*",
+      ]
+
+      actions = [
+        "logs:PutLogEvents"
+      ]
+    }
   }
 
-  statement {
-    sid    = "CreateCWLogs"
-    effect = "Allow"
-    resources = [
-      "arn:${local.partition}:logs:${local.region}:${local.account_id}:log-group:${try(var.aws_for_fluentbit_cw_log_group.name, "*")}",
-    ]
+  dynamic "statement" {
+    for_each = try(var.aws_for_fluentbit_cw_log_group.create, true) ? [1] : []
 
-    actions = [
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:DescribeLogGroups",
-      "logs:DescribeLogStreams",
-      "logs:PutRetentionPolicy",
-    ]
+    content {
+      sid    = "CreateCWLogs"
+      effect = "Allow"
+      resources = [
+        "arn:${local.partition}:logs:${local.region}:${local.account_id}:log-group:${try(var.aws_for_fluentbit_cw_log_group.name, "*")}",
+      ]
+
+      actions = [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:DescribeLogGroups",
+        "logs:DescribeLogStreams",
+        "logs:PutRetentionPolicy",
+      ]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = length(lookup(var.aws_for_fluentbit, "s3_bucket_arns", [])) > 0 ? [1] : []
+
+    content {
+      sid = "S3Write"
+      actions = [
+        "s3:ListBucket",
+        "s3:PutObject",
+        "s3:PutObjectAcl",
+        "s3:GetObject",
+        "s3:GetObjectAcl",
+        "s3:DeleteObject",
+        "s3:DeleteObjectVersion",
+      ]
+      resources = var.aws_for_fluentbit.s3_bucket_arns
+    }
   }
 }
 
@@ -590,6 +616,14 @@ module "aws_for_fluentbit" {
     {
       name  = "serviceAccount.name"
       value = local.aws_for_fluentbit_service_account
+    },
+    {
+      name  = "cloudWatch.region"
+      value = local.region
+    },
+    {
+      name  = "cloudWatchLogs.region"
+      value = local.region
     }],
     try(var.aws_for_fluentbit.set, [])
   )
@@ -639,6 +673,8 @@ locals {
 }
 
 data "aws_iam_policy_document" "aws_fsx_csi_driver" {
+  count = var.enable_aws_fsx_csi_driver ? 1 : 0
+
   statement {
     sid       = "AllowCreateServiceLinkedRoles"
     resources = ["arn:${local.partition}:iam::*:role/aws-service-role/s3.data-source.lustre.fsx.${local.dns_suffix}/*"]
@@ -791,6 +827,8 @@ locals {
 }
 
 data "aws_iam_policy_document" "aws_load_balancer_controller" {
+  count = var.enable_aws_load_balancer_controller ? 1 : 0
+
   statement {
     sid       = "AllowCreateServiceLinkedRole"
     effect    = "Allow"
@@ -2113,21 +2151,42 @@ resource "aws_iam_policy" "fargate_fluentbit" {
 }
 
 data "aws_iam_policy_document" "fargate_fluentbit" {
-  count = try(var.fargate_fluentbit_cw_log_group.create, true) && var.enable_fargate_fluentbit ? 1 : 0
+  count = (try(var.fargate_fluentbit_cw_log_group.create, true) || length(lookup(var.fargate_fluentbit, "s3_bucket_arns", [])) > 0) && var.enable_fargate_fluentbit ? 1 : 0
 
-  statement {
-    sid    = "PutLogEvents"
-    effect = "Allow"
-    actions = [
-      "logs:CreateLogStream",
-      "logs:CreateLogGroup",
-      "logs:DescribeLogStreams",
-      "logs:PutLogEvents"
-    ]
-    resources = [
-      try("${var.fargate_fluentbit.cwlog_arn}:*", "${aws_cloudwatch_log_group.fargate_fluentbit[0].arn}:*"),
-      try("${var.fargate_fluentbit.cwlog_arn}:logstream:*", "${aws_cloudwatch_log_group.fargate_fluentbit[0].arn}:logstream:*")
-    ]
+  dynamic "statement" {
+    for_each = try(var.fargate_fluentbit_cw_log_group.create, true) ? [1] : []
+
+    content {
+      sid = "PutLogEvents"
+      actions = [
+        "logs:CreateLogStream",
+        "logs:CreateLogGroup",
+        "logs:DescribeLogStreams",
+        "logs:PutLogEvents"
+      ]
+      resources = [
+        try("${var.fargate_fluentbit.cwlog_arn}:*", "${aws_cloudwatch_log_group.fargate_fluentbit[0].arn}:*"),
+        try("${var.fargate_fluentbit.cwlog_arn}:logstream:*", "${aws_cloudwatch_log_group.fargate_fluentbit[0].arn}:logstream:*")
+      ]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = length(lookup(var.fargate_fluentbit, "s3_bucket_arns", [])) > 0 ? [1] : []
+
+    content {
+      sid = "S3Write"
+      actions = [
+        "s3:ListBucket",
+        "s3:PutObject",
+        "s3:PutObjectAcl",
+        "s3:GetObject",
+        "s3:GetObjectAcl",
+        "s3:DeleteObject",
+        "s3:DeleteObjectVersion",
+      ]
+      resources = var.fargate_fluentbit.s3_bucket_arns
+    }
   }
 }
 

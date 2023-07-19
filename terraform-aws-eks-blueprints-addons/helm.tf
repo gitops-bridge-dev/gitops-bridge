@@ -34,7 +34,7 @@ resource "helm_release" "this" {
   skip_crds                  = try(each.value.skip_crds, null)
   render_subchart_notes      = try(each.value.render_subchart_notes, null)
   disable_openapi_validation = try(each.value.disable_openapi_validation, null)
-  wait                       = try(each.value.wait, null)
+  wait                       = try(each.value.wait, false)
   wait_for_jobs              = try(each.value.wait_for_jobs, null)
   dependency_update          = try(each.value.dependency_update, null)
   replace                    = try(each.value.replace, null)
@@ -68,4 +68,9 @@ resource "helm_release" "this" {
       type  = try(set_sensitive.value.type, null)
     }
   }
+
+  depends_on = [
+    # Wait for EBS CSI, etc. to be installed first
+    aws_eks_addon.this,
+  ]
 }
