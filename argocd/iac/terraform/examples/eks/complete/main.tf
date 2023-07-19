@@ -1,6 +1,7 @@
 provider "aws" {
   region = local.region
 }
+data "aws_availability_zones" "available" {}
 
 locals {
   name = "cluster-1-cp"
@@ -24,6 +25,13 @@ locals {
     enable_prometheus_adapter                    = true # doesn't required aws resources (ie IAM)
     enable_gpu_operator                          = true # doesn't required aws resources (ie IAM)
     enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
+  }
+  vpc_cidr = "10.0.0.0/16"
+  azs      = slice(data.aws_availability_zones.available.names, 0, 3)
+
+  tags = {
+    Blueprint  = local.name
+    GithubRepo = "github.com/csantanapr/terraform-gitops-bridge"
   }
 }
 
@@ -60,9 +68,8 @@ module "gitops_bridge_bootstrap" {
 }
 
 ################################################################################
-# Blueprints Addons
+# EKS Blueprints Addons
 ################################################################################
-
 module "eks_blueprints_addons" {
   source = "../../../../../../terraform-aws-eks-blueprints-addons/gitops"
 
@@ -113,7 +120,6 @@ module "eks_blueprints_addons" {
     s3_backup_location = "${module.velero_backup_s3_bucket.s3_bucket_arn}/backups"
   }
   enable_aws_gateway_api_controller = true
-
 
   tags = local.tags
 }
@@ -186,21 +192,8 @@ module "ebs_csi_driver_irsa" {
 
 
 ################################################################################
-# Cluster
+# EKS Cluster
 ################################################################################
-data "aws_availability_zones" "available" {}
-data "aws_caller_identity" "current" {}
-
-locals {
-  vpc_cidr = "10.0.0.0/16"
-  azs      = slice(data.aws_availability_zones.available.names, 0, 3)
-
-  tags = {
-    Blueprint  = local.name
-    GithubRepo = "github.com/csantanapr/terraform-gitops-bridge"
-  }
-}
-
 #tfsec:ignore:aws-eks-enable-control-plane-logging
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
@@ -257,7 +250,6 @@ module "eks" {
 ################################################################################
 # Supporting Resources
 ################################################################################
-
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"

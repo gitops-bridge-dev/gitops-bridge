@@ -27,19 +27,31 @@ locals {
 module "gitops_bridge_bootstrap_hub" {
   source = "../../../modules/gitops-bridge-bootstrap"
 
-  cluster_name = module.eks_hub.cluster_name
-  kubeconfig_command = "KUBECONFIG=${local.kubeconfig} \naws eks --region ${local.region} update-kubeconfig --name ${module.eks_hub.cluster_name}"
-  argocd_cluster = module.gitops_bridge_metadata_hub.argocd
-  argocd_bootstrap_app_of_apps = [
-    "argocd app create --port-forward -f ${local.argocd_bootstrap_control_plane}",
-    "argocd app create --port-forward -f ${local.argocd_bootstrap_workloads}"
-  ]
+  options = {
+    argocd = {
+      cluster_name = module.eks_hub.cluster_name
+      kubeconfig_command = "KUBECONFIG=${local.kubeconfig} \naws eks --region ${local.region} update-kubeconfig --name ${module.eks_hub.cluster_name}"
+      argocd_install_script_flags = join(" ",[
+        "--create-namespace --wait",
+        "--set controller.serviceAccount.annotations.\"eks\\.amazonaws\\.com/role-arn\"=\"${module.argocd_irsa.iam_role_arn}\"",
+        "--set server.serviceAccount.annotations.\"eks\\.amazonaws\\.com/role-arn\"=\"${module.argocd_irsa.iam_role_arn}\""
+      ])
+      argocd_cluster = module.gitops_bridge_metadata_hub.argocd
+      argocd_bootstrap_app_of_apps = [
+        "argocd app create --port-forward -f ${local.argocd_bootstrap_control_plane}",
+        "argocd app create --port-forward -f ${local.argocd_bootstrap_workloads}"
+      ]
+    }
+  }
+
+
+
+
 }
 
 ################################################################################
 # ArgoCD EKS Access
 ################################################################################
-
 module "argocd_irsa" {
   source = "aws-ia/eks-blueprints-addon/aws"
 
@@ -89,7 +101,7 @@ data "aws_iam_policy_document" "assume_role_policy" {
 }
 
 ################################################################################
-# Blueprints Addons
+# EKS Blueprints Addons
 ################################################################################
 module "eks_blueprints_addons_hub" {
   source = "../../../../../../terraform-aws-eks-blueprints-addons/gitops"
@@ -98,7 +110,7 @@ module "eks_blueprints_addons_hub" {
   cluster_endpoint  = module.eks_hub.cluster_endpoint
   cluster_version   = module.eks_hub.cluster_version
   oidc_provider_arn = module.eks_hub.oidc_provider_arn
-  vpc_id            = module.vpc.vpc_id
+  vpc_id            = module.vpc_hub.vpc_id
 
 
   #enable_aws_efs_csi_driver                    = true
@@ -128,7 +140,7 @@ module "eks_blueprints_addons_hub" {
 
 
 ################################################################################
-# Cluster
+# EKS Cluster
 ################################################################################
 #tfsec:ignore:aws-eks-enable-control-plane-logging
 module "eks_hub" {
@@ -140,8 +152,8 @@ module "eks_hub" {
   cluster_endpoint_public_access = true
 
 
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnets
+  vpc_id     = module.vpc_hub.vpc_id
+  subnet_ids = module.vpc_hub.private_subnets
 
   eks_managed_node_groups = {
     initial = {
@@ -168,6 +180,32 @@ module "eks_hub" {
         }
       })
     }
+  }
+
+  tags = local.tags
+}
+
+
+module "vpc_hub" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.0"
+
+  name = local.cluster_hub
+  cidr = local.vpc_cidr
+
+  azs             = local.azs
+  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
+  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
+
+  enable_nat_gateway = true
+  single_nat_gateway = true
+
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = 1
+  }
+
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb" = 1
   }
 
   tags = local.tags

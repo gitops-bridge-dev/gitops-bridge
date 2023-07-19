@@ -10,7 +10,7 @@ brew install argocd
 Clone the repo
 ```shell
 git clone github.com/csantanapr/gitops-bridge
-cd gitops-bridge/argocd/eks/terraform/examples/complete
+cd gitops-bridge/argocd/iac/terraform/examples/eks/hello-world
 ```
 
 Run terraform
@@ -21,16 +21,17 @@ terraform apply
 
 Setup kubectl
 ```shell
-$(terraform output -raw configure_kubectl) --kubeconfig /tmp/$(terraform output -raw cluster_name)
 export KUBECONFIG=/tmp/$(terraform output -raw cluster_name)
+$(terraform output -raw configure_kubectl)
 ```
 
 Access ArgoCD UI
 ```shell
 export KUBECONFIG=/tmp/$(terraform output -raw cluster_name)
+$(terraform output -raw configure_kubectl)
 export ARGOCD_OPTS="--port-forward --port-forward-namespace argocd --grpc-web"
 kubectl config set-context --current --namespace argocd
-argocd admin dashboard
+argocd admin dashboard --port 8080
 ```
 Argo CD UI is available at http://localhost:8080
 
@@ -38,7 +39,8 @@ Argo CD UI is available at http://localhost:8080
 Access Cluster and ArgoCD CLI in a new terminal
 ```shell
 export KUBECONFIG=/tmp/$(terraform output -raw cluster_name)
-export ARGOCD_OPTS="--port-forward --port-forward-namespace argocd"
+$(terraform output -raw configure_kubectl)
+export ARGOCD_OPTS="--port-forward --port-forward-namespace argocd --grpc-web"
 kubectl config set-context --current --namespace argocd
 kubectl get applications -n argocd
 kubectl get applicationsets -n argocd

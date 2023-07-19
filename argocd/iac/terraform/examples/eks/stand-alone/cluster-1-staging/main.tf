@@ -1,12 +1,13 @@
 provider "aws" {
   region = local.region
 }
+data "aws_availability_zones" "available" {}
 
 locals {
-  name = "cluster-2-dev"
+  name = "cluster-1-staging"
   region = "us-west-2"
 
-  environment = "dev"
+  environment = "staging"
   addons = {
     #enable_prometheus_adapter                    = true # doesn't required aws resources (ie IAM)
     #enable_gpu_operator                          = true # doesn't required aws resources (ie IAM)
@@ -24,6 +25,13 @@ locals {
     #enable_prometheus_adapter                    = true # doesn't required aws resources (ie IAM)
     #enable_gpu_operator                          = true # doesn't required aws resources (ie IAM)
     enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
+  }
+  vpc_cidr = "10.0.0.0/16"
+  azs      = slice(data.aws_availability_zones.available.names, 0, 3)
+
+  tags = {
+    Blueprint  = local.name
+    GithubRepo = "github.com/csantanapr/terraform-gitops-bridge"
   }
 }
 
@@ -50,17 +58,21 @@ locals {
 module "gitops_bridge_bootstrap" {
   source = "../../../modules/gitops-bridge-bootstrap"
 
-  cluster_name = module.eks.cluster_name
-  kubeconfig_command = "KUBECONFIG=${local.kubeconfig} \naws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name}"
-  argocd_cluster = module.gitops_bridge_metadata.argocd
-  argocd_bootstrap_app_of_apps = [
-    "argocd app create --port-forward -f ${local.argocd_bootstrap_control_plane}",
-    "argocd app create --port-forward -f ${local.argocd_bootstrap_workloads}"
-  ]
+  options = {
+    argocd = {
+      cluster_name = module.eks.cluster_name
+      kubeconfig_command = "KUBECONFIG=${local.kubeconfig} \naws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name}"
+      argocd_cluster = module.gitops_bridge_metadata.argocd
+      argocd_bootstrap_app_of_apps = [
+        "argocd app create --port-forward -f ${local.argocd_bootstrap_control_plane}",
+        "argocd app create --port-forward -f ${local.argocd_bootstrap_workloads}"
+      ]
+    }
+  }
 }
 
 ################################################################################
-# Blueprints Addons
+# EKS Blueprints Addons
 ################################################################################
 module "eks_blueprints_addons" {
   source = "../../../../../../terraform-aws-eks-blueprints-addons/gitops"
@@ -98,21 +110,8 @@ module "eks_blueprints_addons" {
 
 
 ################################################################################
-# Cluster
+# EKS Cluster
 ################################################################################
-data "aws_availability_zones" "available" {}
-data "aws_caller_identity" "current" {}
-
-locals {
-  vpc_cidr = "10.0.0.0/16"
-  azs      = slice(data.aws_availability_zones.available.names, 0, 3)
-
-  tags = {
-    Blueprint  = local.name
-    GithubRepo = "github.com/csantanapr/terraform-gitops-bridge"
-  }
-}
-
 #tfsec:ignore:aws-eks-enable-control-plane-logging
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
@@ -159,7 +158,6 @@ module "eks" {
 ################################################################################
 # Supporting Resources
 ################################################################################
-
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"

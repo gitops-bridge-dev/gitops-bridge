@@ -2,9 +2,9 @@ provider "aws" {
   region = local.region
 }
 
-locals {
+data "aws_availability_zones" "available" {}
 
-  name = "hub-spoke"
+locals {
 
   cluster_hub = "cluster-1-cp"
   cluster_hub_environment = "control-plane"
@@ -36,7 +36,13 @@ locals {
     #enable_gpu_operator                          = true # doesn't required aws resources (ie IAM)
     enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
+
+  vpc_cidr = "10.0.0.0/16"
+  azs      = slice(data.aws_availability_zones.available.names, 0, 3)
+
+  tags = {
+    Blueprint  = "hub-spoke"
+    GithubRepo = "github.com/csantanapr/terraform-gitops-bridge"
+  }
 }
-
-
 

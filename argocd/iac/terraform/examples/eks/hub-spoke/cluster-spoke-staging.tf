@@ -1,4 +1,3 @@
-
 ################################################################################
 # GitOps Bridge: Metadata Staging
 ################################################################################
@@ -7,7 +6,6 @@ module "gitops_bridge_metadata_staging" {
 
   cluster_name = module.eks_spoke_staging.cluster_name
   metadata = module.eks_blueprints_addons_spoke_staging.gitops_metadata
-
   environment = local.cluster_spoke_staging_environment
   addons = local.addons
   enable_argocd = false # we are not deploying argocd to spoke clusters
@@ -28,7 +26,6 @@ module "gitops_bridge_metadata_staging" {
       EOT
     }
   }
-
 }
 
 ################################################################################
@@ -37,15 +34,28 @@ module "gitops_bridge_metadata_staging" {
 module "gitops_bridge_bootstrap_staging" {
   source = "../../../modules/gitops-bridge-bootstrap"
 
-  cluster_name = module.eks_spoke_staging.cluster_name
-  kubeconfig_command = "KUBECONFIG=${local.kubeconfig} \naws eks --region ${local.region} update-kubeconfig --name ${module.eks_hub.cluster_name}"
-  argocd_cluster = module.gitops_bridge_metadata_staging.argocd
-  argocd_create_install = false
-  argocd_create_app_of_apps = false
+  options = {
+    argocd = {
+      cluster_name = module.eks_spoke_staging.cluster_name
+      kubeconfig_command = "KUBECONFIG=${local.kubeconfig} \naws eks --region ${local.region} update-kubeconfig --name ${module.eks_hub.cluster_name}"
+      argocd_cluster = module.gitops_bridge_metadata_staging.argocd
+      argocd_create_install = false # we are not deploying argocd to spoke clusters
+      argocd_create_app_of_apps = false # the hub cluster already has the app of apps
+    }
+  }
+  depends_on = [ module.gitops_bridge_bootstrap_hub ]
 }
 
 ################################################################################
-# Blueprints Addons
+# ArgoCD Access to Prod
+################################################################################
+resource "aws_iam_role" "spoke_role_staging" {
+  name               = local.cluster_spoke_staging
+  assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
+}
+
+################################################################################
+# EKS Blueprints Addons
 ################################################################################
 module "eks_blueprints_addons_spoke_staging" {
   source = "../../../../../../terraform-aws-eks-blueprints-addons/gitops"
@@ -54,7 +64,7 @@ module "eks_blueprints_addons_spoke_staging" {
   cluster_endpoint  = module.eks_spoke_staging.cluster_endpoint
   cluster_version   = module.eks_spoke_staging.cluster_version
   oidc_provider_arn = module.eks_spoke_staging.oidc_provider_arn
-  vpc_id            = module.vpc.vpc_id
+  vpc_id            = module.vpc_staging.vpc_id
 
 
   #enable_aws_efs_csi_driver                    = true
@@ -82,39 +92,52 @@ module "eks_blueprints_addons_spoke_staging" {
   tags = local.tags
 }
 
-################################################################################
-# ArgoCD Access to Prod
-################################################################################
-resource "aws_iam_role" "spoke_role_staging" {
-  name               = local.cluster_spoke_staging
-  assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
-}
 
 ################################################################################
-# Cluster
+# EKS Cluster
 ################################################################################
+# Only required to the aws-auth configmap
+provider "kubernetes" {
+  host                   = module.eks_spoke_staging.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks_spoke_staging.cluster_certificate_authority_data)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    # This requires the awscli to be installed locally where Terraform is executed
+    args = ["eks", "get-token", "--cluster-name", module.eks_spoke_staging.cluster_name]
+  }
+  alias = "staging"
+}
+
 #tfsec:ignore:aws-eks-enable-control-plane-logging
 module "eks_spoke_staging" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 19.13"
+
+  providers = {
+    kubernetes = kubernetes.staging
+  }
 
   cluster_name                   = local.cluster_spoke_staging
   cluster_version                = "1.27"
   cluster_endpoint_public_access = true
 
 
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnets
+  vpc_id     = module.vpc_staging.vpc_id
+  subnet_ids = module.vpc_staging.private_subnets
 
-/*
-  # Team Access
   manage_aws_auth_configmap = true
-  aws_auth_roles =[{
-      rolearn  = aws_iam_role.spoke_role_staging.arn # Granting access to ArgoCD from hub cluster
+  aws_auth_roles = [
+    # Granting access to ArgoCD from hub cluster
+    {
+      rolearn  = aws_iam_role.spoke_role_staging.arn
       username = "gitops-role"
-      groups   = ["system:masters"]
-    }]
-*/
+      groups = [
+        "system:masters"
+      ]
+    },
+  ]
 
   eks_managed_node_groups = {
     initial = {
@@ -141,6 +164,32 @@ module "eks_spoke_staging" {
         }
       })
     }
+  }
+
+  tags = local.tags
+}
+
+
+module "vpc_staging" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.0"
+
+  name = local.cluster_spoke_staging
+  cidr = local.vpc_cidr
+
+  azs             = local.azs
+  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
+  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
+
+  enable_nat_gateway = true
+  single_nat_gateway = true
+
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = 1
+  }
+
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb" = 1
   }
 
   tags = local.tags
