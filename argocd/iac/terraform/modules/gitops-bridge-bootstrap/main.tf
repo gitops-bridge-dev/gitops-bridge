@@ -32,7 +32,7 @@ locals {
     kubectl apply -f ${local.argocd_cluster_manifest}
     echo "{\"cluster\": \"${local.argocd_cluster_manifest}\"}"
   EOF
-  argocd_cluster_manifest = "${path.root}/.terraform/tmp/${timestamp()}.yaml"
+  argocd_cluster_manifest = "${path.root}/.terraform/tmp/${var.cluster_name}.yaml"
 }
 
 resource "local_file" "argocd_cluster_manifest" {

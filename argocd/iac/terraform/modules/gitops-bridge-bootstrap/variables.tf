@@ -2,6 +2,10 @@ variable "kubeconfig_command" {
     default = ""
 }
 
+variable "cluster_name" {
+
+}
+
 
 variable "argocd_create_install" {
   default = true

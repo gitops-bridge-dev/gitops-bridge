@@ -42,7 +42,7 @@ locals {
         stringData = {
             name = var.cluster_name
             server = try(var.options.argocd.server,"https://kubernetes.default.svc")
-            config = local.argocd_server_config
+            config = try(var.options.argocd.argocd_server_config,local.argocd_server_config)
         }
   }
 }

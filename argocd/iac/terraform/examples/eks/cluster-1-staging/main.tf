@@ -5,6 +5,7 @@ provider "aws" {
 locals {
   name = "cluster-1-staging"
   region = "us-west-2"
+
   environment = "staging"
   addons = {
     #enable_prometheus_adapter                    = true # doesn't required aws resources (ie IAM)
@@ -24,82 +25,45 @@ locals {
     #enable_gpu_operator                          = true # doesn't required aws resources (ie IAM)
     enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
+}
+################################################################################
+# GitOps Bridge: Metadata
+################################################################################
+module "gitops_bridge_metadata" {
+  source = "../../../modules/gitops-bridge-metadata"
+
+  cluster_name = module.eks.cluster_name
+  metadata = module.eks_blueprints_addons.gitops_metadata
+  environment = local.environment
+  addons = local.addons
+}
+
+################################################################################
+# GitOps Bridge: Bootstrap
+################################################################################
+locals {
+  kubeconfig = "/tmp/${module.eks.cluster_name}"
   argocd_bootstrap_control_plane = "https://raw.githubusercontent.com/csantanapr/gitops-control-plane/main/bootstrap/control-plane/exclude/bootstrap.yaml"
   argocd_bootstrap_workloads = "https://raw.githubusercontent.com/csantanapr/gitops-control-plane/main/bootstrap/workloads/exclude/bootstrap.yaml"
 }
-
-################################################################################
-# GitOps Bridge
-################################################################################
-
-module "gitops_bridge_metadata" {
-  source = "../../../modules/gitops-bridge-metadata/gitops"
+module "gitops_bridge_bootstrap" {
+  source = "../../../modules/gitops-bridge-bootstrap"
 
   cluster_name = module.eks.cluster_name
-  environment = local.environment
-  metadata = module.eks_blueprints_addons.gitops_metadata
-  addons = local.addons
-  #argocd_remote = true
-}
-
-################################################################################
-# GitOps Bootstrap: Install ArgoCD, Cluster(s), and App of Apps
-################################################################################
-data "http" "argocd_bootstrap_control_plane" {
-  url = local.argocd_bootstrap_control_plane
-}
-data "http" "argocd_bootstrap_workloads" {
-  url = local.argocd_bootstrap_workloads
-}
-locals {
-  manifests = {
-      "cluster.yaml" = yamlencode(module.gitops_bridge_metadata.argocd)
-      "app_of_apps_control_plane.yaml" = data.http.argocd_bootstrap_control_plane.response_body
-      "app_of_apps_workloads.yaml" = data.http.argocd_bootstrap_workloads.response_body
-  }
-  manifests_path = "${path.module}/manifests"
-}
-resource "local_file" "argocd_values_yaml" {
-  for_each = local.manifests
-  content  = each.value
-  filename = "${local.manifests_path}/${each.key}"
-}
-
-locals {
-  kubeconfig = "/tmp/${module.eks.cluster_name}"
-  kubeconfig_command = "aws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name}"
-}
-locals {
-  argocd_helm_repository = "https://argoproj.github.io/argo-helm"
-  argocd_version = "5.38.0"
-  argocd_namespace = "argocd"
-  argocd_install = true
-  argocd_install_script = <<-EOF
-    KUBECONFIG=${local.kubeconfig}
-    ${local.kubeconfig_command}
-    helm repo add argo "${local.argocd_helm_repository}"
-    helm repo update
-    helm upgrade --install argo-cd argo/argo-cd --version "${local.argocd_version}" --namespace "${local.argocd_namespace}" --create-namespace --wait
-    kubectl apply -f ${local.manifests_path}
-    echo "{\"NAMESPACE\": \"${local.argocd_namespace}\"}"
-  EOF
-}
-resource "shell_script" "argocd" {
-  count = local.argocd_install ? 1 : 0
-  lifecycle_commands {
-    create = local.argocd_install_script
-    update = local.argocd_install_script
-    delete = "echo gitops ftw!"
-  }
+  kubeconfig_command = "KUBECONFIG=${local.kubeconfig} \naws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name}"
+  argocd_cluster = module.gitops_bridge_metadata.argocd
+  argocd_bootstrap_app_of_apps = [
+    "argocd app create --port-forward -f ${local.argocd_bootstrap_control_plane}",
+    "argocd app create --port-forward -f ${local.argocd_bootstrap_workloads}"
+  ]
 }
 
 
 ################################################################################
 # Blueprints Addons
 ################################################################################
-
 module "eks_blueprints_addons" {
-  source = "../../../../../../terraform-aws-eks-blueprints-addons"
+  source = "../../../../../../terraform-aws-eks-blueprints-addons/gitops"
 
   cluster_name      = module.eks.cluster_name
   cluster_endpoint  = module.eks.cluster_endpoint

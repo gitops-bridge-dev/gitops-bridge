@@ -5,6 +5,7 @@ provider "aws" {
 locals {
   name = "cluster-2-dev"
   region = "us-west-2"
+
   environment = "dev"
   addons = {
     #enable_prometheus_adapter                    = true # doesn't required aws resources (ie IAM)
@@ -24,80 +25,43 @@ locals {
     #enable_gpu_operator                          = true # doesn't required aws resources (ie IAM)
     enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
-  argocd_bootstrap_control_plane = "https://raw.githubusercontent.com/csantanapr/gitops-control-plane/main/bootstrap/control-plane/exclude/bootstrap.yaml"
-  argocd_bootstrap_workloads = "https://raw.githubusercontent.com/csantanapr/gitops-control-plane/main/bootstrap/workloads/exclude/bootstrap.yaml"
 }
 
 ################################################################################
-# GitOps Bridge
+# GitOps Bridge: Metadata
 ################################################################################
-
 module "gitops_bridge_metadata" {
   source = "../../../modules/gitops-bridge-metadata"
 
   cluster_name = module.eks.cluster_name
-  environment = local.environment
   metadata = module.eks_blueprints_addons.gitops_metadata
+  environment = local.environment
   addons = local.addons
-  #argocd_remote = true
 }
 
 ################################################################################
-# GitOps Bootstrap: Install ArgoCD, Cluster(s), and App of Apps
+# GitOps Bridge: Bootstrap
 ################################################################################
-data "http" "argocd_bootstrap_control_plane" {
-  url = local.argocd_bootstrap_control_plane
-}
-data "http" "argocd_bootstrap_workloads" {
-  url = local.argocd_bootstrap_workloads
-}
-locals {
-  manifests = {
-      "cluster.yaml" = yamlencode(module.gitops_bridge_metadata.argocd)
-      "app_of_apps_control_plane.yaml" = data.http.argocd_bootstrap_control_plane.response_body
-      "app_of_apps_workloads.yaml" = data.http.argocd_bootstrap_workloads.response_body
-  }
-  manifests_path = "${path.module}/manifests"
-}
-resource "local_file" "argocd_values_yaml" {
-  for_each = local.manifests
-  content  = each.value
-  filename = "${local.manifests_path}/${each.key}"
-}
-
 locals {
   kubeconfig = "/tmp/${module.eks.cluster_name}"
-  kubeconfig_command = "aws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name}"
+  argocd_bootstrap_control_plane = "https://raw.githubusercontent.com/csantanapr/gitops-control-plane/main/bootstrap/control-plane/exclude/bootstrap.yaml"
+  argocd_bootstrap_workloads = "https://raw.githubusercontent.com/csantanapr/gitops-control-plane/main/bootstrap/workloads/exclude/bootstrap.yaml"
 }
-locals {
-  argocd_helm_repository = "https://argoproj.github.io/argo-helm"
-  argocd_version = "5.38.0"
-  argocd_namespace = "argocd"
-  argocd_install = true
-  argocd_install_script = <<-EOF
-    KUBECONFIG=${local.kubeconfig}
-    ${local.kubeconfig_command}
-    helm repo add argo "${local.argocd_helm_repository}"
-    helm repo update
-    helm upgrade --install argo-cd argo/argo-cd --version "${local.argocd_version}" --namespace "${local.argocd_namespace}" --create-namespace --wait
-    kubectl apply -f ${local.manifests_path}
-    echo "{\"NAMESPACE\": \"${local.argocd_namespace}\"}"
-  EOF
-}
-resource "shell_script" "argocd" {
-  count = local.argocd_install ? 1 : 0
-  lifecycle_commands {
-    create = local.argocd_install_script
-    update = local.argocd_install_script
-    delete = "echo gitops ftw!"
-  }
-}
+module "gitops_bridge_bootstrap" {
+  source = "../../../modules/gitops-bridge-bootstrap"
 
+  cluster_name = module.eks.cluster_name
+  kubeconfig_command = "KUBECONFIG=${local.kubeconfig} \naws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name}"
+  argocd_cluster = module.gitops_bridge_metadata.argocd
+  argocd_bootstrap_app_of_apps = [
+    "argocd app create --port-forward -f ${local.argocd_bootstrap_control_plane}",
+    "argocd app create --port-forward -f ${local.argocd_bootstrap_workloads}"
+  ]
+}
 
 ################################################################################
 # Blueprints Addons
 ################################################################################
-
 module "eks_blueprints_addons" {
   source = "../../../../../../terraform-aws-eks-blueprints-addons/gitops"
 
@@ -106,17 +70,6 @@ module "eks_blueprints_addons" {
   cluster_version   = module.eks.cluster_version
   oidc_provider_arn = module.eks.oidc_provider_arn
   vpc_id            = module.vpc.vpc_id
-
-
-  #enable_argo_rollouts                         = true # doesn't required aws resources (ie IAM)
-  #enable_argo_workflows                        = true # doesn't required aws resources (ie IAM)
-  #enable_secrets_store_csi_driver              = true # doesn't required aws resources (ie IAM)
-  #enable_secrets_store_csi_driver_provider_aws = true # doesn't required aws resources (ie IAM)
-  #enable_kube_prometheus_stack                 = true # doesn't required aws resources (ie IAM)
-  #enable_gatekeeper                            = true # doesn't required aws resources (ie IAM)
-  #enable_ingress_nginx                         = true # doesn't required aws resources (ie IAM)
-  #enable_metrics_server                         = true # doesn't required aws resources (ie IAM)
-  #enable_vpa                                   = true # doesn't required aws resources (ie IAM)
 
   #enable_aws_efs_csi_driver                    = true
   #enable_aws_fsx_csi_driver                    = true
@@ -139,24 +92,6 @@ module "eks_blueprints_addons" {
   #  s3_backup_location = "${module.velero_backup_s3_bucket.s3_bucket_arn}/backups"
   #}
   #enable_aws_gateway_api_controller = true
-
-  tags = local.tags
-}
-
-module "ebs_csi_driver_irsa" {
-  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "~> 5.14"
-
-  role_name_prefix = "${local.name}-ebs-csi-driver-"
-
-  attach_ebs_csi_policy = true
-
-  oidc_providers = {
-    main = {
-      provider_arn               = module.eks.oidc_provider_arn
-      namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
-    }
-  }
 
   tags = local.tags
 }
@@ -249,13 +184,3 @@ module "vpc" {
 
   tags = local.tags
 }
-
-/*
-locals {
-  fluxcd_cluster_manifest = "${path.module}/fluxcd.yaml"
-}
-resource "local_file" "fluxcd_yaml" {
-  content  = yamlencode(module.gitops_bridge_metadata.fluxcd)
-  filename = local.fluxcd_cluster_manifest
-}
-*/
