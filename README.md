@@ -10,29 +10,6 @@ The GitOps Bridge becomes extremely important for cloud managed kubernetes, this
 
 The GitOps Bridge should be compatible with GitOps engines that run as Saas and not install inside the cluster such as Akuity Platform, CodeFresh, and others.
 
-| Tool           | GitOps    | Kubernetes | Status |
-| :---           |    :----: |   :----:   | ---:     |
-| [Terraform](argocd/iac/terraform/examples/eks/)      | ArgoCD    |  EKS    |  In Progress |
-| EKSCTL         | ArgoCD    |  EKS    |              |
-| CDK            | ArgoCD    |  EKS    |              |
-| Crossplane     | ArgoCD    |  EKS    |              |
-| CAPI           | ArgoCD    |  EKS    |              |
-| Pulumi         | ArgoCD    |  EKS    |              |
-| ACK            | ArgoCD    |  EKS    |              |
-| CloudFormation | ArgoCD    |  EKS    |              |
-| Kops           | ArgoCD    |  EKS    |              |
-| Ansible        | ArgoCD    |  EKS    |              |
-| Terraform      | FluxCD    |  EKS    |  Soon |
-| EKSCTL         | FluxCD    |  EKS    |              |
-| CDK            | FluxCD    |  EKS    |              |
-| Crossplane     | FluxCD    |  EKS    |              |
-| CAPI           | FluxCD    |  EKS    |              |
-| Pulumi         | FluxCD    |  EKS    |              |
-| ACK            | FluxCD    |  EKS    |              |
-| CloudFormation | FluxCD    |  EKS    |              |
-| Kops           | FluxCD    |  EKS    |              |
-| Ansible        | FluxCD    |  EKS    |              |
-
 ### ArgoCD
 
 This git repository contains the files on how to create the Kubernete Clusters and how to bridge the metadata to the GitOps engine, there is an additiona git repository [GitOps Control Plane](https://github.com/gitops-bridge-dev/gitops-bridge-argocd-control-plane-template) that contains the ArgoCD App of Apps to bootstrap and manage the Application Sets for the clusters intended to be use as template to get started.
@@ -41,6 +18,34 @@ This git repository contains the files on how to create the Kubernete Clusters a
 ### Terraform and GitOps Bridge:
 - Terraform has providers for helm and kubernetes, the problem with these providers is that terraform is design to have control over the state
 of the Kubernetes resources, any changes to these resources outside Terraform for example using `kubectl` or GitOps (ie ArgoCD, FluxCD) would create problems in terraform state.
+
+### ArgoCD Status
+| IaC           | GitOps    | Status |
+| :---           |    :----: | ---:     |
+| Terraform      | ArgoCD    |  Stable [try it!](argocd/iac/terraform/examples/eks/) |
+| EKSCTL         | ArgoCD    |              |
+| CDK            | ArgoCD    |              |
+| Crossplane     | ArgoCD    |              |
+| CAPI           | ArgoCD    |              |
+| Pulumi         | ArgoCD    |              |
+| ACK            | ArgoCD    |              |
+| CloudFormation | ArgoCD    |              |
+| Kops           | ArgoCD    |              |
+| Ansible        | ArgoCD    |              |
+
+### FluxCD Status
+| IaC            | GitOps    | Status |
+| :---           |    :----: | ---:     |
+| Terraform      | FluxCD    |  Soon |
+| EKSCTL         | FluxCD    |              |
+| CDK            | FluxCD    |              |
+| Crossplane     | FluxCD    |              |
+| CAPI           | FluxCD    |              |
+| Pulumi         | FluxCD    |              |
+| ACK            | FluxCD    |              |
+| CloudFormation | FluxCD    |              |
+| Kops           | FluxCD    |              |
+| Ansible        | FluxCD    |              |
 
 #### Researched Resources:
 - https://docs.akuity.io/tutorials/adv-gitops
