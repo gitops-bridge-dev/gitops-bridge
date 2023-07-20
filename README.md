@@ -8,7 +8,7 @@ There are many tools to create Kubernetes clusters, this include roll your own l
 
 The GitOps Bridge becomes extremely important for cloud managed kubernetes, this cluster have integrations with cloud services. When using GitOps to install a tool in this cases, the tool usually via helm needs to be configure with metadata about resources or workload identity (IAM) that is available as a result of running a IaC tool such terraform, cloudformation, or cloud cli. The GitOps Bridge would show patterns on how to bridge this metadata about the cluster to GitOps using features specific GitOps engine combined.
 
-The GitOps Bridge should be compatible with GitOps engines that run as Saas and not install inside the cluster such as Akuity Platform, CodeFresh, and others.
+The GitOps Bridge should also be compatible with GitOps engines that run as Saas and not install inside the cluster such as Akuity Platform, CodeFresh, Weaveworks and others.
 
 ### ArgoCD
 
