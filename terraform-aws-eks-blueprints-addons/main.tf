@@ -75,6 +75,9 @@ module "argo_rollouts" {
 
   create = var.enable_argo_rollouts
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/argoproj/argo-helm/tree/main/charts/argo-rollouts
   name             = try(var.argo_rollouts.name, "argo-rollouts")
   description      = try(var.argo_rollouts.description, "A Helm chart for Argo Rollouts")
@@ -127,6 +130,9 @@ module "argo_workflows" {
   version = "1.0.0"
 
   create = var.enable_argo_workflows
+
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
 
   # https://github.com/argoproj/argo-helm/tree/main/charts/argo-workflows
   name             = try(var.argo_workflows.name, "argo-workflows")
@@ -181,6 +187,9 @@ module "argocd" {
 
   create = var.enable_argocd
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/argoproj/argo-helm/blob/main/charts/argo-cd/Chart.yaml
   # (there is no offical helm chart for argocd)
   name             = try(var.argocd.name, "argo-cd")
@@ -231,6 +240,7 @@ module "argocd" {
 
 locals {
   aws_cloudwatch_metrics_service_account = try(var.aws_cloudwatch_metrics.service_account_name, "aws-cloudwatch-metrics")
+  aws_cloudwatch_metrics_namespace       = try(var.aws_cloudwatch_metrics.namespace, "amazon-cloudwatch")
 }
 
 module "aws_cloudwatch_metrics" {
@@ -239,10 +249,13 @@ module "aws_cloudwatch_metrics" {
 
   create = var.enable_aws_cloudwatch_metrics
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/aws/eks-charts/tree/master/stable/aws-cloudwatch-metrics
   name             = try(var.aws_cloudwatch_metrics.name, "aws-cloudwatch-metrics")
   description      = try(var.aws_cloudwatch_metrics.description, "A Helm chart to deploy aws-cloudwatch-metrics project")
-  namespace        = try(var.aws_cloudwatch_metrics.namespace, "amazon-cloudwatch")
+  namespace        = local.aws_cloudwatch_metrics_namespace
   create_namespace = try(var.aws_cloudwatch_metrics.create_namespace, true)
   chart            = "aws-cloudwatch-metrics"
   chart_version    = try(var.aws_cloudwatch_metrics.chart_version, "0.0.9")
@@ -322,6 +335,7 @@ module "aws_cloudwatch_metrics" {
 locals {
   aws_efs_csi_driver_controller_service_account = try(var.aws_efs_csi_driver.controller_service_account_name, "efs-csi-controller-sa")
   aws_efs_csi_driver_node_service_account       = try(var.aws_efs_csi_driver.node_service_account_name, "efs-csi-node-sa")
+  aws_efs_csi_driver_namespace                  = try(var.aws_efs_csi_driver.namespace, "kube-system")
   efs_arns = lookup(var.aws_efs_csi_driver, "efs_arns",
     ["arn:${local.partition}:elasticfilesystem:${local.region}:${local.account_id}:file-system/*"],
   )
@@ -401,10 +415,13 @@ module "aws_efs_csi_driver" {
 
   create = var.enable_aws_efs_csi_driver
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/kubernetes-sigs/aws-efs-csi-driver/tree/master/charts/aws-efs-csi-driver
   name             = try(var.aws_efs_csi_driver.name, "aws-efs-csi-driver")
   description      = try(var.aws_efs_csi_driver.description, "A Helm chart to deploy aws-efs-csi-driver")
-  namespace        = try(var.aws_efs_csi_driver.namespace, "kube-system")
+  namespace        = local.aws_efs_csi_driver_namespace
   create_namespace = try(var.aws_efs_csi_driver.create_namespace, false)
   chart            = "aws-efs-csi-driver"
   chart_version    = try(var.aws_efs_csi_driver.chart_version, "2.4.1")
@@ -497,7 +514,8 @@ module "aws_efs_csi_driver" {
 
 locals {
   aws_for_fluentbit_service_account   = try(var.aws_for_fluentbit.service_account_name, "aws-for-fluent-bit-sa")
-  aws_for_fluentbit_cw_log_group_name = try(var.aws_for_fluentbit_cw_log_group.create, true) ? try(var.aws_for_fluentbit_cw_log_group.name, "/${var.cluster_name}/aws-fluentbit-logs") : null
+  aws_for_fluentbit_cw_log_group_name = try(var.aws_for_fluentbit_cw_log_group.create, true) ? try(var.aws_for_fluentbit_cw_log_group.name, "/aws/eks/${var.cluster_name}/aws-fluentbit-logs") : null
+  aws_for_fluentbit_namespace         = try(var.aws_for_fluentbit.namespace, "kube-system")
 }
 
 resource "aws_cloudwatch_log_group" "aws_for_fluentbit" {
@@ -575,10 +593,13 @@ module "aws_for_fluentbit" {
 
   create = var.enable_aws_for_fluentbit
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/aws/eks-charts/blob/master/stable/aws-for-fluent-bit/Chart.yaml
   name             = try(var.aws_for_fluentbit.name, "aws-for-fluent-bit")
   description      = try(var.aws_for_fluentbit.description, "A Helm chart to install the Fluent-bit Driver")
-  namespace        = try(var.aws_for_fluentbit.namespace, "kube-system")
+  namespace        = local.aws_for_fluentbit_namespace
   create_namespace = try(var.aws_for_fluentbit.create_namespace, false)
   chart            = "aws-for-fluent-bit"
   chart_version    = try(var.aws_for_fluentbit.chart_version, "0.1.24")
@@ -670,6 +691,7 @@ module "aws_for_fluentbit" {
 locals {
   aws_fsx_csi_driver_controller_service_account = try(var.aws_fsx_csi_driver.controller_service_account_name, "aws-fsx-csi-controller-sa")
   aws_fsx_csi_driver_node_service_account       = try(var.aws_fsx_csi_driver.node_service_account_name, "aws-fsx-csi-node-sa")
+  aws_fsx_csi_driver_namespace                  = try(var.aws_fsx_csi_driver.namespace, "kube-system")
 }
 
 data "aws_iam_policy_document" "aws_fsx_csi_driver" {
@@ -730,10 +752,13 @@ module "aws_fsx_csi_driver" {
 
   create = var.enable_aws_fsx_csi_driver
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/kubernetes-sigs/aws-fsx-csi-driver/tree/master/charts/aws-fsx-csi-driver
   name             = try(var.aws_fsx_csi_driver.name, "aws-fsx-csi-driver")
   description      = try(var.aws_fsx_csi_driver.description, "A Helm chart for AWS FSx for Lustre CSI Driver")
-  namespace        = try(var.aws_fsx_csi_driver.namespace, "kube-system")
+  namespace        = local.aws_fsx_csi_driver_namespace
   create_namespace = try(var.aws_fsx_csi_driver.create_namespace, false)
   chart            = "aws-fsx-csi-driver"
   chart_version    = try(var.aws_fsx_csi_driver.chart_version, "1.6.0")
@@ -824,6 +849,7 @@ module "aws_fsx_csi_driver" {
 
 locals {
   aws_load_balancer_controller_service_account = try(var.aws_load_balancer_controller.service_account_name, "aws-load-balancer-controller-sa")
+  aws_load_balancer_controller_namespace       = try(var.aws_load_balancer_controller.namespace, "kube-system")
 }
 
 data "aws_iam_policy_document" "aws_load_balancer_controller" {
@@ -1091,10 +1117,13 @@ module "aws_load_balancer_controller" {
 
   create = var.enable_aws_load_balancer_controller
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/aws/eks-charts/blob/master/stable/aws-load-balancer-controller/Chart.yaml
   name        = try(var.aws_load_balancer_controller.name, "aws-load-balancer-controller")
   description = try(var.aws_load_balancer_controller.description, "A Helm chart to deploy aws-load-balancer-controller for ingress resources")
-  namespace   = try(var.aws_load_balancer_controller.namespace, "kube-system")
+  namespace   = local.aws_load_balancer_controller_namespace
   # namespace creation is false here as kube-system already exists by default
   create_namespace = try(var.aws_load_balancer_controller.create_namespace, false)
   chart            = "aws-load-balancer-controller"
@@ -1179,6 +1208,7 @@ module "aws_load_balancer_controller" {
 
 locals {
   aws_node_termination_handler_service_account = try(var.aws_node_termination_handler.service_account_name, "aws-node-termination-handler-sa")
+  aws_node_termination_handler_namespace       = try(var.aws_node_termination_handler.namespace, "aws-node-termination-handler")
   aws_node_termination_handler_events = merge(
     {
       autoscaling_terminate = {
@@ -1302,10 +1332,13 @@ module "aws_node_termination_handler" {
 
   create = var.enable_aws_node_termination_handler
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/aws/eks-charts/blob/master/stable/aws-node-termination-handler/Chart.yaml
   name             = try(var.aws_node_termination_handler.name, "aws-node-termination-handler")
   description      = try(var.aws_node_termination_handler.description, "A Helm chart to deploy AWS Node Termination Handler")
-  namespace        = try(var.aws_node_termination_handler.namespace, "aws-node-termination-handler")
+  namespace        = local.aws_node_termination_handler_namespace
   create_namespace = try(var.aws_node_termination_handler.create_namespace, true)
   chart            = "aws-node-termination-handler"
   chart_version    = try(var.aws_node_termination_handler.chart_version, "0.21.0")
@@ -1399,6 +1432,7 @@ module "aws_node_termination_handler" {
 
 locals {
   aws_privateca_issuer_service_account = try(var.aws_privateca_issuer.service_account_name, "aws-privateca-issuer-sa")
+  aws_privateca_issuer_namespace       = try(var.aws_privateca_issuer.namespace, local.cert_manager_namespace)
 }
 
 data "aws_iam_policy_document" "aws_privateca_issuer" {
@@ -1423,10 +1457,13 @@ module "aws_privateca_issuer" {
 
   create = var.enable_aws_privateca_issuer
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/cert-manager/aws-privateca-issuer/blob/main/charts/aws-pca-issuer/Chart.yaml
   name             = try(var.aws_privateca_issuer.name, "aws-privateca-issuer")
   description      = try(var.aws_privateca_issuer.description, "A Helm chart to install the AWS Private CA Issuer")
-  namespace        = try(var.aws_privateca_issuer.namespace, module.cert_manager.namespace)
+  namespace        = local.aws_privateca_issuer_namespace
   create_namespace = try(var.aws_privateca_issuer.create_namespace, false)
   chart            = "aws-privateca-issuer"
   chart_version    = try(var.aws_privateca_issuer.chart_version, "v1.2.5")
@@ -1508,6 +1545,7 @@ module "aws_privateca_issuer" {
 locals {
   cert_manager_service_account = try(var.cert_manager.service_account_name, "cert-manager")
   create_cert_manager_irsa     = var.enable_cert_manager && length(var.cert_manager_route53_hosted_zone_arns) > 0
+  cert_manager_namespace       = try(var.cert_manager.namespace, "cert-manager")
 }
 
 data "aws_iam_policy_document" "cert_manager" {
@@ -1538,10 +1576,13 @@ module "cert_manager" {
 
   create = var.enable_cert_manager
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/cert-manager/cert-manager/blob/master/deploy/charts/cert-manager/Chart.template.yaml
   name             = try(var.cert_manager.name, "cert-manager")
   description      = try(var.cert_manager.description, "A Helm chart to deploy cert-manager")
-  namespace        = try(var.cert_manager.namespace, "cert-manager")
+  namespace        = local.cert_manager_namespace
   create_namespace = try(var.cert_manager.create_namespace, true)
   chart            = "cert-manager"
   chart_version    = try(var.cert_manager.chart_version, "v1.11.1")
@@ -1622,7 +1663,9 @@ module "cert_manager" {
 ################################################################################
 
 locals {
-  cluster_autoscaler_service_account = try(var.cluster_autoscaler.service_account_name, "cluster-autoscaler-sa")
+  cluster_autoscaler_service_account    = try(var.cluster_autoscaler.service_account_name, "cluster-autoscaler-sa")
+  cluster_autoscaler_namespace          = try(var.cluster_autoscaler.namespace, "kube-system")
+  cluster_autoscaler_image_tag_selected = try(local.cluster_autoscaler_image_tag[var.cluster_version], "v${var.cluster_version}.0")
 
   # Lookup map to pull latest cluster-autoscaler patch version given the cluster version
   cluster_autoscaler_image_tag = {
@@ -1680,10 +1723,13 @@ module "cluster_autoscaler" {
 
   create = var.enable_cluster_autoscaler
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/kubernetes/autoscaler/blob/master/charts/cluster-autoscaler/Chart.yaml
   name             = try(var.cluster_autoscaler.name, "cluster-autoscaler")
   description      = try(var.cluster_autoscaler.description, "A Helm chart to deploy cluster-autoscaler")
-  namespace        = try(var.cluster_autoscaler.namespace, "kube-system")
+  namespace        = local.cluster_autoscaler_namespace
   create_namespace = try(var.cluster_autoscaler.create_namespace, false)
   chart            = "cluster-autoscaler"
   chart_version    = try(var.cluster_autoscaler.chart_version, "9.29.0")
@@ -1729,7 +1775,7 @@ module "cluster_autoscaler" {
       },
       {
         name  = "image.tag"
-        value = try(local.cluster_autoscaler_image_tag[var.cluster_version], "v${var.cluster_version}.0")
+        value = local.cluster_autoscaler_image_tag_selected
       },
       {
         name  = "rbac.serviceAccount.name"
@@ -1781,6 +1827,9 @@ module "cluster_proportional_autoscaler" {
   version = "1.0.0"
 
   create = var.enable_cluster_proportional_autoscaler
+
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
 
   # https://github.com/kubernetes-sigs/cluster-proportional-autoscaler/blob/master/charts/cluster-proportional-autoscaler/Chart.yaml
   name             = try(var.cluster_proportional_autoscaler.name, "cluster-proportional-autoscaler")
@@ -1870,6 +1919,7 @@ resource "aws_eks_addon" "this" {
 
 locals {
   external_dns_service_account = try(var.external_dns.service_account_name, "external-dns-sa")
+  external_dns_namespace       = try(var.external_dns.namespace, "external-dns")
 }
 
 data "aws_iam_policy_document" "external_dns" {
@@ -1895,10 +1945,13 @@ module "external_dns" {
 
   create = var.enable_external_dns
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/kubernetes-sigs/external-dns/tree/master/charts/external-dns/Chart.yaml
   name             = try(var.external_dns.name, "external-dns")
   description      = try(var.external_dns.description, "A Helm chart to deploy external-dns")
-  namespace        = try(var.external_dns.namespace, "external-dns")
+  namespace        = local.external_dns_namespace
   create_namespace = try(var.external_dns.create_namespace, true)
   chart            = "external-dns"
   chart_version    = try(var.external_dns.chart_version, "1.12.2")
@@ -1979,6 +2032,7 @@ module "external_dns" {
 
 locals {
   external_secrets_service_account = try(var.external_secrets.service_account_name, "external-secrets-sa")
+  external_secrets_namespace       = try(var.external_secrets.namespace, "external-secrets")
 }
 
 data "aws_iam_policy_document" "external_secrets" {
@@ -2044,10 +2098,13 @@ module "external_secrets" {
 
   create = var.enable_external_secrets
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/external-secrets/external-secrets/blob/main/deploy/charts/external-secrets/Chart.yaml
   name             = try(var.external_secrets.name, "external-secrets")
   description      = try(var.external_secrets.description, "A Helm chart to deploy external-secrets")
-  namespace        = try(var.external_secrets.namespace, "external-secrets")
+  namespace        = local.external_secrets_namespace
   create_namespace = try(var.external_secrets.create_namespace, true)
   chart            = "external-secrets"
   chart_version    = try(var.external_secrets.chart_version, "0.8.1")
@@ -2127,7 +2184,8 @@ module "external_secrets" {
 ################################################################################
 
 locals {
-  fargate_fluentbit_policy_name = try(var.fargate_fluentbit_cw_log_group.create, true) ? try(var.fargate_fluentbit.policy_name, "${var.cluster_name}-fargate-fluentbit-logs") : null
+  fargate_fluentbit_policy_name         = try(var.fargate_fluentbit_cw_log_group.create, true) ? try(var.fargate_fluentbit.policy_name, "${var.cluster_name}-fargate-fluentbit-logs") : null
+  fargate_fluentbit_cwlog_stream_prefix = try(var.fargate_fluentbit.cwlog_stream_prefix, "fargate-logs-")
 }
 
 resource "aws_cloudwatch_log_group" "fargate_fluentbit" {
@@ -2193,7 +2251,7 @@ data "aws_iam_policy_document" "fargate_fluentbit" {
 # Help on Fargate Logging with Fluentbit and CloudWatch
 # https://docs.aws.amazon.com/eks/latest/userguide/fargate-logging.html
 resource "kubernetes_namespace_v1" "aws_observability" {
-  count = var.enable_fargate_fluentbit ? 1 : 0
+  count = var.enable_fargate_fluentbit && var.create_kubernetes_resources ? 1 : 0
 
   metadata {
     name = "aws-observability"
@@ -2206,7 +2264,7 @@ resource "kubernetes_namespace_v1" "aws_observability" {
 
 # fluent-bit-cloudwatch value as the name of the CloudWatch log group that is automatically created as soon as your apps start logging
 resource "kubernetes_config_map_v1" "aws_logging" {
-  count = var.enable_fargate_fluentbit ? 1 : 0
+  count = var.enable_fargate_fluentbit && var.create_kubernetes_resources ? 1 : 0
 
   metadata {
     name      = "aws-logging"
@@ -2247,7 +2305,7 @@ resource "kubernetes_config_map_v1" "aws_logging" {
           Match *
           region ${local.region}
           log_group_name ${try(var.fargate_fluentbit.cwlog_group, aws_cloudwatch_log_group.fargate_fluentbit[0].name)}
-          log_stream_prefix ${try(var.fargate_fluentbit.cwlog_stream_prefix, "fargate-logs-")}
+          log_stream_prefix ${local.fargate_fluentbit_cwlog_stream_prefix}
           auto_create_group true
       EOT
     )
@@ -2264,6 +2322,9 @@ module "gatekeeper" {
   version = "1.0.0"
 
   create = var.enable_gatekeeper
+
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
 
   # https://github.com/open-policy-agent/gatekeeper/blob/master/charts/gatekeeper/Chart.yaml
   name             = try(var.gatekeeper.name, "gatekeeper")
@@ -2318,6 +2379,9 @@ module "ingress_nginx" {
 
   create = var.enable_ingress_nginx
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/kubernetes/ingress-nginx/blob/main/charts/ingress-nginx/Chart.yaml
   name             = try(var.ingress_nginx.name, "ingress-nginx")
   description      = try(var.ingress_nginx.description, "A Helm chart to install the Ingress Nginx")
@@ -2369,9 +2433,11 @@ locals {
   karpenter_service_account_name    = try(var.karpenter.service_account_name, "karpenter")
   karpenter_enable_spot_termination = var.enable_karpenter && var.karpenter_enable_spot_termination
 
-  create_karpenter_node_iam_role = var.enable_karpenter && try(var.karpenter_node.create_iam_role, true)
-  karpenter_node_iam_role_arn    = try(aws_iam_role.karpenter[0].arn, var.karpenter_node.iam_role_arn, "")
-  karpenter_node_iam_role_name   = try(var.karpenter_node.iam_role_name, "karpenter-${var.cluster_name}")
+  create_karpenter_node_iam_role       = var.enable_karpenter && try(var.karpenter_node.create_iam_role, true)
+  karpenter_node_iam_role_arn          = try(aws_iam_role.karpenter[0].arn, var.karpenter_node.iam_role_arn, "")
+  karpenter_node_iam_role_name         = try(var.karpenter_node.iam_role_name, "karpenter-${var.cluster_name}")
+  karpenter_node_instance_profile_name = try(aws_iam_instance_profile.karpenter[0].name, var.karpenter_node.instance_profile_name, "")
+  karpenter_namespace                  = try(var.karpenter.namespace, "karpenter")
 }
 
 data "aws_iam_policy_document" "karpenter" {
@@ -2571,10 +2637,13 @@ module "karpenter" {
 
   create = var.enable_karpenter
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/aws/karpenter/blob/main/charts/karpenter/Chart.yaml
   name             = try(var.karpenter.name, "karpenter")
   description      = try(var.karpenter.description, "A Helm chart to deploy Karpenter")
-  namespace        = try(var.karpenter.namespace, "karpenter")
+  namespace        = local.karpenter_namespace
   create_namespace = try(var.karpenter.create_namespace, true)
   chart            = "karpenter"
   chart_version    = try(var.karpenter.chart_version, "v0.27.2")
@@ -2620,7 +2689,7 @@ module "karpenter" {
       },
       {
         name  = "settings.aws.defaultInstanceProfile"
-        value = try(aws_iam_instance_profile.karpenter[0].name, var.karpenter_node.instance_profile_name, "")
+        value = local.karpenter_node_instance_profile_name
       },
       {
         name  = "settings.aws.interruptionQueueName"
@@ -2688,6 +2757,9 @@ module "kube_prometheus_stack" {
 
   create = var.enable_kube_prometheus_stack
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/Chart.yaml
   name             = try(var.kube_prometheus_stack.name, "kube-prometheus-stack")
   description      = try(var.kube_prometheus_stack.description, "A Helm chart to install the Kube Prometheus Stack")
@@ -2740,6 +2812,9 @@ module "metrics_server" {
   version = "1.0.0"
 
   create = var.enable_metrics_server
+
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
 
   # https://github.com/kubernetes-sigs/metrics-server/blob/master/charts/metrics-server/Chart.yaml
   name             = try(var.metrics_server.name, "metrics-server")
@@ -2794,6 +2869,9 @@ module "secrets_store_csi_driver" {
 
   create = var.enable_secrets_store_csi_driver
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/kubernetes-sigs/secrets-store-csi-driver/blob/main/charts/secrets-store-csi-driver/Chart.yaml
   name             = try(var.secrets_store_csi_driver.name, "secrets-store-csi-driver")
   description      = try(var.secrets_store_csi_driver.description, "A Helm chart to install the Secrets Store CSI Driver")
@@ -2846,6 +2924,9 @@ module "secrets_store_csi_driver_provider_aws" {
   version = "1.0.0"
 
   create = var.enable_secrets_store_csi_driver_provider_aws
+
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
 
   # https://github.com/aws/secrets-store-csi-driver-provider-aws/blob/main/charts/secrets-store-csi-driver-provider-aws/Chart.yaml
   name             = try(var.secrets_store_csi_driver_provider_aws.name, "secrets-store-csi-driver-provider-aws")
@@ -2901,6 +2982,7 @@ locals {
   velero_backup_s3_bucket_arn    = try(split("/", var.velero.s3_backup_location)[0], var.velero.s3_backup_location, "")
   velero_backup_s3_bucket_name   = try(split("/", local.velero_backup_s3_bucket[5])[0], local.velero_backup_s3_bucket[5], "")
   velero_backup_s3_bucket_prefix = try(split("/", var.velero.s3_backup_location)[1], "")
+  velero_namespace               = try(var.velero.namespace, "velero")
 }
 
 # https://github.com/vmware-tanzu/velero-plugin-for-aws#option-1-set-permissions-with-an-iam-user
@@ -2953,10 +3035,13 @@ module "velero" {
 
   create = var.enable_velero
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/vmware-tanzu/helm-charts/blob/main/charts/velero/Chart.yaml
   name             = try(var.velero.name, "velero")
   description      = try(var.velero.description, "A Helm chart to install the Velero")
-  namespace        = try(var.velero.namespace, "velero")
+  namespace        = local.velero_namespace
   create_namespace = try(var.velero.create_namespace, true)
   chart            = "velero"
   chart_version    = try(var.velero.chart_version, "3.1.6")
@@ -3076,6 +3161,9 @@ module "vpa" {
 
   create = var.enable_vpa
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/FairwindsOps/charts/blob/master/stable/vpa/Chart.yaml
   # (there is no offical helm chart for VPA)
   name             = try(var.vpa.name, "vpa")
@@ -3132,6 +3220,7 @@ module "vpa" {
 
 locals {
   aws_gateway_api_controller_service_account = try(var.aws_gateway_api_controller.service_account_name, "gateway-api-controller")
+  aws_gateway_api_controller_namespace       = try(var.aws_gateway_api_controller.namespace, "aws-application-networking-system")
 }
 
 data "aws_iam_policy_document" "aws_gateway_api_controller" {
@@ -3154,10 +3243,13 @@ module "aws_gateway_api_controller" {
 
   create = var.enable_aws_gateway_api_controller
 
+  # Disable helm release
+  create_release = var.create_kubernetes_resources
+
   # https://github.com/aws/aws-application-networking-k8s/blob/main/helm/Chart.yaml
   name             = try(var.aws_gateway_api_controller.name, "aws-gateway-api-controller")
   description      = try(var.aws_gateway_api_controller.description, "A Helm chart to deploy aws-gateway-api-controller")
-  namespace        = try(var.aws_gateway_api_controller.namespace, "aws-application-networking-system")
+  namespace        = local.aws_gateway_api_controller_namespace
   create_namespace = try(var.aws_gateway_api_controller.create_namespace, true)
   chart            = "aws-gateway-controller-chart"
   chart_version    = try(var.aws_gateway_api_controller.chart_version, "v0.0.12")

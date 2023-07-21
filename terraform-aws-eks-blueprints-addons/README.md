@@ -174,6 +174,7 @@ module "eks_blueprints_addons" {
 | <a name="input_cluster_version"></a> [cluster\_version](#input\_cluster\_version) | Kubernetes `<major>.<minor>` version to use for the EKS cluster (i.e.: `1.24`) | `string` | n/a | yes |
 | <a name="input_create_delay_dependencies"></a> [create\_delay\_dependencies](#input\_create\_delay\_dependencies) | Dependency attribute which must be resolved before starting the `create_delay_duration` | `list(string)` | `[]` | no |
 | <a name="input_create_delay_duration"></a> [create\_delay\_duration](#input\_create\_delay\_duration) | The duration to wait before creating resources | `string` | `"30s"` | no |
+| <a name="input_create_kubernetes_resources"></a> [create\_kubernetes\_resources](#input\_create\_kubernetes\_resources) | Create Kubernetes resource with Helm or Kubernetes provider | `bool` | `true` | no |
 | <a name="input_eks_addons"></a> [eks\_addons](#input\_eks\_addons) | Map of EKS add-on configurations to enable for the cluster. Add-on name can be the map keys or set with `name` | `any` | `{}` | no |
 | <a name="input_eks_addons_timeouts"></a> [eks\_addons\_timeouts](#input\_eks\_addons\_timeouts) | Create, update, and delete timeout configurations for the EKS add-ons | `map(string)` | `{}` | no |
 | <a name="input_enable_argo_rollouts"></a> [enable\_argo\_rollouts](#input\_enable\_argo\_rollouts) | Enable Argo Rollouts add-on | `bool` | `false` | no |
@@ -225,6 +226,7 @@ module "eks_blueprints_addons" {
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to add to all resources | `map(string)` | `{}` | no |
 | <a name="input_velero"></a> [velero](#input\_velero) | Velero add-on configuration values | `any` | `{}` | no |
 | <a name="input_vpa"></a> [vpa](#input\_vpa) | Vertical Pod Autoscaler add-on configuration values | `any` | `{}` | no |
+| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | Cluster VPC Id | `string` | `null` | no |
 
 ## Outputs
 
@@ -249,6 +251,7 @@ module "eks_blueprints_addons" {
 | <a name="output_external_secrets"></a> [external\_secrets](#output\_external\_secrets) | Map of attributes of the Helm release and IRSA created |
 | <a name="output_fargate_fluentbit"></a> [fargate\_fluentbit](#output\_fargate\_fluentbit) | Map of attributes of the configmap and IAM policy created |
 | <a name="output_gatekeeper"></a> [gatekeeper](#output\_gatekeeper) | Map of attributes of the Helm release and IRSA created |
+| <a name="output_gitops_metadata"></a> [gitops\_metadata](#output\_gitops\_metadata) | GitOps Bridge metadata |
 | <a name="output_helm_releases"></a> [helm\_releases](#output\_helm\_releases) | Map of attributes of the Helm release created |
 | <a name="output_ingress_nginx"></a> [ingress\_nginx](#output\_ingress\_nginx) | Map of attributes of the Helm release and IRSA created |
 | <a name="output_karpenter"></a> [karpenter](#output\_karpenter) | Map of attributes of the Helm release and IRSA created |

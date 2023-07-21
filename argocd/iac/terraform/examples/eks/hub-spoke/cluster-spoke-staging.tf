@@ -58,7 +58,7 @@ resource "aws_iam_role" "spoke_role_staging" {
 # EKS Blueprints Addons
 ################################################################################
 module "eks_blueprints_addons_spoke_staging" {
-  source = "../../../../../../terraform-aws-eks-blueprints-addons/gitops"
+  source = "../../../../../../terraform-aws-eks-blueprints-addons"
 
   cluster_name      = module.eks_spoke_staging.cluster_name
   cluster_endpoint  = module.eks_spoke_staging.cluster_endpoint
@@ -66,6 +66,9 @@ module "eks_blueprints_addons_spoke_staging" {
   oidc_provider_arn = module.eks_spoke_staging.oidc_provider_arn
   vpc_id            = module.vpc_staging.vpc_id
 
+
+  # Using GitOps Bridge
+  create_kubernetes_resources    = false
 
   #enable_aws_efs_csi_driver                    = true
   #enable_aws_fsx_csi_driver                    = true

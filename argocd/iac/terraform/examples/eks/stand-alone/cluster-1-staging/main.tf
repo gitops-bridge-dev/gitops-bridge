@@ -75,13 +75,16 @@ module "gitops_bridge_bootstrap" {
 # EKS Blueprints Addons
 ################################################################################
 module "eks_blueprints_addons" {
-  source = "../../../../../../terraform-aws-eks-blueprints-addons/gitops"
+  source = "../../../../../../terraform-aws-eks-blueprints-addons"
 
   cluster_name      = module.eks.cluster_name
   cluster_endpoint  = module.eks.cluster_endpoint
   cluster_version   = module.eks.cluster_version
   oidc_provider_arn = module.eks.oidc_provider_arn
   vpc_id            = module.vpc.vpc_id
+
+  # Using GitOps Bridge
+  create_kubernetes_resources    = false
 
   #enable_aws_efs_csi_driver                    = true
   #enable_aws_fsx_csi_driver                    = true

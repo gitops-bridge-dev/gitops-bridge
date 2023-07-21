@@ -549,3 +549,19 @@ variable "aws_gateway_api_controller" {
   type        = any
   default     = {}
 }
+
+################################################################################
+# GitOps Bridge
+################################################################################
+
+variable "vpc_id" {
+  description = "Cluster VPC Id"
+  type        = string
+  default     = null
+}
+
+variable "create_kubernetes_resources" {
+  description = "Create Kubernetes resource with Helm or Kubernetes provider"
+  type        = bool
+  default     = true
+}

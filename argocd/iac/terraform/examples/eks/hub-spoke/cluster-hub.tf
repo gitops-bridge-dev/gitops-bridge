@@ -104,7 +104,7 @@ data "aws_iam_policy_document" "assume_role_policy" {
 # EKS Blueprints Addons
 ################################################################################
 module "eks_blueprints_addons_hub" {
-  source = "../../../../../../terraform-aws-eks-blueprints-addons/gitops"
+  source = "../../../../../../terraform-aws-eks-blueprints-addons"
 
   cluster_name      = module.eks_hub.cluster_name
   cluster_endpoint  = module.eks_hub.cluster_endpoint
@@ -112,6 +112,9 @@ module "eks_blueprints_addons_hub" {
   oidc_provider_arn = module.eks_hub.oidc_provider_arn
   vpc_id            = module.vpc_hub.vpc_id
 
+
+  # Using GitOps Bridge
+  create_kubernetes_resources    = false
 
   #enable_aws_efs_csi_driver                    = true
   #enable_aws_fsx_csi_driver                    = true
