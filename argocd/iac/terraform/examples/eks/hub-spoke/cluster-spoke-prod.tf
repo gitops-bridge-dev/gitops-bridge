@@ -58,7 +58,7 @@ resource "aws_iam_role" "spoke_role_prod" {
 # EKS Blueprints Addons
 ################################################################################
 module "eks_blueprints_addons_spoke_prod" {
-  source = "../../../../../../terraform-aws-eks-blueprints-addons"
+  source = "github.com/csantanapr/terraform-aws-eks-blueprints-addons?ref=gitops-bridge-v2"
 
   cluster_name      = module.eks_spoke_prod.cluster_name
   cluster_endpoint  = module.eks_spoke_prod.cluster_endpoint

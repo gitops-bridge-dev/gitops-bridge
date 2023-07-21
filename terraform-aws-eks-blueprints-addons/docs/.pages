@@ -1,7 +1,0 @@
-nav:
-  - Overview: index.md
-  - Architectures: architectures.md
-  - Amazon EKS Addons: amazon-eks-addons.md
-  - AWS Partner Addons: aws-partner-addons.md
-  - Helm Releases: helm-release.md
-  - Addons: addons

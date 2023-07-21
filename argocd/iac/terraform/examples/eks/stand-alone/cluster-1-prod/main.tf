@@ -39,7 +39,7 @@ locals {
 # GitOps Bridge: Metadata
 ################################################################################
 module "gitops_bridge_metadata" {
-  source = "../../../modules/gitops-bridge-metadata"
+  source = "../../../../modules/gitops-bridge-metadata"
 
   cluster_name = module.eks.cluster_name
   metadata = module.eks_blueprints_addons.gitops_metadata
@@ -56,7 +56,7 @@ locals {
   argocd_bootstrap_workloads = "https://raw.githubusercontent.com/gitops-bridge-dev/gitops-bridge-argocd-control-plane-template/main/bootstrap/workloads/exclude/bootstrap.yaml"
 }
 module "gitops_bridge_bootstrap" {
-  source = "../../../modules/gitops-bridge-bootstrap"
+  source = "../../../../modules/gitops-bridge-bootstrap"
 
   options = {
     argocd = {
@@ -75,7 +75,7 @@ module "gitops_bridge_bootstrap" {
 # EKS Blueprints Addons
 ################################################################################
 module "eks_blueprints_addons" {
-  source = "../../../../../../terraform-aws-eks-blueprints-addons"
+  source = "github.com/csantanapr/terraform-aws-eks-blueprints-addons?ref=gitops-bridge-v2"
 
   cluster_name      = module.eks.cluster_name
   cluster_endpoint  = module.eks.cluster_endpoint

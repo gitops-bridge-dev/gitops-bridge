@@ -104,7 +104,7 @@ data "aws_iam_policy_document" "assume_role_policy" {
 # EKS Blueprints Addons
 ################################################################################
 module "eks_blueprints_addons_hub" {
-  source = "../../../../../../terraform-aws-eks-blueprints-addons"
+  source = "github.com/csantanapr/terraform-aws-eks-blueprints-addons?ref=gitops-bridge-v2"
 
   cluster_name      = module.eks_hub.cluster_name
   cluster_endpoint  = module.eks_hub.cluster_endpoint
