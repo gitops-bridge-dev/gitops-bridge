@@ -6,13 +6,13 @@ data "aws_availability_zones" "available" {}
 
 locals {
 
-  cluster_hub = "cluster-1-cp"
+  cluster_hub = "cluster-hub"
   cluster_hub_environment = "control-plane"
 
-  cluster_spoke_staging = "cluster-1-staging"
+  cluster_spoke_staging = "cluster-spoke-staging"
   cluster_spoke_staging_environment = "staging"
 
-  cluster_spoke_prod = "cluster-1-prod"
+  cluster_spoke_prod = "cluster-spoke-prod"
   cluster_spoke_prod_environment = "prod"
 
   region = "us-west-2"
