@@ -37,11 +37,11 @@ resource "shell_script" "argocd_install" {
 # Register ArgoCD Cluster Secret
 ################################################################################
 locals {
+  argocd_cluster_command = try(var.options.argocd.argocd_cluster_command,"kubectl apply -f ${local.argocd_cluster_manifest}")
   argocd_cluster_secret_script = <<-EOF
     set -x
     ${local.argocd_kubeconfig_command}
-    kubectl apply -f ${local.argocd_cluster_manifest}
-    echo "{\"cluster\": \"${local.argocd_cluster_manifest}\"}"
+    ${local.argocd_cluster_command}
   EOF
   argocd_cluster_manifest = "${path.root}/.terraform/tmp/${try(var.options.argocd.cluster_name,"my-cluster")}.yaml"
 }
@@ -69,34 +69,19 @@ resource "shell_script" "argocd_cluster" {
 ################################################################################
 locals {
   argocd_login = try(var.options.argocd.argocd_login,"kubectl config set-context --current --namespace argocd \nargocd login --port-forward --username admin --password $(argocd admin initial-password | head -1)")
+  argocd_bootstrap_script = <<-EOF
+    set -x
+    ${local.argocd_kubeconfig_command}
+    ${local.argocd_login}
+    ${try(var.options.argocd.argocd_bootstrap_app_of_apps,"")}
+  EOF
 }
 resource "shell_script" "argocd_app_of_apps" {
-  for_each = toset(try(var.options.argocd.argocd_bootstrap_app_of_apps,[]))
+  count = try(var.options.argocd.argocd_create_app_of_apps,true) ? 1 : 0
   lifecycle_commands {
-    create = <<-EOF
-        set -x
-        ${local.argocd_kubeconfig_command}
-        ${local.argocd_login}
-        ${each.key}
-        echo "{\"app\": \"${each.key}\"}"
-    EOF
-    update = <<-EOF
-        set -x
-        ${local.argocd_kubeconfig_command}
-        ${local.argocd_login}
-        ${each.key}
-        echo "{\"app\": \"${each.key}\"}"
-    EOF
-    /*
-    read = <<-EOF
-        set -x
-        ${local.argocd_kubeconfig_command}
-        ${local.argocd_login}
-        ${each.key}
-        echo "{\"app\": \"${each.key}\"}"
-    EOF
-    */
-
+    create = local.argocd_bootstrap_script
+    update = local.argocd_bootstrap_script
+    //read = local.argocd_bootstrap_script
     delete = "echo gitops ftw!"
   }
   depends_on = [ shell_script.argocd_cluster ]

@@ -30,24 +30,24 @@ module "gitops_bridge_bootstrap_hub" {
   options = {
     argocd = {
       cluster_name = module.eks_hub.cluster_name
-      kubeconfig_command = "KUBECONFIG=${local.kubeconfig} \naws eks --region ${local.region} update-kubeconfig --name ${module.eks_hub.cluster_name}"
+      kubeconfig_command = <<-EOT
+      KUBECONFIG=${local.kubeconfig}
+      aws eks --region ${local.region} update-kubeconfig --name ${module.eks_hub.cluster_name}
+      EOT
       argocd_install_script_flags = join(" ",[
         "--create-namespace --wait",
         "--set controller.serviceAccount.annotations.\"eks\\.amazonaws\\.com/role-arn\"=\"${module.argocd_irsa.iam_role_arn}\"",
         "--set server.serviceAccount.annotations.\"eks\\.amazonaws\\.com/role-arn\"=\"${module.argocd_irsa.iam_role_arn}\""
       ])
       argocd_cluster = module.gitops_bridge_metadata_hub.argocd
-      argocd_bootstrap_app_of_apps = [
-        "argocd app create --port-forward -f ${local.argocd_bootstrap_control_plane}",
-        "argocd app create --port-forward -f ${local.argocd_bootstrap_workloads}"
-      ]
+      argocd_bootstrap_app_of_apps = <<-EOT
+      argocd app create --port-forward -f ${local.argocd_bootstrap_control_plane}
+      argocd app create --port-forward -f ${local.argocd_bootstrap_workloads}
+      EOT
     }
   }
-
-
-
-
 }
+
 
 ################################################################################
 # ArgoCD EKS Access

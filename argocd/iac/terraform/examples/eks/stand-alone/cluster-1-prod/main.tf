@@ -61,12 +61,15 @@ module "gitops_bridge_bootstrap" {
   options = {
     argocd = {
       cluster_name = module.eks.cluster_name
-      kubeconfig_command = "KUBECONFIG=${local.kubeconfig} \naws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name}"
+      kubeconfig_command = <<-EOT
+      KUBECONFIG=${local.kubeconfig}
+      aws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name}
+      EOT
       argocd_cluster = module.gitops_bridge_metadata.argocd
-      argocd_bootstrap_app_of_apps = [
-        "argocd app create --port-forward -f ${local.argocd_bootstrap_control_plane}",
-        "argocd app create --port-forward -f ${local.argocd_bootstrap_workloads}"
-      ]
+      argocd_bootstrap_app_of_apps = <<-EOT
+      argocd app create --port-forward -f ${local.argocd_bootstrap_control_plane}
+      argocd app create --port-forward -f ${local.argocd_bootstrap_workloads}
+      EOT
     }
   }
 }

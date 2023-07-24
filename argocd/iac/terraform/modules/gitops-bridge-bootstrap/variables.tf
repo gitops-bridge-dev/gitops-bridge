@@ -10,9 +10,10 @@
     cluster_name                 = "my-cluster"
     argocd_create_cluster_secret = true
     argocd_cluster               = ""
-    argocd_create_cluster_secret = true
+    argocd_cluster_command       = "kubectl apply -f ${local.argocd_cluster_manifest}"
     argocd_login                 = "kubectl config set-context --current --namespace argocd \nargocd login --port-forward --username admin --password $(argocd admin initial-password | head -1)"
-    argocd_bootstrap_app_of_apps = []
+    argocd_create_app_of_apps    = true
+    argocd_bootstrap_app_of_apps = ""
   }
 }
 */

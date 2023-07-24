@@ -37,7 +37,10 @@ module "gitops_bridge_bootstrap_staging" {
   options = {
     argocd = {
       cluster_name = module.eks_spoke_staging.cluster_name
-      kubeconfig_command = "KUBECONFIG=${local.kubeconfig} \naws eks --region ${local.region} update-kubeconfig --name ${module.eks_hub.cluster_name}"
+      kubeconfig_command = <<-EOT
+      KUBECONFIG=${local.kubeconfig}
+      aws eks --region ${local.region} update-kubeconfig --name ${module.eks_hub.cluster_name}
+      EOT
       argocd_cluster = module.gitops_bridge_metadata_staging.argocd
       argocd_create_install = false # we are not deploying argocd to spoke clusters
       argocd_create_app_of_apps = false # the hub cluster already has the app of apps
