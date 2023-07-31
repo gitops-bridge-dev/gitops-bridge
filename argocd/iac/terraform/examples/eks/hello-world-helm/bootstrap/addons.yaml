@@ -7,7 +7,7 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: 'argocd'
-  project: dedfault
+  project: default
   source:
     path: bootstrap/control-plane
     repoURL: https://github.com/gitops-bridge-dev/gitops-bridge-argocd-control-plane-template

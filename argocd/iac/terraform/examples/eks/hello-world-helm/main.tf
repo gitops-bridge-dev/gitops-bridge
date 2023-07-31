@@ -41,7 +41,7 @@ locals {
     enable_metrics_server = true # doesn't required aws resources (ie IAM)
   }
 
-  gitops_addons_app = file("${path.module}/bootstrap/addons.yaml",{project = "foo"})
+  gitops_addons_app = file("${path.module}/bootstrap/addons.yaml")
   gitops_workloads_app = file("${path.module}/bootstrap/workloads.yaml")
 
   vpc_cidr = "10.0.0.0/16"
