@@ -63,7 +63,6 @@ module "gitops_bridge_metadata" {
   metadata = module.eks_blueprints_addons.gitops_metadata
   environment = local.environment
   addons = local.addons
-
 }
 
 ################################################################################
@@ -72,14 +71,10 @@ module "gitops_bridge_metadata" {
 module "gitops_bridge_bootstrap" {
   source = "../../../modules/gitops-bridge-bootstrap-helm"
 
-  options = {
-    argocd = {
-      argocd_cluster = module.gitops_bridge_metadata.argocd
-      argocd_bootstrap_app_of_apps = {
-        addons = local.gitops_addons_app
-        workloads = local.gitops_workloads_app
-      }
-    }
+  argocd_cluster = module.gitops_bridge_metadata.argocd
+  argocd_bootstrap_app_of_apps = {
+    addons = local.gitops_addons_app
+    workloads = local.gitops_workloads_app
   }
 }
 
