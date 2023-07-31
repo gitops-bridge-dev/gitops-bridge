@@ -3,6 +3,32 @@ provider "aws" {
 }
 data "aws_availability_zones" "available" {}
 
+provider "helm" {
+  kubernetes {
+    host                   = module.eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      # This requires the awscli to be installed locally where Terraform is executed
+      args = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
+    }
+  }
+}
+
+provider "kubectl" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
+    command     = "aws"
+  }
+  load_config_file       = false
+  apply_retry_count      = 15
+}
+
 locals {
   name = "cluster-1-crossplane"
   region = "us-west-2"
@@ -15,6 +41,8 @@ locals {
     enable_crossplane = true
   }
 
+  gitops_addons_app = file("${path.module}/bootstrap/addons.yaml")
+
   vpc_cidr = "10.0.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
 
@@ -23,7 +51,6 @@ locals {
     GithubRepo = "github.com/csantanapr/terraform-gitops-bridge"
   }
 }
-
 ################################################################################
 # GitOps Bridge: Metadata
 ################################################################################
@@ -43,29 +70,15 @@ module "gitops_bridge_metadata" {
 ################################################################################
 # GitOps Bridge: Bootstrap
 ################################################################################
-locals {
-  kubeconfig = "/tmp/${module.eks.cluster_name}"
-  argocd_bootstrap_control_plane = "https://raw.githubusercontent.com/gitops-bridge-dev/gitops-bridge-argocd-control-plane-template/main/bootstrap/control-plane/exclude/bootstrap.yaml"
-  argocd_bootstrap_workloads = "https://raw.githubusercontent.com/gitops-bridge-dev/gitops-bridge-argocd-control-plane-template/main/bootstrap/workloads/exclude/bootstrap.yaml"
-}
 module "gitops_bridge_bootstrap" {
-  source = "../../../modules/gitops-bridge-bootstrap"
+  source = "../../../modules/gitops-bridge-bootstrap-helm"
 
-  options = {
-    argocd = {
-      cluster_name = module.eks.cluster_name
-      kubeconfig_command = <<-EOT
-      KUBECONFIG=${local.kubeconfig}
-      aws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name}
-      EOT
-      argocd_cluster = module.gitops_bridge_metadata.argocd
-      argocd_bootstrap_app_of_apps = <<-EOT
-      argocd app create --port-forward -f ${local.argocd_bootstrap_control_plane}
-      argocd app create --port-forward -f ${local.argocd_bootstrap_workloads}
-      EOT
-    }
+  argocd_cluster = module.gitops_bridge_metadata.argocd
+  argocd_bootstrap_app_of_apps = {
+    addons = local.gitops_addons_app
   }
 }
+
 
 ################################################################################
 # Crossplane
