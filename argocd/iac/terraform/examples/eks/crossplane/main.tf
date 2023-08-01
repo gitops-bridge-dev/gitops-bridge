@@ -3,6 +3,7 @@ provider "aws" {
 }
 data "aws_availability_zones" "available" {}
 
+
 provider "helm" {
   kubernetes {
     host                   = module.eks.cluster_endpoint
@@ -27,6 +28,18 @@ provider "kubectl" {
   }
   load_config_file       = false
   apply_retry_count      = 15
+}
+
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    # This requires the awscli to be installed locally where Terraform is executed
+    args = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
+  }
 }
 
 locals {
@@ -71,7 +84,7 @@ module "gitops_bridge_metadata" {
 # GitOps Bridge: Bootstrap
 ################################################################################
 module "gitops_bridge_bootstrap" {
-  source = "../../../modules/gitops-bridge-bootstrap-helm"
+  source = "../../../modules/gitops-bridge-bootstrap"
 
   argocd_cluster = module.gitops_bridge_metadata.argocd
   argocd_bootstrap_app_of_apps = {

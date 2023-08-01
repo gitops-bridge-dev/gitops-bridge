@@ -1,42 +1,40 @@
-output "configure_kubectl_hub" {
+output "configure_kubectl" {
   description = "Configure kubectl: make sure you're logged in with the correct AWS profile and run the following command to update your kubeconfig"
-  value       = "aws eks --region ${local.region} update-kubeconfig --name ${module.eks_hub.cluster_name}"
+  value       = "aws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name}"
 }
 
-output "terminal_setup_hub" {
+
+output "terminal_setup" {
   description = "Terminal Setup"
   value       = <<-EOT
-    export KUBECONFIG="/tmp/${module.eks_hub.cluster_name}"
-    aws eks --region ${local.region} update-kubeconfig --name ${module.eks_hub.cluster_name}
+    export KUBECONFIG="/tmp/${module.eks.cluster_name}"
+    aws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name}
     export ARGOCD_OPTS="--port-forward --port-forward-namespace argocd --grpc-web"
     kubectl config set-context --current --namespace argocd
     argocd admin dashboard --port 8080
     EOT
 }
 
-output "configure_kubectl_spoke_staging" {
-  description = "Configure kubectl: make sure you're logged in with the correct AWS profile and run the following command to update your kubeconfig"
-  value       = "aws eks --region ${local.region} update-kubeconfig --name ${module.eks_spoke_staging.cluster_name}"
+
+output "argocd_iam_role_arn" {
+  description = "IAM Role for ArgoCD Cluster Hub, use to connect to spoke clusters"
+  value = module.argocd_irsa.iam_role_arn
 }
 
-output "terminal_setup_staging" {
-  description = "Terminal Setup"
-  value       = <<-EOT
-    export KUBECONFIG="/tmp/${module.eks_spoke_staging.cluster_name}"
-    aws eks --region ${local.region} update-kubeconfig --name ${module.eks_spoke_staging.cluster_name}
-    EOT
+output "cluster_name" {
+  description = "Cluster Hub name"
+  value = module.eks.cluster_name
 }
-
-output "configure_kubectl_spoke_prod" {
-  description = "Configure kubectl: make sure you're logged in with the correct AWS profile and run the following command to update your kubeconfig"
-  value       = "aws eks --region ${local.region} update-kubeconfig --name ${module.eks_spoke_prod.cluster_name}"
+output "cluster_endpoint" {
+  description = "Cluster Hub endpoint"
+  value = module.eks.cluster_endpoint
 }
-
-output "terminal_setup_prod" {
-  description = "Terminal Setup"
-  value       = <<-EOT
-    export KUBECONFIG="/tmp/${module.eks_spoke_prod.cluster_name}"
-    aws eks --region ${local.region} update-kubeconfig --name ${module.eks_spoke_prod.cluster_name}
-    EOT
+output "cluster_certificate_authority_data" {
+  description = "Cluster Hub certificate_authority_data"
+  value = module.eks.cluster_certificate_authority_data
+}
+output "cluster_region" {
+  description = "Cluster Hub region"
+  value = local.region
 }
 

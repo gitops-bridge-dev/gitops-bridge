@@ -3,7 +3,33 @@ provider "aws" {
 }
 data "aws_availability_zones" "available" {}
 
-# Only required for eks module when using self managed nodes
+
+provider "helm" {
+  kubernetes {
+    host                   = module.eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      # This requires the awscli to be installed locally where Terraform is executed
+      args = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
+    }
+  }
+}
+
+provider "kubectl" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
+    command     = "aws"
+  }
+  load_config_file       = false
+  apply_retry_count      = 15
+}
+
 provider "kubernetes" {
   host                   = module.eks.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
@@ -12,11 +38,9 @@ provider "kubernetes" {
     api_version = "client.authentication.k8s.io/v1beta1"
     command     = "aws"
     # This requires the awscli to be installed locally where Terraform is executed
-    args = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
+    args = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
   }
 }
-
-
 
 locals {
   name   = "cluster-1-cp"
@@ -42,6 +66,10 @@ locals {
     enable_gpu_operator          = true # doesn't required aws resources (ie IAM)
     enable_foo                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
+
+  gitops_addons_app = file("${path.module}/bootstrap/addons.yaml")
+  gitops_workloads_app = file("${path.module}/bootstrap/workloads.yaml")
+
   vpc_cidr = "10.0.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
 
@@ -66,29 +94,15 @@ module "gitops_bridge_metadata" {
 ################################################################################
 # GitOps Bridge: Bootstrap
 ################################################################################
-locals {
-  kubeconfig                     = "/tmp/${module.eks.cluster_name}"
-  argocd_bootstrap_control_plane = "https://raw.githubusercontent.com/gitops-bridge-dev/gitops-bridge-argocd-control-plane-template/main/bootstrap/control-plane/exclude/bootstrap.yaml"
-  argocd_bootstrap_workloads     = "https://raw.githubusercontent.com/gitops-bridge-dev/gitops-bridge-argocd-control-plane-template/main/bootstrap/workloads/exclude/bootstrap.yaml"
-}
 module "gitops_bridge_bootstrap" {
   source = "../../../modules/gitops-bridge-bootstrap"
 
-  options = {
-    argocd = {
-      cluster_name       = module.eks.cluster_name
-      kubeconfig_command = "KUBECONFIG=${local.kubeconfig} \naws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name}"
-      argocd_cluster     = module.gitops_bridge_metadata.argocd
-      argocd_bootstrap_app_of_apps = [
-        "argocd app create --port-forward -f ${local.argocd_bootstrap_control_plane}",
-        "argocd app create --port-forward -f ${local.argocd_bootstrap_workloads}"
-      ]
-    }
+  argocd_cluster = module.gitops_bridge_metadata.argocd
+  argocd_bootstrap_app_of_apps = {
+    addons = local.gitops_addons_app
+    workloads = local.gitops_workloads_app
   }
-
 }
-
-
 
 ################################################################################
 # EKS Cluster

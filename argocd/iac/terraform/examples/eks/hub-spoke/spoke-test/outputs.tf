@@ -9,8 +9,5 @@ output "terminal_setup" {
   value       = <<-EOT
     export KUBECONFIG="/tmp/${module.eks.cluster_name}"
     aws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name}
-    export ARGOCD_OPTS="--port-forward --port-forward-namespace argocd --grpc-web"
-    kubectl config set-context --current --namespace argocd
-    argocd admin dashboard --port 8080
     EOT
 }

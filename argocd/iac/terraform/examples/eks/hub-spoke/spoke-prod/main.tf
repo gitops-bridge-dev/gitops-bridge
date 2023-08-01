@@ -3,46 +3,69 @@ provider "aws" {
 }
 data "aws_availability_zones" "available" {}
 
+data "terraform_remote_state" "cluster_hub" {
+  backend = "local"
 
-provider "helm" {
-  kubernetes {
-    host                   = module.eks.cluster_endpoint
-    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-
-    exec {
-      api_version = "client.authentication.k8s.io/v1beta1"
-      command     = "aws"
-      # This requires the awscli to be installed locally where Terraform is executed
-      args = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
-    }
+  config = {
+    path = "${path.module}/../terraform.tfstate"
   }
 }
 
-provider "kubectl" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+provider "kubernetes" {
+  host                   = data.terraform_remote_state.cluster_hub.outputs.cluster_endpoint
+  cluster_ca_certificate = base64decode(data.terraform_remote_state.cluster_hub.outputs.cluster_certificate_authority_data)
+
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
-    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
+    command     = "aws"
+    # This requires the awscli to be installed locally where Terraform is executed
+    args = ["eks", "get-token", "--cluster-name", data.terraform_remote_state.cluster_hub.outputs.cluster_name, "--region", data.terraform_remote_state.cluster_hub.outputs.cluster_region]
+  }
+    alias = "hub"
+}
+
+provider "kubectl" {
+  host                   = data.terraform_remote_state.cluster_hub.outputs.cluster_endpoint
+  cluster_ca_certificate = base64decode(data.terraform_remote_state.cluster_hub.outputs.cluster_certificate_authority_data)
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    args        = ["eks", "get-token", "--cluster-name", data.terraform_remote_state.cluster_hub.outputs.cluster_name, "--region", data.terraform_remote_state.cluster_hub.outputs.cluster_region]
     command     = "aws"
   }
   load_config_file       = false
   apply_retry_count      = 15
 }
 
-locals {
-  name = "cluster-1-dev"
-  region = "us-west-2"
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
 
-  environment = "dev"
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    # This requires the awscli to be installed locally where Terraform is executed
+    args = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
+  }
+}
+
+
+
+locals {
+  name = "cluster-spoke-prod"
+  region = "us-west-2"
+  environment = "prod"
 
   enable_cert_manager_addon = true
+  enable_aws_load_balancer_controller = true
   addons = {
     enable_metrics_server = true # doesn't required aws resources (ie IAM)
   }
 
-  gitops_addons_app = file("${path.module}/bootstrap/addons.yaml")
-  gitops_workloads_app = file("${path.module}/bootstrap/workloads.yaml")
+  gitops_workloads_app = templatefile("${path.module}/bootstrap/workloads.yaml",
+    {
+      environment = local.environment
+      cluster = module.eks.cluster_name
+    })
 
   vpc_cidr = "10.0.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
@@ -57,24 +80,65 @@ locals {
 # GitOps Bridge: Metadata
 ################################################################################
 module "gitops_bridge_metadata" {
-  source = "../../../modules/gitops-bridge-metadata"
+  source = "../../../../modules/gitops-bridge-metadata"
 
   cluster_name = module.eks.cluster_name
   metadata = module.eks_blueprints_addons.gitops_metadata
   environment = local.environment
   addons = local.addons
+
+  enable_argocd = false # we are not deploying argocd to spoke clusters
+  options = {
+    argocd = {
+      server = module.eks.cluster_endpoint
+      argocd_server_config = <<-EOT
+        {
+          "tlsClientConfig": {
+            "insecure": false,
+            "caData" : "${module.eks.cluster_certificate_authority_data}"
+          },
+          "awsAuthConfig" : {
+            "clusterName": "${module.eks.cluster_name}",
+            "roleARN": "${aws_iam_role.spoke.arn}"
+          }
+        }
+      EOT
+    }
+  }
 }
 
 ################################################################################
 # GitOps Bridge: Bootstrap
 ################################################################################
 module "gitops_bridge_bootstrap" {
-  source = "../../../modules/gitops-bridge-bootstrap-helm"
+  source = "../../../../modules/gitops-bridge-bootstrap"
 
+  providers = {
+    kubernetes = kubernetes.hub
+  }
+
+  argocd_create_install = false # We are not installing argocd on remote spoke clusters
   argocd_cluster = module.gitops_bridge_metadata.argocd
   argocd_bootstrap_app_of_apps = {
-    addons = local.gitops_addons_app
     workloads = local.gitops_workloads_app
+  }
+}
+
+################################################################################
+# ArgoCD EKS Access
+################################################################################
+resource "aws_iam_role" "spoke" {
+  name               = "${module.eks.cluster_name}-argocd-spoke"
+  assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
+}
+
+data "aws_iam_policy_document" "assume_role_policy" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "AWS"
+      identifiers = [data.terraform_remote_state.cluster_hub.outputs.argocd_iam_role_arn]
+    }
   }
 }
 
@@ -94,7 +158,8 @@ module "eks_blueprints_addons" {
   # Using GitOps Bridge
   create_kubernetes_resources    = false
 
-  enable_cert_manager       = local.enable_cert_manager_addon
+  enable_cert_manager                 = local.enable_cert_manager_addon
+  enable_aws_load_balancer_controller = local.enable_aws_load_balancer_controller
 
   tags = local.tags
 }
@@ -114,6 +179,18 @@ module "eks" {
 
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets
+
+  manage_aws_auth_configmap = true
+  aws_auth_roles = [
+    # Granting access to ArgoCD from hub cluster
+    {
+      rolearn  = aws_iam_role.spoke.arn
+      username = "gitops-role"
+      groups = [
+        "system:masters"
+      ]
+    },
+  ]
 
   eks_managed_node_groups = {
     initial = {

@@ -2,9 +2,17 @@ terraform {
   required_version = ">= 1.0"
 
   required_providers {
-    shell = {
-      source  = "scottwinkler/shell"
-      version = ">= 1.7.10"
+    helm = {
+      source  = "hashicorp/helm"
+      version = ">= 2.10.1"
+    }
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = ">= 1.14"
+    }
+    kubernetes = {
+      source = "hashicorp/kubernetes"
+      version = ">= 2.22.0"
     }
   }
 
