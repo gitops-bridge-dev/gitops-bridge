@@ -189,10 +189,12 @@ module "eks_blueprints_addons" {
       }
     }
     kube-proxy = {}
+    /* adot needs to be installed after cert-manager is installed with gitops, uncomment once cluster addons are deployed
     adot = {
       most_recent              = true
       service_account_role_arn = module.adot_irsa.iam_role_arn
     }
+    */
     aws-guardduty-agent = {}
   }
 
