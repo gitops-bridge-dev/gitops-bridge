@@ -72,18 +72,6 @@ resource "helm_release" "argocd" {
 
 }
 
-/*
-################################################################################
-# Register ArgoCD Cluster Secret
-################################################################################
-resource "kubectl_manifest" "cluster" {
-  count = var.argocd_cluster != null ? 1 : 0
-
-  yaml_body = yamlencode(var.argocd_cluster)
-
-  depends_on = [ helm_release.argocd ]
-}
-*/
 resource "kubernetes_secret_v1" "cluster" {
   count = var.argocd_cluster != null ? 1 : 0
 
@@ -94,6 +82,8 @@ resource "kubernetes_secret_v1" "cluster" {
     labels = var.argocd_cluster.metadata.labels
   }
   data = var.argocd_cluster.stringData
+
+  depends_on = [ helm_release.argocd ]
 
 }
 

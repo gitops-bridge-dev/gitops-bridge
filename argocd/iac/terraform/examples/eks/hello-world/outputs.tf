@@ -11,6 +11,7 @@ output "terminal_setup" {
     aws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name}
     export ARGOCD_OPTS="--port-forward --port-forward-namespace argocd --grpc-web"
     kubectl config set-context --current --namespace argocd
+    argocd login --port-forward --username admin --password $(argocd admin initial-password | head -1)
     argocd admin dashboard --port 8080
     EOT
 }

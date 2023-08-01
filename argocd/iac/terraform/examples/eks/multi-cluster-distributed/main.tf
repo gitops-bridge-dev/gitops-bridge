@@ -43,10 +43,11 @@ provider "kubernetes" {
 }
 
 locals {
-  name = var.name
+  name = "cluster-${terraform.workspace}"
+  environment = terraform.workspace
+  vpc_cidr = var.vpc_cidr
+  kubernetes_version = var.kubernetes_version
   region = "us-west-2"
-
-  environment = var.environment
 
   enable_cert_manager_addon = true
   addons = {
@@ -60,7 +61,7 @@ locals {
       cluster = module.eks.cluster_name
     })
 
-  vpc_cidr = "10.0.0.0/16"
+
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
 
   tags = {
@@ -124,7 +125,7 @@ module "eks" {
   version = "~> 19.13"
 
   cluster_name                   = local.name
-  cluster_version                = "1.27"
+  cluster_version                = local.kubernetes_version
   cluster_endpoint_public_access = true
 
 

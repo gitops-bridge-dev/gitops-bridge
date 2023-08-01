@@ -31,6 +31,7 @@ export KUBECONFIG=/tmp/$(terraform output -raw cluster_name)
 $(terraform output -raw configure_kubectl)
 export ARGOCD_OPTS="--port-forward --port-forward-namespace argocd --grpc-web"
 kubectl config set-context --current --namespace argocd
+argocd login --port-forward --username admin --password $(argocd admin initial-password | head -1)
 argocd admin dashboard --port 8080
 ```
 Argo CD UI is available at http://localhost:8080
@@ -42,6 +43,7 @@ export KUBECONFIG=/tmp/$(terraform output -raw cluster_name)
 $(terraform output -raw configure_kubectl)
 export ARGOCD_OPTS="--port-forward --port-forward-namespace argocd --grpc-web"
 kubectl config set-context --current --namespace argocd
+argocd login --port-forward --username admin --password $(argocd admin initial-password | head -1)
 kubectl get applications -n argocd
 kubectl get applicationsets -n argocd
 argocd app list
