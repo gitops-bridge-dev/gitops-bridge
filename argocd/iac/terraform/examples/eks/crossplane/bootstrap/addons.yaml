@@ -11,6 +11,7 @@ spec:
   source:
     path: bootstrap/control-plane
     repoURL: https://github.com/gitops-bridge-dev/gitops-bridge-argocd-control-plane-template
+    targetRevision: HEAD
     directory:
       recurse: true
       exclude: exclude/*
