@@ -1,5 +1,7 @@
 # ArgoCD with ingress domain name
 
+Example on how to deploy Amazon EKS with addons configured via ArgoCD.
+In this example the ArgoCD is configured with ingress using a https domain name managed on Route53
 
 
 **Create DNS Hosted Zone in Route 53:**
@@ -17,7 +19,26 @@ Use the NameServers in the DelegatoinSet to update your registered domain NS rec
 
 
 After creating the Route53 zone deploy the EKS Cluster
-```sh
+```shell
 terraform init
-terraform apply -auto-approve
+terraform apply
 ```
+
+Access Terraform output to configure `kubectl` and `argocd`
+```shell
+terraform output
+```
+
+To access ArgoCD thru ingress https use the following command to get URL and passwords
+```shell
+echo "URL: https://$(kubectl get ing -n argocd argo-cd-argocd-server -o jsonpath='{.spec.tls[0].hosts[0]}')"
+echo "Username: admin"
+echo "Password: $(kubectl get secrets argocd-initial-admin-secret -n argocd --template="{{index .data.password | base64decode}}")"
+```
+
+Destroy EKS Cluster
+```shell
+cd hub
+./destroy.sh
+```
+

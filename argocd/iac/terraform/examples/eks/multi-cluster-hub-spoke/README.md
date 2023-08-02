@@ -11,6 +11,13 @@ terraform init
 terraform apply
 ```
 
+Access Terraform output for Hub Cluster
+```shell
+cd hub
+terraform output
+```
+
+
 Deploy the Spoke Clusters
 ```shell
 cd spokes
