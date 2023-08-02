@@ -6,13 +6,13 @@ metadata:
 spec:
   destination:
     server: https://kubernetes.default.svc
-    namespace: 'argocd'
+    namespace: 'guestbook'
   project: default
   source:
-    path: bootstrap/workloads
-    repoURL: https://github.com/gitops-bridge-dev/gitops-bridge-argocd-control-plane-template
-    directory:
-      recurse: true
-      exclude: exclude/*
+    path: helm-guestbook
+    repoURL: https://github.com/argoproj/argocd-example-apps
+    targetRevision: HEAD
   syncPolicy:
     automated: {}
+    syncOptions:
+    - CreateNamespace=true

@@ -88,7 +88,7 @@ module "gitops_bridge_metadata" {
   cluster_name = module.eks.cluster_name
   metadata = merge(module.eks_blueprints_addons.gitops_metadata,
   {
-    aws_enable_argocd_ingress = true
+    enable_aws_argocd_ingress = true
     metadata_aws_argocd_hosts = "[${local.argocd_host}]"
     metadata_aws_external_dns_domain_filters = "[${local.domain_name}]"
     metadata_aws_argocd_iam_role_arn = ""
@@ -96,7 +96,10 @@ module "gitops_bridge_metadata" {
   })
   environment = local.environment
   addons = local.addons
-  enable_argocd = false
+  argocd = {
+    enable_argocd = false
+  }
+
 }
 
 ################################################################################

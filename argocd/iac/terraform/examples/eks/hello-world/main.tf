@@ -3,7 +3,6 @@ provider "aws" {
 }
 data "aws_availability_zones" "available" {}
 
-
 provider "helm" {
   kubernetes {
     host                   = module.eks.cluster_endpoint
@@ -44,16 +43,31 @@ provider "kubernetes" {
 
 locals {
   name = "cluster-1-dev"
+  environment = "dev"
   region = "us-west-2"
 
-  environment = "dev"
-
-  enable_cert_manager_addon = true
   addons = {
-    enable_metrics_server = true # doesn't required aws resources (ie IAM)
+    #enable_argo_rollouts                         = true
+    #enable_argo_workflows                        = true
+    #enable_aws_ebs_csi_resources                 = true # generate gp2 and gp3 storage classes for ebs-csi
+    #enable_aws_secrets_store_csi_driver_provider = true
+    #enable_cluster_proportional_autoscaler       = true
+    #enable_gatekeeper                            = true
+    #enable_gpu_operator                          = true
+    #enable_ingress_nginx                         = true
+    #enable_kyverno                               = true
+    #enable_kube_prometheus_stack                 = true
+    enable_metrics_server                        = true
+    #enable_prometheus_adapter                    = true
+    #enable_secrets_store_csi_driver              = true
+    #enable_vpa                                   = true
+    #enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
 
-  gitops_addons_app = file("${path.module}/bootstrap/addons.yaml")
+  argocd_bootstrap_app_of_apps = {
+    addons = file("${path.module}/bootstrap/addons.yaml")
+    workloads = file("${path.module}/bootstrap/workloads.yaml")
+  }
 
   vpc_cidr = "10.0.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
@@ -83,9 +97,7 @@ module "gitops_bridge_bootstrap" {
   source = "../../../modules/gitops-bridge-bootstrap"
 
   argocd_cluster = module.gitops_bridge_metadata.argocd
-  argocd_bootstrap_app_of_apps = {
-    addons = local.gitops_addons_app
-  }
+  argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
 }
 
 
@@ -104,7 +116,41 @@ module "eks_blueprints_addons" {
   # Using GitOps Bridge
   create_kubernetes_resources    = false
 
-  enable_cert_manager       = local.enable_cert_manager_addon
+  enable_cert_manager       = true
+  #enable_aws_efs_csi_driver      = true
+  #enable_aws_fsx_csi_driver      = true
+  #enable_aws_cloudwatch_metrics  = true
+  #enable_aws_privateca_issuer    = true
+  #enable_cluster_autoscaler      = true
+  #enable_external_dns            = true
+  #external_dns_route53_zone_arns = ["arn:aws:route53:::hostedzone/Z123456789"] # fake value for testing
+  #external_dns_route53_zone_arns = [data.aws_route53_zone.domain_name.arn]
+  #enable_external_secrets             = true
+  #enable_aws_load_balancer_controller = true
+  #enable_fargate_fluentbit            = true
+  #enable_aws_for_fluentbit            = true
+  /*
+  aws_for_fluentbit = {
+    s3_bucket_arns = [
+      module.velero_backup_s3_bucket.s3_bucket_arn,
+      "${module.velero_backup_s3_bucket.s3_bucket_arn}/logs/*"
+    ]
+  }
+  */
+
+  #enable_aws_node_termination_handler   = true
+  #aws_node_termination_handler_asg_arns = [for asg in module.eks.self_managed_node_groups : asg.autoscaling_group_arn]
+
+  #enable_karpenter = true
+
+  #enable_velero = true
+  ## An S3 Bucket ARN is required. This can be declared with or without a Suffix.
+  /*
+  velero = {
+    s3_backup_location = "${module.velero_backup_s3_bucket.s3_bucket_arn}/backups"
+  }
+  */
+  #enable_aws_gateway_api_controller = true
 
   tags = local.tags
 }

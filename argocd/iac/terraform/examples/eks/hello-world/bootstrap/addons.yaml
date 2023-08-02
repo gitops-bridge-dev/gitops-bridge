@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: bootstrap-control-plane
+  name: bootstrap-addons
   namespace: 'argocd'
 spec:
   destination:
@@ -9,7 +9,7 @@ spec:
     namespace: 'argocd'
   project: default
   source:
-    path: bootstrap/control-plane
+    path: bootstrap/control-plane/addons
     repoURL: https://github.com/gitops-bridge-dev/gitops-bridge-argocd-control-plane-template
     targetRevision: HEAD
     directory:

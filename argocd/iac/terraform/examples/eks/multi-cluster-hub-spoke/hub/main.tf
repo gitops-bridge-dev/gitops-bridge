@@ -74,14 +74,16 @@ module "gitops_bridge_metadata" {
 
   cluster_name = module.eks.cluster_name
   metadata = merge(module.eks_blueprints_addons.gitops_metadata,{
-    aws_enable_argocd = true,
+    enable_aws_argocd = true,
     metadata_aws_argocd_iam_role_arn = module.argocd_irsa.iam_role_arn,
     metadata_aws_argocd_namespace = "argocd"
   })
   environment = local.environment
   addons = local.addons
+  argocd = {
+    enable_argocd = false # we are going to install argocd with aws irsa
+  }
 
-  enable_argocd = false # we are going to install argocd with aws irsa
 }
 
 ################################################################################

@@ -48,23 +48,21 @@ locals {
 
   environment = "control-plane"
   addons = {
-    enable_prometheus_adapter                    = true # doesn't required aws resources (ie IAM)
-    enable_gpu_operator                          = true # doesn't required aws resources (ie IAM)
-    enable_kyverno                               = true # doesn't required aws resources (ie IAM)
-    enable_argo_rollouts                         = true # doesn't required aws resources (ie IAM)
-    enable_argo_workflows                        = true # doesn't required aws resources (ie IAM)
-    enable_secrets_store_csi_driver              = true # doesn't required aws resources (ie IAM)
-    enable_secrets_store_csi_driver_provider_aws = true # doesn't required aws resources (ie IAM)
-    enable_kube_prometheus_stack                 = true # doesn't required aws resources (ie IAM)
-    enable_gatekeeper                            = true # doesn't required aws resources (ie IAM)
-    #enable_ingress_nginx                         = true # doesn't required aws resources (ie IAM)
-    enable_metrics_server = true # doesn't required aws resources (ie IAM)
-    #enable_cluster_proportional_autoscaler       = true # doesn't required aws resources (ie IAM)
-    enable_vpa                   = true # doesn't required aws resources (ie IAM)
-    aws_enable_ebs_csi_resources = true # generate gp2 and gp3 storage classes for ebs-csi
-    enable_prometheus_adapter    = true # doesn't required aws resources (ie IAM)
-    enable_gpu_operator          = true # doesn't required aws resources (ie IAM)
-    enable_foo                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
+    enable_argo_rollouts                         = true
+    enable_argo_workflows                        = true
+    enable_aws_ebs_csi_resources                 = true # generate gp2 and gp3 storage classes for ebs-csi
+    enable_aws_secrets_store_csi_driver_provider = true
+    #enable_cluster_proportional_autoscaler       = true
+    enable_gatekeeper                            = true
+    enable_gpu_operator                          = true
+    #enable_ingress_nginx                         = true
+    enable_kyverno                               = true
+    enable_kube_prometheus_stack                 = true
+    enable_metrics_server                        = true
+    enable_prometheus_adapter                    = true
+    enable_secrets_store_csi_driver              = true
+    enable_vpa                                   = true
+    enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
 
   gitops_addons_app = file("${path.module}/bootstrap/addons.yaml")

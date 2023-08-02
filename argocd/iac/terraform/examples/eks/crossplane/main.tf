@@ -74,7 +74,7 @@ module "gitops_bridge_metadata" {
   metadata = merge(module.eks_blueprints_addons.gitops_metadata,{
     metadata_aws_crossplane_iam_role_arn = module.crossplane_irsa_aws.iam_role_arn
     metadata_aws_upbound_crossplane_iam_role_arn = module.crossplane_irsa_aws.iam_role_arn
-    aws_enable_crossplane = true
+    enable_aws_crossplane = true
   })
   environment = local.environment
   addons = local.addons
