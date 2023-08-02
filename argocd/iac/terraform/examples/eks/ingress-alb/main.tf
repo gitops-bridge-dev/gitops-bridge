@@ -51,9 +51,8 @@ data "aws_route53_zone" "domain_name" {
 
 locals {
   name = "cluster-1-dev"
-  region = "us-west-2"
-
   environment = "dev"
+  region = "us-west-2"
 
   enable_ingress = true
   domain_private_zone = false
@@ -68,7 +67,10 @@ locals {
     enable_metrics_server = true # doesn't required aws resources (ie IAM)
   }
 
-  gitops_addons_app = file("${path.module}/bootstrap/addons.yaml")
+  argocd_bootstrap_app_of_apps = {
+    addons = file("${path.module}/bootstrap/addons.yaml")
+    workloads = file("${path.module}/bootstrap/workloads.yaml")
+  }
 
   vpc_cidr = "10.0.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
@@ -109,9 +111,7 @@ module "gitops_bridge_bootstrap" {
   source = "../../../modules/gitops-bridge-bootstrap"
 
   argocd_cluster = module.gitops_bridge_metadata.argocd
-  argocd_bootstrap_app_of_apps = {
-    addons = local.gitops_addons_app
-  }
+  argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
 }
 
 

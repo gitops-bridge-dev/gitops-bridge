@@ -53,21 +53,22 @@ provider "kubernetes" {
 locals {
   name = "cluster-${terraform.workspace}"
   environment = terraform.workspace
-  vpc_cidr = var.vpc_cidr
-  kubernetes_version = var.kubernetes_version
   region = "us-west-2"
 
-  enable_cert_manager_addon = true
-  enable_aws_load_balancer_controller = true
+  vpc_cidr = var.vpc_cidr
+  kubernetes_version = var.kubernetes_version
+
   addons = {
     enable_metrics_server = true # doesn't required aws resources (ie IAM)
   }
 
-  gitops_workloads_app = templatefile("${path.module}/bootstrap/workloads.yaml",
+  argocd_bootstrap_app_of_apps = {
+    workloads = templatefile("${path.module}/bootstrap/workloads.yaml",
     {
       environment = local.environment
       cluster = module.eks.cluster_name
     })
+  }
 
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
 
@@ -114,15 +115,14 @@ module "gitops_bridge_metadata" {
 module "gitops_bridge_bootstrap" {
   source = "../../../../modules/gitops-bridge-bootstrap"
 
+  # The ArgoCD remote cluster secret is deploy on hub cluster not on spoke clusters
   providers = {
     kubernetes = kubernetes.hub
   }
 
   argocd_create_install = false # We are not installing argocd on remote spoke clusters
   argocd_cluster = module.gitops_bridge_metadata.argocd
-  argocd_bootstrap_app_of_apps = {
-    workloads = local.gitops_workloads_app
-  }
+  argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
 }
 
 ################################################################################
@@ -159,8 +159,8 @@ module "eks_blueprints_addons" {
   # Using GitOps Bridge
   create_kubernetes_resources    = false
 
-  enable_cert_manager                 = local.enable_cert_manager_addon
-  enable_aws_load_balancer_controller = local.enable_aws_load_balancer_controller
+  enable_cert_manager                 = true
+  enable_aws_load_balancer_controller = true
 
   tags = local.tags
 }

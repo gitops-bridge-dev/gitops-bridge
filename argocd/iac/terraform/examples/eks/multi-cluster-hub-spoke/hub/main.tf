@@ -49,14 +49,13 @@ locals {
   kubernetes_version = var.kubernetes_version
   region = "us-west-2"
 
-
-
-  enable_cert_manager_addon = true
   addons = {
     enable_metrics_server = true # doesn't required aws resources (ie IAM)
   }
 
-  gitops_addons_app = file("${path.module}/bootstrap/addons.yaml")
+  argocd_bootstrap_app_of_apps = {
+    addons = file("${path.module}/bootstrap/addons.yaml")
+  }
 
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
 
@@ -93,9 +92,7 @@ module "gitops_bridge_bootstrap" {
   source = "../../../../modules/gitops-bridge-bootstrap"
 
   argocd_cluster = module.gitops_bridge_metadata.argocd
-  argocd_bootstrap_app_of_apps = {
-    addons = local.gitops_addons_app
-  }
+  argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
   argocd = {
     values = [
       <<-EOT
@@ -168,7 +165,7 @@ module "eks_blueprints_addons" {
   # Using GitOps Bridge
   create_kubernetes_resources    = false
 
-  enable_cert_manager       = local.enable_cert_manager_addon
+  enable_cert_manager       = true
   enable_aws_load_balancer_controller = true
 
   tags = local.tags

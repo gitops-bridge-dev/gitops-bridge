@@ -65,8 +65,10 @@ locals {
     enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
 
-  gitops_addons_app = file("${path.module}/bootstrap/addons.yaml")
-  gitops_workloads_app = file("${path.module}/bootstrap/workloads.yaml")
+  argocd_bootstrap_app_of_apps = {
+    addons = file("${path.module}/bootstrap/addons.yaml")
+    workloads = file("${path.module}/bootstrap/workloads.yaml")
+  }
 
   vpc_cidr = "10.0.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
@@ -96,10 +98,7 @@ module "gitops_bridge_bootstrap" {
   source = "../../../modules/gitops-bridge-bootstrap"
 
   argocd_cluster = module.gitops_bridge_metadata.argocd
-  argocd_bootstrap_app_of_apps = {
-    addons = local.gitops_addons_app
-    workloads = local.gitops_workloads_app
-  }
+  argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
 }
 
 ################################################################################
