@@ -4,11 +4,10 @@ locals {
   cluster_config = merge ({
     cluster_name = var.cluster_name,
     environment  = var.environment
+    enable_argocd = true
   },
   var.metadata,
-  var.addons,
-  var.argocd,
-  var.fluxcd
+  var.addons
   )
 }
 

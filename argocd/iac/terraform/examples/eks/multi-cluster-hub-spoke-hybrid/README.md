@@ -2,7 +2,8 @@
 
 This example deploys ArgoCD on the Hub cluster (ie. management/control-plane cluster).
 The spoke clusters are registered as remote clusters in the Hub Cluster's ArgoCD
-The ArgoCD on the Hub Cluster deploy addons and workloads to the spoke clusters
+The ArgoCD on the Hub Cluster deploy addons to the spoke clusters
+Each spoke cluster have ArgoCD only use for workloads, not the addons
 
 Each spoke cluster gets deployed an app of apps ArgoCD Application with the name `workloads-${env}`
 

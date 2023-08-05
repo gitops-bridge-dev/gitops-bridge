@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: workloads
   namespace: 'argocd'
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
 spec:
   destination:
     server: https://kubernetes.default.svc

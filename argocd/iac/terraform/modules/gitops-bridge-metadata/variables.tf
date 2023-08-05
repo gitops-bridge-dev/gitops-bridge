@@ -11,13 +11,9 @@ variable "addons" {
   default = {}
 }
 variable "argocd" {
-  default = {
-    enable_argocd = true
-  }
+  default = {}
 }
 variable "fluxcd" {
-  default = {
-    enable_argocd = true
-  }
+  default = {}
 }
 

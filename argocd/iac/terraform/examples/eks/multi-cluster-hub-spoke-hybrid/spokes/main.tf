@@ -57,6 +57,32 @@ provider "kubernetes" {
   }
 }
 
+provider "kubectl" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
+    command     = "aws"
+  }
+  load_config_file       = false
+  apply_retry_count      = 15
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = module.eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      # This requires the awscli to be installed locally where Terraform is executed
+      args = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
+    }
+  }
+}
+
 
 
 locals {
@@ -69,7 +95,6 @@ locals {
 
   addons = {
     enable_metrics_server = true # doesn't required aws resources (ie IAM)
-    enable_argocd = false # we are not deploying argocd to spoke clusters
   }
 
   argocd_bootstrap_app_of_apps = {
@@ -89,7 +114,40 @@ locals {
 }
 
 ################################################################################
-# GitOps Bridge: Metadata
+# GitOps Bridge: Metadata for Spoke Cluster
+################################################################################
+module "gitops_bridge_metadata_spoke" {
+  source = "../../../../modules/gitops-bridge-metadata"
+
+  cluster_name = module.eks.cluster_name
+  environment = local.environment
+  #No metadata
+  addons = {
+    enable_argocd = false # ArgoCD is deploy from Hub Cluster
+  }
+}
+
+################################################################################
+# GitOps Bridge: Bootstrap for Spoke Cluster
+################################################################################
+resource "kubernetes_namespace_v1" "argocd" {
+  metadata {
+    name = "argocd"
+  }
+}
+module "gitops_bridge_bootstrap_spoke" {
+  source = "../../../../modules/gitops-bridge-bootstrap"
+
+  argocd_cluster = module.gitops_bridge_metadata_spoke.argocd
+  argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
+  argocd_create_install = false # Not installing argocd via helm on spoke cluster
+
+  depends_on = [ kubernetes_namespace_v1.argocd ]
+}
+
+
+################################################################################
+# GitOps Bridge: Metadata for Hub Cluster
 ################################################################################
 module "gitops_bridge_metadata_hub" {
   source = "../../../../modules/gitops-bridge-metadata"
@@ -114,6 +172,7 @@ module "gitops_bridge_metadata_hub" {
       }
     EOT
   }
+
 }
 
 ################################################################################
@@ -122,15 +181,15 @@ module "gitops_bridge_metadata_hub" {
 module "gitops_bridge_bootstrap_hub" {
   source = "../../../../modules/gitops-bridge-bootstrap"
 
-  # The ArgoCD remote cluster secret is deploy on hub cluster not on spoke clusters
+  # The ArgoCD remote cluster secret is deploy on hub cluster and spoke clusters
   providers = {
     kubernetes = kubernetes.hub
     kubectl = kubectl.hub
   }
 
-  argocd_create_install = false # We are not installing argocd via helm on hub cluster
+  argocd_create_install = false # We are not installing argocd on remote spoke clusters
   argocd_cluster = module.gitops_bridge_metadata_hub.argocd
-  argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
+
 }
 
 ################################################################################
