@@ -24,9 +24,9 @@ terraform output
 Deploy the Spoke Clusters
 ```shell
 cd spokes
-./deploy dev
-./deploy test
-./deploy prod
+./deploy.sh dev
+./deploy.sh staging
+./deploy.sh prod
 ```
 Each environment uses a Terraform workspace
 
@@ -40,9 +40,9 @@ terraform output
 Destroy Spoke Clusters
 ```shell
 cd spokes
-./destroy dev
-./destroy test
-./destroy prod
+./destroy.sh dev
+./destroy.sh staging
+./destroy.sh prod
 ```
 
 Destroy Hub Clusters

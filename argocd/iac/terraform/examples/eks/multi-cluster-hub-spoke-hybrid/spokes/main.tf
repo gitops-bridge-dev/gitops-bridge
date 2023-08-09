@@ -130,10 +130,11 @@ module "gitops_bridge_metadata_spoke" {
 ################################################################################
 # GitOps Bridge: Bootstrap for Spoke Cluster
 ################################################################################
-resource "kubernetes_namespace_v1" "argocd" {
-  metadata {
-    name = "argocd"
-  }
+# Wait ArgoCD CRDs and "argocd" namespace to be created by hub cluster to this spoke cluster
+resource "time_sleep" "wait_for_argocd_namespace_and_crds" {
+  create_duration = "7m"
+
+  depends_on = [module.gitops_bridge_bootstrap_hub]
 }
 module "gitops_bridge_bootstrap_spoke" {
   source = "../../../../modules/gitops-bridge-bootstrap"
@@ -142,7 +143,7 @@ module "gitops_bridge_bootstrap_spoke" {
   argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
   argocd_create_install = false # Not installing argocd via helm on spoke cluster
 
-  depends_on = [ kubernetes_namespace_v1.argocd ]
+  depends_on = [ time_sleep.wait_for_argocd_namespace_and_crds ]
 }
 
 

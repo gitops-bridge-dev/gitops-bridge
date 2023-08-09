@@ -5,9 +5,9 @@ Each cluster gets deployed an app of apps ArgoCD Application with the name `work
 
 To deploy run the following commands
 ```shell
-./deploy dev
-./deploy test
-./deploy prod
+./deploy.sh dev
+./deploy.sh staging
+./deploy.sh prod
 ```
 Each environment uses a Terraform workspace
 
@@ -19,7 +19,7 @@ terraform output
 
 To destroy run the following commands
 ```shell
-./destroy dev
-./destroy test
-./destroy prod
+./destroy.sh dev
+./destroy.sh staging
+./destroy.sh prod
 ```
