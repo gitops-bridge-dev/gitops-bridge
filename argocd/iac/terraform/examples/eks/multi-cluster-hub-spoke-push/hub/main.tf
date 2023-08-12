@@ -26,8 +26,8 @@ provider "kubectl" {
     args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
     command     = "aws"
   }
-  load_config_file       = false
-  apply_retry_count      = 15
+  load_config_file  = false
+  apply_retry_count = 15
 }
 
 provider "kubernetes" {
@@ -43,21 +43,66 @@ provider "kubernetes" {
 }
 
 locals {
-  name = "cluster-${local.environment}"
-  environment = "control-plane"
-  vpc_cidr = var.vpc_cidr
+  name               = "hub-spoke-${local.environment}"
+  environment        = "control-plane"
+  vpc_cidr           = var.vpc_cidr
   kubernetes_version = var.kubernetes_version
-  region = "us-west-2"
+  region             = "us-west-2"
 
-  addons = {
-    enable_metrics_server = true # doesn't required aws resources (ie IAM)
+
+  aws_addons = {
+    enable_cert_manager = true
+    #enable_aws_efs_csi_driver                    = true
+    #enable_aws_fsx_csi_driver                    = true
+    #enable_aws_cloudwatch_metrics                = true
+    #enable_aws_privateca_issuer                  = true
+    #enable_cluster_autoscaler                    = true
+    #enable_external_dns                          = true
+    #enable_external_secrets                      = true
+    #enable_aws_load_balancer_controller          = true
+    #enable_fargate_fluentbit                     = true
+    #enable_aws_for_fluentbit                     = true
+    #enable_aws_node_termination_handler          = true
+    #enable_karpenter                             = true
+    #enable_velero                                = true
+    #enable_aws_gateway_api_controller            = true
+    #enable_aws_ebs_csi_resources                 = true # generate gp2 and gp3 storage classes for ebs-csi
+    #enable_aws_secrets_store_csi_driver_provider = true
+    enable_aws_argocd = true
   }
+  oss_addons = {
+    enable_argocd = false # disable default argocd application set, we enable enable_aws_argocd above
+    #enable_argo_rollouts                         = true
+    #enable_argo_workflows                        = true
+    #enable_cluster_proportional_autoscaler       = true
+    #enable_gatekeeper                            = true
+    #enable_gpu_operator                          = true
+    #enable_ingress_nginx                         = true
+    #enable_kyverno                               = true
+    #enable_kube_prometheus_stack                 = true
+    enable_metrics_server = true
+    #enable_prometheus_adapter                    = true
+    #enable_secrets_store_csi_driver              = true
+    #enable_vpa                                   = true
+    #enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
+  }
+  addons = merge(local.aws_addons, local.oss_addons)
+
+  addons_metadata = merge({
+    aws_vpc_id = module.vpc.vpc_id # Only required when enabling the aws_gateway_api_controller addon
+    },
+    module.eks_blueprints_addons.gitops_metadata,
+    {
+      argocd_iam_role_arn = module.argocd_irsa.iam_role_arn,
+      argocd_namespace    = "argocd"
+    }
+  )
 
   argocd_bootstrap_app_of_apps = {
     addons = file("${path.module}/bootstrap/addons.yaml")
   }
 
-  azs      = slice(data.aws_availability_zones.available.names, 0, 3)
+  azs = slice(data.aws_availability_zones.available.names, 0, 3)
 
   tags = {
     Blueprint  = local.name
@@ -72,17 +117,9 @@ module "gitops_bridge_metadata" {
   source = "../../../../modules/gitops-bridge-metadata"
 
   cluster_name = module.eks.cluster_name
-  metadata = merge(module.eks_blueprints_addons.gitops_metadata,{
-    enable_aws_argocd = true,
-    metadata_aws_argocd_iam_role_arn = module.argocd_irsa.iam_role_arn,
-    metadata_aws_argocd_namespace = "argocd"
-  })
-  environment = local.environment
-  addons = local.addons
-  argocd = {
-    enable_argocd = false # we are going to install argocd with aws irsa
-  }
-
+  environment  = local.environment
+  metadata     = local.addons_metadata
+  addons       = local.addons
 }
 
 ################################################################################
@@ -91,7 +128,7 @@ module "gitops_bridge_metadata" {
 module "gitops_bridge_bootstrap" {
   source = "../../../../modules/gitops-bridge-bootstrap"
 
-  argocd_cluster = module.gitops_bridge_metadata.argocd
+  argocd_cluster               = module.gitops_bridge_metadata.argocd
   argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
   argocd = {
     values = [
@@ -120,7 +157,7 @@ module "argocd_irsa" {
   role_name_use_prefix       = false
   role_name                  = "${module.eks.cluster_name}-argocd-hub"
   assume_role_condition_test = "StringLike"
-  create_policy = false
+  create_policy              = false
   role_policies = {
     ArgoCD_EKS_Policy = aws_iam_policy.irsa_policy.arn
   }
@@ -150,6 +187,7 @@ data "aws_iam_policy_document" "irsa_policy" {
   }
 }
 
+
 ################################################################################
 # EKS Blueprints Addons
 ################################################################################
@@ -160,13 +198,26 @@ module "eks_blueprints_addons" {
   cluster_endpoint  = module.eks.cluster_endpoint
   cluster_version   = module.eks.cluster_version
   oidc_provider_arn = module.eks.oidc_provider_arn
-  vpc_id            = module.vpc.vpc_id
 
   # Using GitOps Bridge
-  create_kubernetes_resources    = false
+  create_kubernetes_resources = false
 
-  enable_cert_manager       = true
-  enable_aws_load_balancer_controller = true
+  # EKS Blueprints Addons
+  enable_cert_manager                 = try(local.aws_addons.enable_cert_manager, false)
+  enable_aws_efs_csi_driver           = try(local.aws_addons.enable_aws_efs_csi_driver, false)
+  enable_aws_fsx_csi_driver           = try(local.aws_addons.enable_aws_fsx_csi_driver, false)
+  enable_aws_cloudwatch_metrics       = try(local.aws_addons.enable_aws_cloudwatch_metrics, false)
+  enable_aws_privateca_issuer         = try(local.aws_addons.enable_aws_privateca_issuer, false)
+  enable_cluster_autoscaler           = try(local.aws_addons.enable_cluster_autoscaler, false)
+  enable_external_dns                 = try(local.aws_addons.enable_external_dns, false)
+  enable_external_secrets             = try(local.aws_addons.enable_external_secrets, false)
+  enable_aws_load_balancer_controller = try(local.aws_addons.enable_aws_load_balancer_controller, false)
+  enable_fargate_fluentbit            = try(local.aws_addons.enable_fargate_fluentbit, false)
+  enable_aws_for_fluentbit            = try(local.aws_addons.enable_aws_for_fluentbit, false)
+  enable_aws_node_termination_handler = try(local.aws_addons.enable_aws_node_termination_handler, false)
+  enable_karpenter                    = try(local.aws_addons.enable_karpenter, false)
+  enable_velero                       = try(local.aws_addons.enable_velero, false)
+  enable_aws_gateway_api_controller   = try(local.aws_addons.enable_aws_gateway_api_controller, false)
 
   tags = local.tags
 }

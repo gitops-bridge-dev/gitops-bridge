@@ -15,4 +15,3 @@ terraform workspace new $env
 terraform workspace select $env
 terraform init
 terraform apply -var-file="workspaces/${env}.tfvars"
-

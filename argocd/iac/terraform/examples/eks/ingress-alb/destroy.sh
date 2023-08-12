@@ -2,9 +2,11 @@
 
 set -x
 
-# Delete the Ingress before removing the addons
-kubectl_login=$(terraform output -raw configure_kubectl)
-$kubectl_login
+# Delete the Ingress/SVC before removing the addons
+TMPFILE=$(mktemp)
+terraform output -raw configure_kubectl > "$TMPFILE"
+source "$TMPFILE"
+
 kubectl delete ing -n argocd argo-cd-argocd-server
 
 terraform destroy -target="module.gitops_bridge_bootstrap" -auto-approve

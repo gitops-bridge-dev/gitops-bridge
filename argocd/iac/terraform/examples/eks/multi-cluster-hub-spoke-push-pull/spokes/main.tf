@@ -36,9 +36,9 @@ provider "kubectl" {
     args        = ["eks", "get-token", "--cluster-name", data.terraform_remote_state.cluster_hub.outputs.cluster_name, "--region", data.terraform_remote_state.cluster_hub.outputs.cluster_region]
     command     = "aws"
   }
-  load_config_file       = false
-  apply_retry_count      = 15
-  alias = "hub"
+  load_config_file  = false
+  apply_retry_count = 15
+  alias             = "hub"
 }
 
 ################################################################################
@@ -57,30 +57,95 @@ provider "kubernetes" {
   }
 }
 
+provider "kubectl" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
+    command     = "aws"
+  }
+  load_config_file  = false
+  apply_retry_count = 15
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = module.eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      # This requires the awscli to be installed locally where Terraform is executed
+      args = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
+    }
+  }
+}
+
 
 
 locals {
-  name = "cluster-${terraform.workspace}"
+  name        = "hub-spoke-2-${terraform.workspace}"
   environment = terraform.workspace
-  region = "us-west-2"
+  region      = "us-west-2"
 
-  vpc_cidr = var.vpc_cidr
+  vpc_cidr           = var.vpc_cidr
   kubernetes_version = var.kubernetes_version
 
-  addons = {
-    enable_metrics_server = true # doesn't required aws resources (ie IAM)
-    enable_argocd = false # we are not deploying argocd to spoke clusters
+
+  aws_addons = {
+    enable_cert_manager = true
+    #enable_aws_efs_csi_driver                    = true
+    #enable_aws_fsx_csi_driver                    = true
+    #enable_aws_cloudwatch_metrics                = true
+    #enable_aws_privateca_issuer                  = true
+    #enable_cluster_autoscaler                    = true
+    #enable_external_dns                          = true
+    #enable_external_secrets                      = true
+    enable_aws_load_balancer_controller = true
+    #enable_fargate_fluentbit                     = true
+    #enable_aws_for_fluentbit                     = true
+    #enable_aws_node_termination_handler          = true
+    #enable_karpenter                             = true
+    #enable_velero                                = true
+    #enable_aws_gateway_api_controller            = true
+    #enable_aws_ebs_csi_resources                 = true # generate gp2 and gp3 storage classes for ebs-csi
+    #enable_aws_secrets_store_csi_driver_provider = true
   }
+  oss_addons = {
+    #enable_argo_rollouts                         = true
+    #enable_argo_workflows                        = true
+    #enable_cluster_proportional_autoscaler       = true
+    #enable_gatekeeper                            = true
+    #enable_gpu_operator                          = true
+    #enable_ingress_nginx                         = true
+    #enable_kyverno                               = true
+    #enable_kube_prometheus_stack                 = true
+    enable_metrics_server = true
+    #enable_prometheus_adapter                    = true
+    #enable_secrets_store_csi_driver              = true
+    #enable_vpa                                   = true
+    #enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
+  }
+  addons = merge(local.aws_addons, local.oss_addons)
+
+  addons_metadata = merge({
+    aws_vpc_id = module.vpc.vpc_id # Only required when enabling the aws_gateway_api_controller addon
+    },
+    module.eks_blueprints_addons.gitops_metadata
+  )
+
 
   argocd_bootstrap_app_of_apps = {
     workloads = templatefile("${path.module}/bootstrap/workloads.yaml",
-    {
-      environment = local.environment
-      cluster = module.eks.cluster_name
+      {
+        environment = local.environment
+        cluster     = module.eks.cluster_name
     })
   }
 
-  azs      = slice(data.aws_availability_zones.available.names, 0, 3)
+  azs = slice(data.aws_availability_zones.available.names, 0, 3)
 
   tags = {
     Blueprint  = local.name
@@ -89,18 +154,52 @@ locals {
 }
 
 ################################################################################
-# GitOps Bridge: Metadata
+# GitOps Bridge: Metadata for Spoke Cluster
+################################################################################
+module "gitops_bridge_metadata_spoke" {
+  source = "../../../../modules/gitops-bridge-metadata"
+
+  cluster_name = module.eks.cluster_name
+  environment  = local.environment
+  #No metadata
+  addons = {
+    enable_argocd = false # ArgoCD is deploy from Hub Cluster
+  }
+}
+
+################################################################################
+# GitOps Bridge: Bootstrap for Spoke Cluster
+################################################################################
+# Wait ArgoCD CRDs and "argocd" namespace to be created by hub cluster to this spoke cluster
+resource "time_sleep" "wait_for_argocd_namespace_and_crds" {
+  create_duration = "7m"
+
+  depends_on = [module.gitops_bridge_bootstrap_hub]
+}
+module "gitops_bridge_bootstrap_spoke" {
+  source = "../../../../modules/gitops-bridge-bootstrap"
+
+  argocd_cluster               = module.gitops_bridge_metadata_spoke.argocd
+  argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
+  argocd_create_install        = false # Not installing argocd via helm on spoke cluster
+
+  depends_on = [time_sleep.wait_for_argocd_namespace_and_crds]
+}
+
+
+################################################################################
+# GitOps Bridge: Metadata for Hub Cluster
 ################################################################################
 module "gitops_bridge_metadata_hub" {
   source = "../../../../modules/gitops-bridge-metadata"
 
   cluster_name = module.eks.cluster_name
-  metadata = module.eks_blueprints_addons.gitops_metadata
-  environment = local.environment
-  addons = local.addons
+  environment  = local.environment
+  metadata     = local.addons_metadata
+  addons       = local.addons
 
   argocd = {
-    server = module.eks.cluster_endpoint
+    server               = module.eks.cluster_endpoint
     argocd_server_config = <<-EOT
       {
         "tlsClientConfig": {
@@ -114,6 +213,7 @@ module "gitops_bridge_metadata_hub" {
       }
     EOT
   }
+
 }
 
 ################################################################################
@@ -122,15 +222,15 @@ module "gitops_bridge_metadata_hub" {
 module "gitops_bridge_bootstrap_hub" {
   source = "../../../../modules/gitops-bridge-bootstrap"
 
-  # The ArgoCD remote cluster secret is deploy on hub cluster not on spoke clusters
+  # The ArgoCD remote cluster secret is deploy on hub cluster and spoke clusters
   providers = {
     kubernetes = kubernetes.hub
-    kubectl = kubectl.hub
+    kubectl    = kubectl.hub
   }
 
-  argocd_create_install = false # We are not installing argocd via helm on hub cluster
-  argocd_cluster = module.gitops_bridge_metadata_hub.argocd
-  argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
+  argocd_create_install = false # We are not installing argocd on remote spoke clusters
+  argocd_cluster        = module.gitops_bridge_metadata_hub.argocd
+
 }
 
 ################################################################################
@@ -152,6 +252,7 @@ data "aws_iam_policy_document" "assume_role_policy" {
 }
 
 
+
 ################################################################################
 # EKS Blueprints Addons
 ################################################################################
@@ -162,16 +263,30 @@ module "eks_blueprints_addons" {
   cluster_endpoint  = module.eks.cluster_endpoint
   cluster_version   = module.eks.cluster_version
   oidc_provider_arn = module.eks.oidc_provider_arn
-  vpc_id            = module.vpc.vpc_id
 
   # Using GitOps Bridge
-  create_kubernetes_resources    = false
+  create_kubernetes_resources = false
 
-  enable_cert_manager                 = true
-  enable_aws_load_balancer_controller = true
+  # EKS Blueprints Addons
+  enable_cert_manager                 = try(local.aws_addons.enable_cert_manager, false)
+  enable_aws_efs_csi_driver           = try(local.aws_addons.enable_aws_efs_csi_driver, false)
+  enable_aws_fsx_csi_driver           = try(local.aws_addons.enable_aws_fsx_csi_driver, false)
+  enable_aws_cloudwatch_metrics       = try(local.aws_addons.enable_aws_cloudwatch_metrics, false)
+  enable_aws_privateca_issuer         = try(local.aws_addons.enable_aws_privateca_issuer, false)
+  enable_cluster_autoscaler           = try(local.aws_addons.enable_cluster_autoscaler, false)
+  enable_external_dns                 = try(local.aws_addons.enable_external_dns, false)
+  enable_external_secrets             = try(local.aws_addons.enable_external_secrets, false)
+  enable_aws_load_balancer_controller = try(local.aws_addons.enable_aws_load_balancer_controller, false)
+  enable_fargate_fluentbit            = try(local.aws_addons.enable_fargate_fluentbit, false)
+  enable_aws_for_fluentbit            = try(local.aws_addons.enable_aws_for_fluentbit, false)
+  enable_aws_node_termination_handler = try(local.aws_addons.enable_aws_node_termination_handler, false)
+  enable_karpenter                    = try(local.aws_addons.enable_karpenter, false)
+  enable_velero                       = try(local.aws_addons.enable_velero, false)
+  enable_aws_gateway_api_controller   = try(local.aws_addons.enable_aws_gateway_api_controller, false)
 
   tags = local.tags
 }
+
 
 ################################################################################
 # EKS Cluster

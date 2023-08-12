@@ -44,7 +44,7 @@ provider "kubernetes" {
 }
 
 locals {
-  name        = "my-cluster"
+  name        = "ex-${replace(basename(path.cwd), "_", "-")}"
   environment = "dev"
   region      = "us-west-2"
 

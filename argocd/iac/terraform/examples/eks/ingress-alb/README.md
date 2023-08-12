@@ -38,7 +38,5 @@ echo "Password: $(kubectl get secrets argocd-initial-admin-secret -n argocd --te
 
 Destroy EKS Cluster
 ```shell
-cd hub
 ./destroy.sh
 ```
-
