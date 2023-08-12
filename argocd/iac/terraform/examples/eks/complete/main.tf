@@ -26,8 +26,8 @@ provider "kubectl" {
     args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
     command     = "aws"
   }
-  load_config_file       = false
-  apply_retry_count      = 15
+  load_config_file  = false
+  apply_retry_count = 15
 }
 
 provider "kubernetes" {
@@ -48,7 +48,7 @@ locals {
   region      = "us-west-2"
 
   aws_addons = {
-    enable_cert_manager = true
+    enable_cert_manager                          = true
     enable_aws_efs_csi_driver                    = true
     enable_aws_fsx_csi_driver                    = true
     enable_aws_cloudwatch_metrics                = true
@@ -67,19 +67,19 @@ locals {
     enable_aws_secrets_store_csi_driver_provider = true
   }
   oss_addons = {
-    enable_argo_rollouts                         = true
-    enable_argo_workflows                        = true
+    enable_argo_rollouts  = true
+    enable_argo_workflows = true
     #enable_cluster_proportional_autoscaler      = true
-    enable_gatekeeper                            = true
-    enable_gpu_operator                          = true
+    enable_gatekeeper   = true
+    enable_gpu_operator = true
     #enable_ingress_nginx                        = true
-    enable_kyverno                               = true
-    enable_kube_prometheus_stack                 = true
-    enable_metrics_server                        = true
-    enable_prometheus_adapter                    = true
-    enable_secrets_store_csi_driver              = true
-    enable_vpa                                   = true
-    enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
+    enable_kyverno                  = true
+    enable_kube_prometheus_stack    = true
+    enable_metrics_server           = true
+    enable_prometheus_adapter       = true
+    enable_secrets_store_csi_driver = true
+    enable_vpa                      = true
+    enable_foo                      = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
   addons = merge(local.aws_addons, local.oss_addons)
 
@@ -90,7 +90,7 @@ locals {
   )
 
   argocd_bootstrap_app_of_apps = {
-    addons = file("${path.module}/bootstrap/addons.yaml")
+    addons    = file("${path.module}/bootstrap/addons.yaml")
     workloads = file("${path.module}/bootstrap/workloads.yaml")
   }
 
@@ -121,7 +121,7 @@ module "gitops_bridge_metadata" {
 module "gitops_bridge_bootstrap" {
   source = "../../../modules/gitops-bridge-bootstrap"
 
-  argocd_cluster = module.gitops_bridge_metadata.argocd
+  argocd_cluster               = module.gitops_bridge_metadata.argocd
   argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
 }
 
