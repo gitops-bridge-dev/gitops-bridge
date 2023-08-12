@@ -43,19 +43,36 @@ provider "kubernetes" {
 }
 
 locals {
-  name   = "cluster-1-cp"
-  region = "us-west-2"
+  name        = "cluster-1-dev"
+  environment = "dev"
+  region      = "us-west-2"
 
-  environment = "control-plane"
-  addons = {
-    enable_argo_rollouts                         = true
-    enable_argo_workflows                        = true
+  aws_addons = {
+    enable_cert_manager = true
+    enable_aws_efs_csi_driver                    = true
+    enable_aws_fsx_csi_driver                    = true
+    enable_aws_cloudwatch_metrics                = true
+    enable_aws_privateca_issuer                  = true
+    enable_cluster_autoscaler                    = true
+    enable_external_dns                          = true
+    enable_external_secrets                      = true
+    enable_aws_load_balancer_controller          = true
+    enable_fargate_fluentbit                     = true
+    enable_aws_for_fluentbit                     = true
+    enable_aws_node_termination_handler          = true
+    enable_karpenter                             = true
+    enable_velero                                = true
+    enable_aws_gateway_api_controller            = true
     enable_aws_ebs_csi_resources                 = true # generate gp2 and gp3 storage classes for ebs-csi
     enable_aws_secrets_store_csi_driver_provider = true
-    #enable_cluster_proportional_autoscaler       = true
+  }
+  oss_addons = {
+    enable_argo_rollouts                         = true
+    enable_argo_workflows                        = true
+    #enable_cluster_proportional_autoscaler      = true
     enable_gatekeeper                            = true
     enable_gpu_operator                          = true
-    #enable_ingress_nginx                         = true
+    #enable_ingress_nginx                        = true
     enable_kyverno                               = true
     enable_kube_prometheus_stack                 = true
     enable_metrics_server                        = true
@@ -64,6 +81,13 @@ locals {
     enable_vpa                                   = true
     enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
+  addons = merge(local.aws_addons, local.oss_addons)
+
+  addons_metadata = merge({
+    aws_vpc_id = module.vpc.vpc_id # Only required when enabling the aws_gateway_api_controller addon
+    },
+    module.eks_blueprints_addons.gitops_metadata
+  )
 
   argocd_bootstrap_app_of_apps = {
     addons = file("${path.module}/bootstrap/addons.yaml")
@@ -86,8 +110,8 @@ module "gitops_bridge_metadata" {
   source = "../../../modules/gitops-bridge-metadata"
 
   cluster_name = module.eks.cluster_name
-  metadata     = module.eks_blueprints_addons.gitops_metadata
   environment  = local.environment
+  metadata     = local.addons_metadata
   addons       = local.addons
 }
 
@@ -100,6 +124,86 @@ module "gitops_bridge_bootstrap" {
   argocd_cluster = module.gitops_bridge_metadata.argocd
   argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
 }
+
+
+################################################################################
+# EKS Blueprints Addons
+################################################################################
+module "eks_blueprints_addons" {
+  source = "github.com/csantanapr/terraform-aws-eks-blueprints-addons?ref=gitops-bridge-v2"
+
+  cluster_name      = module.eks.cluster_name
+  cluster_endpoint  = module.eks.cluster_endpoint
+  cluster_version   = module.eks.cluster_version
+  oidc_provider_arn = module.eks.oidc_provider_arn
+
+  # Using GitOps Bridge
+  create_kubernetes_resources = false
+
+  # EKS Blueprints Addons
+  enable_cert_manager                 = try(local.aws_addons.enable_cert_manager, false)
+  enable_aws_efs_csi_driver           = try(local.aws_addons.enable_aws_efs_csi_driver, false)
+  enable_aws_fsx_csi_driver           = try(local.aws_addons.enable_aws_fsx_csi_driver, false)
+  enable_aws_cloudwatch_metrics       = try(local.aws_addons.enable_aws_cloudwatch_metrics, false)
+  enable_aws_privateca_issuer         = try(local.aws_addons.enable_aws_privateca_issuer, false)
+  enable_cluster_autoscaler           = try(local.aws_addons.enable_cluster_autoscaler, false)
+  enable_external_dns                 = try(local.aws_addons.enable_external_dns, false)
+  enable_external_secrets             = try(local.aws_addons.enable_external_secrets, false)
+  enable_aws_load_balancer_controller = try(local.aws_addons.enable_aws_load_balancer_controller, false)
+  enable_fargate_fluentbit            = try(local.aws_addons.enable_fargate_fluentbit, false)
+  enable_aws_for_fluentbit            = try(local.aws_addons.enable_aws_for_fluentbit, false)
+  enable_aws_node_termination_handler = try(local.aws_addons.enable_aws_node_termination_handler, false)
+  enable_karpenter                    = try(local.aws_addons.enable_karpenter, false)
+  enable_velero                       = try(local.aws_addons.enable_velero, false)
+  enable_aws_gateway_api_controller   = try(local.aws_addons.enable_aws_gateway_api_controller, false)
+
+  external_dns_route53_zone_arns = ["arn:aws:route53:::hostedzone/Z123456789"] # fake value for testing
+  #external_dns_route53_zone_arns = [data.aws_route53_zone.domain_name.arn]
+  aws_for_fluentbit = {
+    s3_bucket_arns = [
+      module.velero_backup_s3_bucket.s3_bucket_arn,
+      "${module.velero_backup_s3_bucket.s3_bucket_arn}/logs/*"
+    ]
+  }
+  aws_node_termination_handler_asg_arns = [for asg in module.eks.self_managed_node_groups : asg.autoscaling_group_arn]
+  ## An S3 Bucket ARN is required. This can be declared with or without a Suffix.
+  velero = {
+    s3_backup_location = "${module.velero_backup_s3_bucket.s3_bucket_arn}/backups"
+  }
+
+  eks_addons = {
+    aws-ebs-csi-driver = {
+      most_recent              = true
+      service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
+    }
+    coredns = {
+      most_recent = true
+
+      timeouts = {
+        create = "25m"
+        delete = "10m"
+      }
+    }
+    kube-proxy = {}
+    /* adot needs to be installed after cert-manager is installed with gitops, uncomment once cluster addons are deployed
+    adot = {
+      most_recent              = true
+      service_account_role_arn = module.adot_irsa.iam_role_arn
+    }
+    */
+    aws-guardduty-agent = {}
+  }
+
+  tags = local.tags
+}
+
+/*
+data "aws_route53_zone" "domain_name" {
+  name         = "example.com"
+  private_zone = false
+}
+*/
+
 
 ################################################################################
 # EKS Cluster
@@ -158,87 +262,6 @@ module "eks" {
 
   tags = local.tags
 }
-
-
-################################################################################
-# EKS Blueprints Addons
-################################################################################
-module "eks_blueprints_addons" {
-  source = "github.com/csantanapr/terraform-aws-eks-blueprints-addons?ref=gitops-bridge-v2"
-
-  cluster_name      = module.eks.cluster_name
-  cluster_endpoint  = module.eks.cluster_endpoint
-  cluster_version   = module.eks.cluster_version
-  oidc_provider_arn = module.eks.oidc_provider_arn
-  vpc_id            = module.vpc.vpc_id
-
-  eks_addons = {
-    aws-ebs-csi-driver = {
-      most_recent              = true
-      service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
-    }
-    coredns = {
-      most_recent = true
-
-      timeouts = {
-        create = "25m"
-        delete = "10m"
-      }
-    }
-    kube-proxy = {}
-    /* adot needs to be installed after cert-manager is installed with gitops, uncomment once cluster addons are deployed
-    adot = {
-      most_recent              = true
-      service_account_role_arn = module.adot_irsa.iam_role_arn
-    }
-    */
-    aws-guardduty-agent = {}
-  }
-
-  # Using GitOps Bridge
-  create_kubernetes_resources    = false
-
-  enable_aws_efs_csi_driver      = true
-  enable_aws_fsx_csi_driver      = true
-  enable_aws_cloudwatch_metrics  = true
-  enable_aws_privateca_issuer    = true
-  enable_cert_manager            = true
-  enable_cluster_autoscaler      = true
-  enable_external_dns            = true
-  external_dns_route53_zone_arns = ["arn:aws:route53:::hostedzone/Z123456789"] # fake value for testing
-  #external_dns_route53_zone_arns = [data.aws_route53_zone.domain_name.arn]
-  enable_external_secrets             = true
-  enable_aws_load_balancer_controller = true
-  enable_fargate_fluentbit            = true
-  enable_aws_for_fluentbit            = true
-  aws_for_fluentbit = {
-    s3_bucket_arns = [
-      module.velero_backup_s3_bucket.s3_bucket_arn,
-      "${module.velero_backup_s3_bucket.s3_bucket_arn}/logs/*"
-    ]
-  }
-
-  enable_aws_node_termination_handler   = true
-  aws_node_termination_handler_asg_arns = [for asg in module.eks.self_managed_node_groups : asg.autoscaling_group_arn]
-
-  enable_karpenter = true
-
-  enable_velero = true
-  ## An S3 Bucket ARN is required. This can be declared with or without a Suffix.
-  velero = {
-    s3_backup_location = "${module.velero_backup_s3_bucket.s3_bucket_arn}/backups"
-  }
-  enable_aws_gateway_api_controller = true
-
-  tags = local.tags
-}
-
-/*
-data "aws_route53_zone" "domain_name" {
-  name         = "example.com"
-  private_zone = false
-}
-*/
 
 
 ################################################################################

@@ -6,7 +6,6 @@ output "configure_kubectl" {
   EOT
 }
 
-
 output "configure_argocd" {
   description = "Terminal Setup"
   value       = <<-EOT
@@ -19,3 +18,7 @@ output "configure_argocd" {
     EOT
 }
 
+output "argocd_cluster" {
+  description = "ArgoCD cluster resource"
+  value       = module.gitops_bridge_metadata.argocd
+}

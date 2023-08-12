@@ -6,7 +6,6 @@ output "configure_kubectl" {
   EOT
 }
 
-
 output "configure_argocd" {
   description = "Terminal Setup"
   value       = <<-EOT
@@ -17,4 +16,9 @@ output "configure_argocd" {
     argocd login --port-forward --username admin --password $(argocd admin initial-password | head -1)
     argocd admin dashboard --port 8080
     EOT
+}
+
+output "argocd_cluster" {
+  description = "ArgoCD cluster resource"
+  value       = module.gitops_bridge_metadata.argocd
 }

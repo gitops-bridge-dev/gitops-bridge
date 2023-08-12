@@ -1,5 +1,5 @@
 variable "cluster_name" {
-  default = "my-cluster"
+  default = "in-cluster"
 }
 variable "environment" {
   default = "dev"

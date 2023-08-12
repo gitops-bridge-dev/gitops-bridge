@@ -15,12 +15,16 @@ terraform {
       version = ">= 1.14"
     }
     kubernetes = {
-      source = "hashicorp/kubernetes"
+      source  = "hashicorp/kubernetes"
       version = "2.22.0"
     }
     bcrypt = {
       source  = "viktorradnai/bcrypt"
       version = ">= 0.1.2"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.5.1"
     }
   }
 

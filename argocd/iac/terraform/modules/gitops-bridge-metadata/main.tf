@@ -1,13 +1,27 @@
 
 locals {
 
-  cluster_config = merge ({
-    cluster_name = var.cluster_name,
+  argocd_labels = merge ({
+    cluster_name = var.cluster_name
     environment  = var.environment
     enable_argocd = true
+    "argocd.argoproj.io/secret-type" = "cluster"
   },
-  var.metadata,
   var.addons
+  )
+  argocd_annotations = merge(
+    {
+      cluster_name = var.cluster_name
+      environment  = var.environment
+    },
+    var.metadata
+  )
+  fluxcd_data = merge(
+    {
+      cluster_name = var.cluster_name
+      environment  = var.environment
+    },
+    var.metadata
   )
 }
 
@@ -25,18 +39,8 @@ locals {
         metadata = {
           name = try(var.argocd.secret_name,var.cluster_name)
           namespace = try(var.argocd.secret_namespace,"argocd")
-          annotations = {for key, value in local.cluster_config : key => tostring(value) if value != null}
-          labels = merge({
-            for key, value in
-            {
-              for key, value in local.cluster_config : key => tostring(value) if value != null
-            } :
-            key => tostring(value) if startswith(key, "metadata_") == false
-          },{
-            "argocd.argoproj.io/secret-type" = "cluster"
-          })
-
-
+          annotations = local.argocd_annotations
+          labels = local.argocd_labels
         }
         stringData = {
             name = var.cluster_name
@@ -54,6 +58,6 @@ locals {
           name = try(var.fluxcd.configmap_name,var.cluster_name)
           namespace = try(var.fluxcd.configmap_namespace,"flux-system")
         }
-        data = {for key, value in local.cluster_config : key => tostring(value) if value != null}
+        data = local.fluxcd_data
   }
 }
