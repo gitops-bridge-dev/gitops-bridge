@@ -157,7 +157,7 @@ locals {
 # GitOps Bridge: Metadata for Spoke Cluster
 ################################################################################
 module "gitops_bridge_metadata_spoke" {
-  source = "../../../../modules/gitops-bridge-metadata"
+  source = "../../../../../modules/gitops-bridge-metadata"
 
   cluster_name = module.eks.cluster_name
   environment  = local.environment
@@ -177,7 +177,7 @@ resource "time_sleep" "wait_for_argocd_namespace_and_crds" {
   depends_on = [module.gitops_bridge_bootstrap_hub]
 }
 module "gitops_bridge_bootstrap_spoke" {
-  source = "../../../../modules/gitops-bridge-bootstrap"
+  source = "../../../../../modules/gitops-bridge-bootstrap"
 
   argocd_cluster               = module.gitops_bridge_metadata_spoke.argocd
   argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
@@ -191,7 +191,7 @@ module "gitops_bridge_bootstrap_spoke" {
 # GitOps Bridge: Metadata for Hub Cluster
 ################################################################################
 module "gitops_bridge_metadata_hub" {
-  source = "../../../../modules/gitops-bridge-metadata"
+  source = "../../../../../modules/gitops-bridge-metadata"
 
   cluster_name = module.eks.cluster_name
   environment  = local.environment
@@ -220,7 +220,7 @@ module "gitops_bridge_metadata_hub" {
 # GitOps Bridge: Bootstrap for Hub Cluster
 ################################################################################
 module "gitops_bridge_bootstrap_hub" {
-  source = "../../../../modules/gitops-bridge-bootstrap"
+  source = "../../../../../modules/gitops-bridge-bootstrap"
 
   # The ArgoCD remote cluster secret is deploy on hub cluster and spoke clusters
   providers = {

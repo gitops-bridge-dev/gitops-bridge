@@ -107,7 +107,7 @@ locals {
 # GitOps Bridge: Metadata
 ################################################################################
 module "gitops_bridge_metadata" {
-  source = "../../../modules/gitops-bridge-metadata"
+  source = "../../../../modules/gitops-bridge-metadata"
 
   cluster_name = module.eks.cluster_name
   environment  = local.environment
@@ -119,7 +119,7 @@ module "gitops_bridge_metadata" {
 # GitOps Bridge: Bootstrap
 ################################################################################
 module "gitops_bridge_bootstrap" {
-  source = "../../../modules/gitops-bridge-bootstrap"
+  source = "../../../../modules/gitops-bridge-bootstrap"
 
   argocd_cluster               = module.gitops_bridge_metadata.argocd
   argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
