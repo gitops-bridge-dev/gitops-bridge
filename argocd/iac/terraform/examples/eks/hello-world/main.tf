@@ -82,7 +82,7 @@ locals {
     #enable_vpa                                   = true
     #enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
-  addons = merge(local.aws_addons, local.oss_addons)
+  addons = merge(local.aws_addons, local.oss_addons, {kubernetes_version = local.cluster_version})
 
   addons_metadata = merge(
     module.eks_blueprints_addons.gitops_metadata,
@@ -90,10 +90,8 @@ locals {
     aws_cluster_name = module.eks.cluster_name
     aws_region       = local.region
     aws_account_id   = data.aws_caller_identity.current.account_id
+    aws_vpc_id       = module.vpc.vpc_id # Required when enabling addon aws_gateway_api_controller
     },
-    try(local.aws_addons.enable_aws_gateway_api_controller, false) ? {aws_vpc_id = module.vpc.vpc_id} : {},                                      # Required when enabling addon aws_gateway_api_controller
-    try(local.aws_addons.enable_karpenter, false) ? {karpenter_cluster_endpoint = module.eks.cluster_endpoint} : {},                             # Required when enabling addon karpeneter
-    try(local.aws_addons.enable_cluster_autoscaler, false) ? {cluster_autoscaler_image_tag  = local.cluster_autoscaler_image_tag_selected} : {}, # Required when enabling addon cluster_autoscaler
     try(local.aws_addons.enable_velero, false) ? {
       velero_backup_s3_bucket_prefix  = try(local.velero_backup_s3_bucket_prefix,"")
       velero_backup_s3_bucket_name    = try(local.velero_backup_s3_bucket_name,"") } : {} # Required when enabling addon velero
@@ -112,7 +110,6 @@ locals {
     GithubRepo = "github.com/csantanapr/terraform-gitops-bridge"
   }
 
-  create_velero_bucket = true
   velero_backup_s3_bucket        = try(split(":", module.velero_backup_s3_bucket.s3_bucket_arn), [])
   velero_backup_s3_bucket_name   = try(local.velero_backup_s3_bucket[5], "")
   velero_backup_s3_bucket_prefix = "backups"
@@ -253,33 +250,13 @@ module "vpc" {
 }
 
 ################################################################################
-# Cluster Autoscaler
-################################################################################
-
-locals {
-  cluster_autoscaler_image_tag_selected = try(local.cluster_autoscaler_image_tag[local.cluster_version], "v${local.cluster_version}.0")
-
-  # Lookup map to pull latest cluster-autoscaler patch version given the cluster version
-  cluster_autoscaler_image_tag = {
-    "1.20" = "v1.20.3"
-    "1.21" = "v1.21.3"
-    "1.22" = "v1.22.3"
-    "1.23" = "v1.23.1"
-    "1.24" = "v1.24.3"
-    "1.25" = "v1.25.3"
-    "1.26" = "v1.26.4"
-    "1.27" = "v1.27.3"
-  }
-}
-
-################################################################################
 # Velero
 ################################################################################
 module "velero_backup_s3_bucket" {
   source  = "terraform-aws-modules/s3-bucket/aws"
   version = "~> 3.0"
 
-  create_bucket = local.create_velero_bucket
+  create_bucket = try(local.aws_addons.enable_velero, false)
 
   bucket_prefix = "${local.name}-"
 
