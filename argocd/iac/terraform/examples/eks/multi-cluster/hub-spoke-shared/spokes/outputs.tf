@@ -14,11 +14,9 @@ output "configure_argocd" {
     export ARGOCD_OPTS="--port-forward --port-forward-namespace argocd --grpc-web"
     kubectl config set-context --current --namespace argocd
     argocd login --port-forward --username admin --password $(argocd admin initial-password | head -1)
-    argocd admin dashboard --port 8081
+        echo "ArgoCD Username: admin"
+    echo "ArgoCD Password: $(kubectl get secrets argocd-initial-admin-secret -n argocd --template="{{index .data.password | base64decode}}")"
+    echo Port Forward: http://localhost:8081
+    kubectl port-forward -n argocd svc/argo-cd-argocd-server 8081:80
     EOT
-}
-
-output "argocd_cluster" {
-  description = "ArgoCD cluster resource"
-  value       = module.gitops_bridge_metadata_hub.argocd
 }

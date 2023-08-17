@@ -14,8 +14,3 @@ output "configure_argocd" {
     aws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name}
     EOT
 }
-
-output "argocd_cluster" {
-  description = "ArgoCD cluster resource"
-  value       = module.gitops_bridge_metadata_hub.argocd
-}
