@@ -1,6 +1,7 @@
 provider "aws" {
   region = local.region
 }
+data "aws_caller_identity" "current" {}
 data "aws_availability_zones" "available" {}
 
 provider "helm" {
@@ -45,6 +46,7 @@ locals {
   name        = "ex-${replace(basename(path.cwd), "_", "-")}"
   environment = "dev"
   region      = "us-west-2"
+  cluster_version = "1.27"
 
   aws_addons = {
     enable_cert_manager = true
@@ -52,16 +54,16 @@ locals {
     #enable_aws_fsx_csi_driver                    = true
     #enable_aws_cloudwatch_metrics                = true
     #enable_aws_privateca_issuer                  = true
-    #enable_cluster_autoscaler                    = true
+    enable_cluster_autoscaler                    = true
     #enable_external_dns                          = true
     #enable_external_secrets                      = true
     #enable_aws_load_balancer_controller          = true
     #enable_fargate_fluentbit                     = true
     #enable_aws_for_fluentbit                     = true
     #enable_aws_node_termination_handler          = true
-    #enable_karpenter                             = true
-    #enable_velero                                = true
-    #enable_aws_gateway_api_controller            = true
+    enable_karpenter                             = true
+    enable_velero                                = true
+    enable_aws_gateway_api_controller            = true
     #enable_aws_ebs_csi_resources                 = true # generate gp2 and gp3 storage classes for ebs-csi
     #enable_aws_secrets_store_csi_driver_provider = true
   }
@@ -82,10 +84,19 @@ locals {
   }
   addons = merge(local.aws_addons, local.oss_addons)
 
-  addons_metadata = merge({
-    aws_vpc_id = module.vpc.vpc_id # Only required when enabling the aws_gateway_api_controller addon
+  addons_metadata = merge(
+    module.eks_blueprints_addons.gitops_metadata,
+    {
+    aws_cluster_name = module.eks.cluster_name
+    aws_region       = local.region
+    aws_account_id   = data.aws_caller_identity.current.account_id
     },
-    module.eks_blueprints_addons.gitops_metadata
+    try(local.aws_addons.enable_aws_gateway_api_controller, false) ? {aws_vpc_id = module.vpc.vpc_id} : {},                                      # Required when enabling addon aws_gateway_api_controller
+    try(local.aws_addons.enable_karpenter, false) ? {karpenter_cluster_endpoint = module.eks.cluster_endpoint} : {},                             # Required when enabling addon karpeneter
+    try(local.aws_addons.enable_cluster_autoscaler, false) ? {cluster_autoscaler_image_tag  = local.cluster_autoscaler_image_tag_selected} : {}, # Required when enabling addon cluster_autoscaler
+    try(local.aws_addons.enable_velero, false) ? {
+      velero_backup_s3_bucket_prefix  = try(local.velero_backup_s3_bucket_prefix,"")
+      velero_backup_s3_bucket_name    = try(local.velero_backup_s3_bucket_name,"") } : {} # Required when enabling addon velero
   )
 
   argocd_bootstrap_app_of_apps = {
@@ -100,13 +111,18 @@ locals {
     Blueprint  = local.name
     GithubRepo = "github.com/csantanapr/terraform-gitops-bridge"
   }
+
+  create_velero_bucket = true
+  velero_backup_s3_bucket        = try(split(":", module.velero_backup_s3_bucket.s3_bucket_arn), [])
+  velero_backup_s3_bucket_name   = try(local.velero_backup_s3_bucket[5], "")
+  velero_backup_s3_bucket_prefix = "backups"
 }
 
 ################################################################################
 # GitOps Bridge: Metadata
 ################################################################################
 module "gitops_bridge_metadata" {
-  source = "../../../../modules/gitops-bridge-metadata"
+  source = "../../../modules/gitops-bridge-metadata"
 
   cluster_name = module.eks.cluster_name
   environment  = local.environment
@@ -118,7 +134,7 @@ module "gitops_bridge_metadata" {
 # GitOps Bridge: Bootstrap
 ################################################################################
 module "gitops_bridge_bootstrap" {
-  source = "../../../../modules/gitops-bridge-bootstrap"
+  source = "../../../modules/gitops-bridge-bootstrap"
 
   argocd_cluster               = module.gitops_bridge_metadata.argocd
   argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
@@ -129,7 +145,7 @@ module "gitops_bridge_bootstrap" {
 # EKS Blueprints Addons
 ################################################################################
 module "eks_blueprints_addons" {
-  source = "github.com/csantanapr/terraform-aws-eks-blueprints-addons?ref=gitops-bridge-v2"
+  source = "github.com/csantanapr/terraform-aws-eks-blueprints-addons?ref=gitops-bridge-v2-c"
 
   cluster_name      = module.eks.cluster_name
   cluster_endpoint  = module.eks.cluster_endpoint
@@ -153,8 +169,12 @@ module "eks_blueprints_addons" {
   enable_aws_for_fluentbit            = try(local.aws_addons.enable_aws_for_fluentbit, false)
   enable_aws_node_termination_handler = try(local.aws_addons.enable_aws_node_termination_handler, false)
   enable_karpenter                    = try(local.aws_addons.enable_karpenter, false)
-  enable_velero                       = try(local.aws_addons.enable_velero, false)
   enable_aws_gateway_api_controller   = try(local.aws_addons.enable_aws_gateway_api_controller, false)
+  enable_velero                       = try(local.aws_addons.enable_velero, false)
+  ## An S3 Bucket ARN is required. This can be declared with or without a Suffix.
+  velero = {
+    s3_backup_location = "${try(module.velero_backup_s3_bucket.s3_bucket_arn,"")}/${local.velero_backup_s3_bucket_prefix}"
+  }
 
   tags = local.tags
 }
@@ -168,7 +188,7 @@ module "eks" {
   version = "~> 19.13"
 
   cluster_name                   = local.name
-  cluster_version                = "1.27"
+  cluster_version                = local.cluster_version
   cluster_endpoint_public_access = true
 
 
@@ -231,3 +251,68 @@ module "vpc" {
 
   tags = local.tags
 }
+
+################################################################################
+# Cluster Autoscaler
+################################################################################
+
+locals {
+  cluster_autoscaler_image_tag_selected = try(local.cluster_autoscaler_image_tag[local.cluster_version], "v${local.cluster_version}.0")
+
+  # Lookup map to pull latest cluster-autoscaler patch version given the cluster version
+  cluster_autoscaler_image_tag = {
+    "1.20" = "v1.20.3"
+    "1.21" = "v1.21.3"
+    "1.22" = "v1.22.3"
+    "1.23" = "v1.23.1"
+    "1.24" = "v1.24.3"
+    "1.25" = "v1.25.3"
+    "1.26" = "v1.26.4"
+    "1.27" = "v1.27.3"
+  }
+}
+
+################################################################################
+# Velero
+################################################################################
+module "velero_backup_s3_bucket" {
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "~> 3.0"
+
+  create_bucket = local.create_velero_bucket
+
+  bucket_prefix = "${local.name}-"
+
+  # Allow deletion of non-empty bucket
+  # NOTE: This is enabled for example usage only, you should not enable this for production workloads
+  force_destroy = true
+
+  attach_deny_insecure_transport_policy = true
+  attach_require_latest_tls_policy      = true
+
+  acl = "private"
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+
+  control_object_ownership = true
+  object_ownership         = "BucketOwnerPreferred"
+
+  versioning = {
+    status     = true
+    mfa_delete = false
+  }
+
+  server_side_encryption_configuration = {
+    rule = {
+      apply_server_side_encryption_by_default = {
+        sse_algorithm = "AES256"
+      }
+    }
+  }
+
+  tags = local.tags
+}
+
