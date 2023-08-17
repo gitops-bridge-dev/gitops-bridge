@@ -1,8 +1,8 @@
 provider "aws" {
   region = local.region
 }
+data "aws_caller_identity" "current" {}
 data "aws_availability_zones" "available" {}
-
 
 provider "helm" {
   kubernetes {
@@ -42,17 +42,11 @@ provider "kubernetes" {
   }
 }
 
-# To get the hosted zone to be use in argocd domain
-data "aws_route53_zone" "domain_name" {
-  count        = local.enable_ingress ? 1 : 0
-  name         = local.domain_name
-  private_zone = local.domain_private_zone
-}
-
 locals {
-  name        = "ex-${replace(basename(path.cwd), "_", "-")}"
-  environment = "dev"
-  region      = "us-west-2"
+  name            = "ex-${replace(basename(path.cwd), "_", "-")}"
+  environment     = "dev"
+  region          = "us-west-2"
+  cluster_version = "1.27"
 
   enable_ingress      = true
   domain_private_zone = false
@@ -100,12 +94,16 @@ locals {
     #enable_vpa                                   = true
     #enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
-  addons = merge(local.aws_addons, local.oss_addons)
+  addons = merge(local.aws_addons, local.oss_addons, { kubernetes_version = local.cluster_version })
 
-  addons_metadata = merge({
-    aws_vpc_id = module.vpc.vpc_id # Only required when enabling the aws_gateway_api_controller addon
-    },
+  addons_metadata = merge(
     module.eks_blueprints_addons.gitops_metadata,
+    {
+      aws_cluster_name = module.eks.cluster_name
+      aws_region       = local.region
+      aws_account_id   = data.aws_caller_identity.current.account_id
+      aws_vpc_id       = module.vpc.vpc_id
+    },
     {
       argocd_hosts                = "[${local.argocd_host}]"
       external_dns_domain_filters = "[${local.domain_name}]"
@@ -196,7 +194,7 @@ module "eks" {
   version = "~> 19.13"
 
   cluster_name                   = local.name
-  cluster_version                = "1.27"
+  cluster_version                = local.cluster_version
   cluster_endpoint_public_access = true
 
 
@@ -259,6 +257,17 @@ module "vpc" {
 
   tags = local.tags
 }
+
+################################################################################
+# Route 53
+################################################################################
+# To get the hosted zone to be use in argocd domain
+data "aws_route53_zone" "domain_name" {
+  count        = local.enable_ingress ? 1 : 0
+  name         = local.domain_name
+  private_zone = local.domain_private_zone
+}
+
 
 ################################################################################
 # ACM Certificate

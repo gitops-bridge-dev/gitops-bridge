@@ -43,9 +43,9 @@ provider "kubernetes" {
 }
 
 locals {
-  name        = "ex-${replace(basename(path.cwd), "_", "-")}"
-  environment = "dev"
-  region      = "us-west-2"
+  name            = "ex-${replace(basename(path.cwd), "_", "-")}"
+  environment     = "dev"
+  region          = "us-west-2"
   cluster_version = "1.27"
 
   aws_addons = {
@@ -54,16 +54,16 @@ locals {
     #enable_aws_fsx_csi_driver                    = true
     #enable_aws_cloudwatch_metrics                = true
     #enable_aws_privateca_issuer                  = true
-    enable_cluster_autoscaler                    = true
+    #enable_cluster_autoscaler                    = true
     #enable_external_dns                          = true
     #enable_external_secrets                      = true
     #enable_aws_load_balancer_controller          = true
     #enable_fargate_fluentbit                     = true
     #enable_aws_for_fluentbit                     = true
     #enable_aws_node_termination_handler          = true
-    enable_karpenter                             = true
-    enable_velero                                = true
-    enable_aws_gateway_api_controller            = true
+    #enable_karpenter                             = true
+    #enable_velero                                = true
+    #enable_aws_gateway_api_controller            = true
     #enable_aws_ebs_csi_resources                 = true # generate gp2 and gp3 storage classes for ebs-csi
     #enable_aws_secrets_store_csi_driver_provider = true
   }
@@ -76,25 +76,22 @@ locals {
     #enable_ingress_nginx                         = true
     #enable_kyverno                               = true
     #enable_kube_prometheus_stack                 = true
-    enable_metrics_server                         = true
+    enable_metrics_server = true
     #enable_prometheus_adapter                    = true
     #enable_secrets_store_csi_driver              = true
     #enable_vpa                                   = true
     #enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
-  addons = merge(local.aws_addons, local.oss_addons, {kubernetes_version = local.cluster_version})
+  addons = merge(local.aws_addons, local.oss_addons, { kubernetes_version = local.cluster_version })
 
   addons_metadata = merge(
     module.eks_blueprints_addons.gitops_metadata,
     {
-    aws_cluster_name = module.eks.cluster_name
-    aws_region       = local.region
-    aws_account_id   = data.aws_caller_identity.current.account_id
-    aws_vpc_id       = module.vpc.vpc_id # Required when enabling addon aws_gateway_api_controller
-    },
-    try(local.aws_addons.enable_velero, false) ? {
-      velero_backup_s3_bucket_prefix  = try(local.velero_backup_s3_bucket_prefix,"")
-      velero_backup_s3_bucket_name    = try(local.velero_backup_s3_bucket_name,"") } : {} # Required when enabling addon velero
+      aws_cluster_name = module.eks.cluster_name
+      aws_region       = local.region
+      aws_account_id   = data.aws_caller_identity.current.account_id
+      aws_vpc_id       = module.vpc.vpc_id
+    }
   )
 
   argocd_bootstrap_app_of_apps = {
@@ -109,10 +106,6 @@ locals {
     Blueprint  = local.name
     GithubRepo = "github.com/csantanapr/terraform-gitops-bridge"
   }
-
-  velero_backup_s3_bucket        = try(split(":", module.velero_backup_s3_bucket.s3_bucket_arn), [])
-  velero_backup_s3_bucket_name   = try(local.velero_backup_s3_bucket[5], "")
-  velero_backup_s3_bucket_prefix = "backups"
 }
 
 ################################################################################
@@ -166,12 +159,8 @@ module "eks_blueprints_addons" {
   enable_aws_for_fluentbit            = try(local.aws_addons.enable_aws_for_fluentbit, false)
   enable_aws_node_termination_handler = try(local.aws_addons.enable_aws_node_termination_handler, false)
   enable_karpenter                    = try(local.aws_addons.enable_karpenter, false)
-  enable_aws_gateway_api_controller   = try(local.aws_addons.enable_aws_gateway_api_controller, false)
   enable_velero                       = try(local.aws_addons.enable_velero, false)
-  ## An S3 Bucket ARN is required. This can be declared with or without a Suffix.
-  velero = {
-    s3_backup_location = "${try(module.velero_backup_s3_bucket.s3_bucket_arn,"")}/${local.velero_backup_s3_bucket_prefix}"
-  }
+  enable_aws_gateway_api_controller   = try(local.aws_addons.enable_aws_gateway_api_controller, false)
 
   tags = local.tags
 }
@@ -248,48 +237,3 @@ module "vpc" {
 
   tags = local.tags
 }
-
-################################################################################
-# Velero
-################################################################################
-module "velero_backup_s3_bucket" {
-  source  = "terraform-aws-modules/s3-bucket/aws"
-  version = "~> 3.0"
-
-  create_bucket = try(local.aws_addons.enable_velero, false)
-
-  bucket_prefix = "${local.name}-"
-
-  # Allow deletion of non-empty bucket
-  # NOTE: This is enabled for example usage only, you should not enable this for production workloads
-  force_destroy = true
-
-  attach_deny_insecure_transport_policy = true
-  attach_require_latest_tls_policy      = true
-
-  acl = "private"
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-
-  control_object_ownership = true
-  object_ownership         = "BucketOwnerPreferred"
-
-  versioning = {
-    status     = true
-    mfa_delete = false
-  }
-
-  server_side_encryption_configuration = {
-    rule = {
-      apply_server_side_encryption_by_default = {
-        sse_algorithm = "AES256"
-      }
-    }
-  }
-
-  tags = local.tags
-}
-

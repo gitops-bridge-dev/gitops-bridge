@@ -1,6 +1,7 @@
 provider "aws" {
   region = local.region
 }
+data "aws_caller_identity" "current" {}
 data "aws_availability_zones" "available" {}
 
 provider "bcrypt" {}
@@ -44,9 +45,10 @@ provider "kubernetes" {
 }
 
 locals {
-  name        = "ex-${replace(basename(path.cwd), "_", "-")}"
-  environment = "dev"
-  region      = "us-west-2"
+  name            = "ex-${replace(basename(path.cwd), "_", "-")}"
+  environment     = "dev"
+  region          = "us-west-2"
+  cluster_version = "1.27"
 
   aws_addons = {
     enable_cert_manager = true
@@ -82,12 +84,16 @@ locals {
     #enable_vpa                                   = true
     #enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
-  addons = merge(local.aws_addons, local.oss_addons)
+  addons = merge(local.aws_addons, local.oss_addons, { kubernetes_version = local.cluster_version })
 
-  addons_metadata = merge({
-    aws_vpc_id = module.vpc.vpc_id # Only required when enabling the aws_gateway_api_controller addon
-    },
-    module.eks_blueprints_addons.gitops_metadata
+  addons_metadata = merge(
+    module.eks_blueprints_addons.gitops_metadata,
+    {
+      aws_cluster_name = module.eks.cluster_name
+      aws_region       = local.region
+      aws_account_id   = data.aws_caller_identity.current.account_id
+      aws_vpc_id       = module.vpc.vpc_id
+    }
   )
 
   argocd_bootstrap_app_of_apps = {
@@ -205,7 +211,7 @@ module "eks" {
   version = "~> 19.13"
 
   cluster_name                   = local.name
-  cluster_version                = "1.27"
+  cluster_version                = local.cluster_version
   cluster_endpoint_public_access = true
 
 

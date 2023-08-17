@@ -1,8 +1,8 @@
 provider "aws" {
   region = local.region
 }
+data "aws_caller_identity" "current" {}
 data "aws_availability_zones" "available" {}
-
 
 provider "helm" {
   kubernetes {
@@ -43,9 +43,10 @@ provider "kubernetes" {
 }
 
 locals {
-  name        = "ex-${replace(basename(path.cwd), "_", "-")}"
-  environment = "dev"
-  region      = "us-west-2"
+  name            = "ex-${replace(basename(path.cwd), "_", "-")}"
+  environment     = "dev"
+  region          = "us-west-2"
+  cluster_version = "1.27"
 
   aws_addons = {
     enable_cert_manager                          = true
@@ -81,12 +82,19 @@ locals {
     enable_vpa                      = true
     enable_foo                      = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
-  addons = merge(local.aws_addons, local.oss_addons)
+  addons = merge(local.aws_addons, local.oss_addons, { kubernetes_version = local.cluster_version })
 
-  addons_metadata = merge({
-    aws_vpc_id = module.vpc.vpc_id # Only required when enabling the aws_gateway_api_controller addon
+  addons_metadata = merge(
+    module.eks_blueprints_addons.gitops_metadata,
+    {
+      aws_cluster_name = module.eks.cluster_name
+      aws_region       = local.region
+      aws_account_id   = data.aws_caller_identity.current.account_id
+      aws_vpc_id       = module.vpc.vpc_id
     },
-    module.eks_blueprints_addons.gitops_metadata
+    try(local.aws_addons.enable_velero, false) ? {
+      velero_backup_s3_bucket_prefix  = try(local.velero_backup_s3_bucket_prefix,"")
+      velero_backup_s3_bucket_name    = try(local.velero_backup_s3_bucket_name,"") } : {} # Required when enabling addon velero
   )
 
   argocd_bootstrap_app_of_apps = {
@@ -101,6 +109,10 @@ locals {
     Blueprint  = local.name
     GithubRepo = "github.com/csantanapr/terraform-gitops-bridge"
   }
+
+  velero_backup_s3_bucket        = try(split(":", module.velero_backup_s3_bucket.s3_bucket_arn), [])
+  velero_backup_s3_bucket_name   = try(local.velero_backup_s3_bucket[5], "")
+  velero_backup_s3_bucket_prefix = "backups"
 }
 
 ################################################################################
@@ -168,7 +180,7 @@ module "eks_blueprints_addons" {
   aws_node_termination_handler_asg_arns = [for asg in module.eks.self_managed_node_groups : asg.autoscaling_group_arn]
   ## An S3 Bucket ARN is required. This can be declared with or without a Suffix.
   velero = {
-    s3_backup_location = "${module.velero_backup_s3_bucket.s3_bucket_arn}/backups"
+    s3_backup_location = "${try(module.velero_backup_s3_bucket.s3_bucket_arn,"")}/${local.velero_backup_s3_bucket_prefix}"
   }
 
   eks_addons = {
@@ -214,8 +226,9 @@ module "eks" {
   version = "~> 19.13"
 
   cluster_name                   = local.name
-  cluster_version                = "1.26"
+  cluster_version                = local.cluster_version
   cluster_endpoint_public_access = true
+
 
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets
@@ -241,7 +254,6 @@ module "eks" {
       desired_size = 3
     }
   }
-
   # EKS Addons
   cluster_addons = {
     vpc-cni = {
@@ -259,10 +271,8 @@ module "eks" {
       })
     }
   }
-
   tags = local.tags
 }
-
 
 ################################################################################
 # Supporting Resources
@@ -296,6 +306,8 @@ module "vpc" {
 module "velero_backup_s3_bucket" {
   source  = "terraform-aws-modules/s3-bucket/aws"
   version = "~> 3.0"
+
+  create_bucket = try(local.aws_addons.enable_velero, false)
 
   bucket_prefix = "${local.name}-"
 
