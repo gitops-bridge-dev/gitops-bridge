@@ -135,7 +135,7 @@ module "gitops_bridge_bootstrap" {
 # EKS Blueprints Addons
 ################################################################################
 module "eks_blueprints_addons" {
-  source = "github.com/csantanapr/terraform-aws-eks-blueprints-addons?ref=gitops-bridge-v2-c"
+  source = "github.com/csantanapr/terraform-aws-eks-blueprints-addons?ref=gitops-bridge-v2"
 
   cluster_name      = module.eks.cluster_name
   cluster_endpoint  = module.eks.cluster_endpoint
