@@ -48,8 +48,12 @@ locals {
   region      = "us-west-2"
 
   aws_addons = {
-    enable_cert_manager   = true
-    enable_aws_crossplane = true # installs aws crossplane providers
+    enable_cert_manager                    = true
+    enable_aws_crossplane                  = true  # installs aws crossplane providers
+    enable_aws_crossplane_provider         = false # installs aws contrib provider
+    enable_aws_crossplane_upbound_provider = true  # installs aws upbound provider
+    enable_crossplane_kubernetes_provider  = true  # installs kubernetes provider
+    enable_crossplane_helm_provider        = true  # installs helm provider
     #enable_aws_efs_csi_driver                    = true
     #enable_aws_fsx_csi_driver                    = true
     #enable_aws_cloudwatch_metrics                = true
