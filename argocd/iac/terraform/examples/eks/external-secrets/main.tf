@@ -48,7 +48,8 @@ locals {
   region          = "us-west-2"
   cluster_version = "1.27"
 
-  aws_secret_manager_secret_name = "github-ssh-key"
+  aws_secret_manager_secret_name = "argocd-ssh-key"
+  git_private_ssh_key = "~/.ssh/id_rsa" # Update with the git ssh key to be used by ArgoCD
 
   aws_addons = {
     enable_cert_manager = true
@@ -135,8 +136,14 @@ module "gitops_bridge_bootstrap" {
 ################################################################################
 # AWS Secret Manager
 ################################################################################
-data "aws_secretsmanager_secret" "git_ssh_key" {
-  name = local.aws_secret_manager_secret_name
+#tfsec:ignore:aws-ssm-secret-use-customer-key
+resource "aws_secretsmanager_secret" "git_ssh_key" {
+  name                    = local.aws_secret_manager_secret_name
+  recovery_window_in_days = 0 # Set to zero for this example to force delete during Terraform destroy
+}
+resource "aws_secretsmanager_secret_version" "git_ssh_key" {
+  secret_id     = aws_secretsmanager_secret.git_ssh_key.id
+  secret_string = file(pathexpand(local.git_private_ssh_key))
 }
 
 

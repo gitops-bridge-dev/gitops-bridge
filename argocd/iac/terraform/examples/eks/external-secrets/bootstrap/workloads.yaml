@@ -2,18 +2,19 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: bootstrap-workloads
-  namespace: argocd
+  namespace: 'argocd'
   finalizers:
   - resources-finalizer.argocd.argoproj.io
 spec:
   destination:
-    namespace: default
     server: https://kubernetes.default.svc
+    namespace: 'guestbook'
   project: default
   source:
-    path: envs/dev
-    repoURL: git@github.com:aws-samples/eks-blueprints-workloads.git
+    path: helm-guestbook
+    repoURL: git@github.com:argoproj/argocd-example-apps.git
     targetRevision: HEAD
   syncPolicy:
+    automated: {}
     syncOptions:
     - CreateNamespace=true
