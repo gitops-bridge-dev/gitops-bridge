@@ -21,7 +21,7 @@ Access Terraform output to configure `kubectl` and `argocd`
 terraform output
 ```
 
-There is a file `github.yaml` located in the addons git repository `clusters/ex-external-secrets/secret/` this file creates the resources `ClusterSecretStore` and `ExternalSecret`. Update the git `url` this file when you change the git repository for the workloads specified in `bootstrap/workloads.yaml`
+There is a file `github.yaml` located in the addons git repository `clusters/ex-external-secrets/secret/` this file creates the resources `ClusterSecretStore` and `ExternalSecret`. Update git url in this file when you change the git repository for the workloads specified in `bootstrap/workloads.yaml`. Also update the region in this file if you are using a different region for AWS Secret Manager.
 
 To verify that the ArgoCD secret with ssh key is created run the following command
 ```shell
