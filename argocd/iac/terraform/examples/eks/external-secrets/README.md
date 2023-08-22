@@ -17,6 +17,11 @@ Access Terraform output to configure `kubectl` and `argocd`
 terraform output
 ```
 
+After cluster is deploy use the external secret operator to create the ArgoCD secret for git ssh access
+```shell
+kubectl apply -f secrets/github.yaml
+```
+
 Destroy EKS Cluster
 ```shell
 cd hub
