@@ -11,7 +11,7 @@ resource "helm_release" "argocd" {
   namespace        = try(var.argocd.namespace, "argocd")
   create_namespace = try(var.argocd.create_namespace, true)
   chart            = try(var.argocd.chart,"argo-cd")
-  version          = try(var.argocd.chart_version, "5.43.4")
+  version          = try(var.argocd.chart_version, "5.45.0")
   repository       = try(var.argocd.repository, "https://argoproj.github.io/argo-helm")
   values           = try(var.argocd.values, [])
 
