@@ -9,9 +9,9 @@ spec:
     namespace: 'argocd'
   project: default
   source:
-    path: bootstrap/control-plane
-    repoURL: https://github.com/gitops-bridge-dev/gitops-bridge-argocd-control-plane-template
-    targetRevision: HEAD
+    path: ${path}
+    repoURL: ${repoURL}
+    targetRevision: ${targetRevision}
     directory:
       recurse: true
       exclude: exclude/*
