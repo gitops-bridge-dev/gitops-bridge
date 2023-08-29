@@ -48,6 +48,9 @@ locals {
   region          = "us-west-2"
   cluster_version = var.kubernetes_version
   vpc_cidr        = var.vpc_cidr
+  gitops_url      = var.gitops_url
+  gitops_revision = var.gitops_revision
+  gitops_path     = var.gitops_path
 
   aws_addons = {
     enable_cert_manager = true
@@ -92,11 +95,19 @@ locals {
       aws_region       = local.region
       aws_account_id   = data.aws_caller_identity.current.account_id
       aws_vpc_id       = module.vpc.vpc_id
+    },
+    {
+      gitops_bridge_repo_url      = local.gitops_url
+      gitops_bridge_repo_revision = local.gitops_revision
     }
   )
 
   argocd_bootstrap_app_of_apps = {
-    addons = file("${path.module}/bootstrap/addons.yaml")
+    addons = templatefile("${path.module}/bootstrap/addons.yaml", {
+      repoURL        = local.gitops_url
+      targetRevision = local.gitops_revision
+      path           = local.gitops_path
+    })
     workloads = templatefile("${path.module}/bootstrap/workloads.yaml",
       {
         environment = local.environment

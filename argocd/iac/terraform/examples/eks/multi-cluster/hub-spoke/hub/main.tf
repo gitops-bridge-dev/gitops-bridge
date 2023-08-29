@@ -48,6 +48,9 @@ locals {
   region          = "us-west-2"
   cluster_version = var.kubernetes_version
   vpc_cidr        = var.vpc_cidr
+  gitops_url      = var.gitops_url
+  gitops_revision = var.gitops_revision
+  gitops_path     = var.gitops_path
 
   aws_addons = {
     enable_cert_manager = true
@@ -98,11 +101,19 @@ locals {
     {
       argocd_iam_role_arn = module.argocd_irsa.iam_role_arn,
       argocd_namespace    = "argocd"
+    },
+    {
+      gitops_bridge_repo_url      = local.gitops_url
+      gitops_bridge_repo_revision = local.gitops_revision
     }
   )
 
   argocd_bootstrap_app_of_apps = {
-    addons = file("${path.module}/bootstrap/addons.yaml")
+    addons = templatefile("${path.module}/bootstrap/addons.yaml", {
+      repoURL        = local.gitops_url
+      targetRevision = local.gitops_revision
+      path           = local.gitops_path
+    })
   }
 
   azs = slice(data.aws_availability_zones.available.names, 0, 3)

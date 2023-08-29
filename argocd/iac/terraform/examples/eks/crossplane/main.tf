@@ -1,8 +1,8 @@
 provider "aws" {
   region = local.region
 }
+data "aws_caller_identity" "current" {}
 data "aws_availability_zones" "available" {}
-
 
 provider "helm" {
   kubernetes {
@@ -43,9 +43,13 @@ provider "kubernetes" {
 }
 
 locals {
-  name        = "ex-${replace(basename(path.cwd), "_", "-")}"
-  environment = "control-plane"
-  region      = "us-west-2"
+  name            = "ex-${replace(basename(path.cwd), "_", "-")}"
+  environment     = "control-plane"
+  region          = "us-west-2"
+  cluster_version = "1.27"
+  gitops_url      = var.gitops_url
+  gitops_revision = var.gitops_revision
+  gitops_path     = var.gitops_path
 
   aws_addons = {
     enable_cert_manager                    = true
@@ -87,20 +91,32 @@ locals {
     #enable_vpa                                   = true
     #enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
-  addons = merge(local.aws_addons, local.oss_addons)
+  addons = merge(local.aws_addons, local.oss_addons, { kubernetes_version = local.cluster_version })
 
-  addons_metadata = merge({
-    aws_vpc_id = module.vpc.vpc_id # Only required when enabling the aws_gateway_api_controller addon
-    },
+  addons_metadata = merge(
     module.eks_blueprints_addons.gitops_metadata,
+    {
+      aws_cluster_name = module.eks.cluster_name
+      aws_region       = local.region
+      aws_account_id   = data.aws_caller_identity.current.account_id
+      aws_vpc_id       = module.vpc.vpc_id
+    },
     {
       aws_crossplane_iam_role_arn         = module.crossplane_irsa_aws.iam_role_arn
       aws_upbound_crossplane_iam_role_arn = module.crossplane_irsa_aws.iam_role_arn
+    },
+    {
+      gitops_bridge_repo_url      = local.gitops_url
+      gitops_bridge_repo_revision = local.gitops_revision
     }
   )
 
   argocd_bootstrap_app_of_apps = {
-    addons    = file("${path.module}/bootstrap/addons.yaml")
+    addons = templatefile("${path.module}/bootstrap/addons.yaml", {
+      repoURL        = local.gitops_url
+      targetRevision = local.gitops_revision
+      path           = local.gitops_path
+    })
     workloads = file("${path.module}/bootstrap/workloads.yaml")
   }
 
@@ -209,7 +225,7 @@ module "eks" {
   version = "~> 19.13"
 
   cluster_name                   = local.name
-  cluster_version                = "1.27"
+  cluster_version                = local.cluster_version
   cluster_endpoint_public_access = true
 
 

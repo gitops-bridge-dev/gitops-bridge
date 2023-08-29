@@ -15,8 +15,19 @@ output "configure_argocd" {
     kubectl config set-context --current --namespace argocd
     argocd login --port-forward --username admin --password $(argocd admin initial-password | head -1)
     echo "ArgoCD Username: admin"
-    echo "ArgoCD Password: $(aws secretsmanager get-secret-value --secret-id argocd)"
+    echo "ArgoCD Password: $(kubectl get secrets argocd-initial-admin-secret -n argocd --template="{{index .data.password | base64decode}}")"
     echo Port Forward: http://localhost:8080
     kubectl port-forward -n argocd svc/argo-cd-argocd-server 8080:80
+    EOT
+}
+
+output "access_argocd" {
+  description = "ArgoCD Access"
+  value       = <<-EOT
+    export KUBECONFIG="/tmp/${module.eks.cluster_name}"
+    aws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name}
+    echo "ArgoCD URL: https://$(kubectl get svc -n argocd argo-cd-argocd-server -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
+    echo "ArgoCD Username: admin"
+    echo "ArgoCD Password: $(aws secretsmanager get-secret-value --secret-id argocd --output json | jq -r .SecretString)"
     EOT
 }
