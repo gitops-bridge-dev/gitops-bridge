@@ -151,7 +151,7 @@ resource "kubernetes_secret" "git_secrets" {
     }
     git-workloads = {
       type = "git"
-      url = local.gitops_addons_org
+      url = local.gitops_workloads_org
       sshPrivateKey = file(pathexpand(local.git_private_ssh_key))
     }
   }
