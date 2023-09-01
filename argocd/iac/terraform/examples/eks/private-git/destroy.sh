@@ -4,11 +4,11 @@ set -x
 
 # Delete the Ingress/SVC before removing the addons
 TMPFILE=$(mktemp)
-terraform output -raw configure_kubectl > "$TMPFILE"
-source "$TMPFILE"
+#terraform output -raw configure_kubectl > "$TMPFILE"
+#source "$TMPFILE"
 
 kubectl delete svc -n argocd argo-cd-argocd-server
-
+terraform state rm kubernetes_namespace.argocd
 terraform destroy -target="module.gitops_bridge_bootstrap" -auto-approve
 terraform destroy -target="module.eks_blueprints_addons" -auto-approve
 terraform destroy -target="module.eks" -auto-approve
