@@ -21,7 +21,7 @@ spec:
       project: default
       source:
         repoURL: '{{metadata.annotations.gitops_bridge_repo_url}}'
-        path: '{{metadata.annotations.gitops_bridge_repo_path}}'
+        path: '{{metadata.annotations.gitops_bridge_repo_basepath}}{{metadata.annotations.gitops_bridge_repo_path}}'
         targetRevision: '{{metadata.annotations.gitops_bridge_repo_revision}}'
         directory:
           recurse: true

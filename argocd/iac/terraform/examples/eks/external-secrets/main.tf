@@ -49,6 +49,7 @@ locals {
   cluster_version        = "1.27"
   gitops_addons_org      = var.gitops_addons_org
   gitops_addons_repo     = var.gitops_addons_repo
+  gitops_addons_basepath = var.gitops_addons_basepath
   gitops_addons_path     = var.gitops_addons_path
   gitops_addons_revision = var.gitops_addons_revision
   gitops_addons_url      = "${local.gitops_addons_org}/${local.gitops_addons_repo}"
@@ -110,6 +111,7 @@ locals {
     },
     {
       gitops_bridge_repo_url      = local.gitops_addons_url
+      gitops_bridge_repo_basepath = local.gitops_addons_basepath
       gitops_bridge_repo_path     = local.gitops_addons_path
       gitops_bridge_repo_revision = local.gitops_addons_revision
     },
