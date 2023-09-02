@@ -1,0 +1,6 @@
+region: us-west-2
+externalSecret:
+  clusterSecretStore:
+    secret: secret
+  secretStore:
+    secret: /external-secrets/secret

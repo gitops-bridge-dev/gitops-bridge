@@ -43,16 +43,26 @@ provider "kubernetes" {
 }
 
 locals {
-  name            = "ex-${replace(basename(path.cwd), "_", "-")}"
-  environment     = "dev"
-  region          = "us-west-2"
-  cluster_version = "1.27"
-  gitops_url      = var.gitops_url
-  gitops_revision = var.gitops_revision
-  gitops_path     = var.gitops_path
+  name                   = "ex-${replace(basename(path.cwd), "_", "-")}"
+  environment            = "dev"
+  region                 = "us-west-2"
+  cluster_version        = "1.27"
+  gitops_addons_org      = var.gitops_addons_org
+  gitops_addons_repo     = var.gitops_addons_repo
+  gitops_addons_path     = var.gitops_addons_path
+  gitops_addons_revision = var.gitops_addons_revision
+  gitops_addons_url      = "${local.gitops_addons_org}/${local.gitops_addons_repo}"
 
-  aws_secret_manager_secret_name = "argocd-ssh-key"
-  git_private_ssh_key = "~/.ssh/id_rsa" # Update with the git ssh key to be used by ArgoCD
+  gitops_workload_org      = var.gitops_workload_org
+  gitops_workload_repo     = var.gitops_workload_repo
+  gitops_workload_path     = var.gitops_workload_path
+  gitops_workload_revision = var.gitops_workload_revision
+  gitops_workload_url      = "${local.gitops_workload_org}/${local.gitops_workload_repo}"
+
+  # Secret names in AWS
+  workload_sm_secret = local.name
+  workload_pm_secret = "/${local.name}/secret"
+
 
   aws_addons = {
     enable_cert_manager = true
@@ -62,7 +72,7 @@ locals {
     #enable_aws_privateca_issuer                  = true
     #enable_cluster_autoscaler                    = true
     #enable_external_dns                          = true
-    enable_external_secrets                      = true
+    enable_external_secrets = true
     #enable_aws_load_balancer_controller          = true
     #enable_fargate_fluentbit                     = true
     #enable_aws_for_fluentbit                     = true
@@ -99,18 +109,24 @@ locals {
       aws_vpc_id       = module.vpc.vpc_id
     },
     {
-      gitops_bridge_repo_url      = local.gitops_url
-      gitops_bridge_repo_revision = local.gitops_revision
+      gitops_bridge_repo_url      = local.gitops_addons_url
+      gitops_bridge_repo_path     = local.gitops_addons_path
+      gitops_bridge_repo_revision = local.gitops_addons_revision
+    },
+    {
+      workload_repo_url      = local.gitops_addons_url
+      workload_repo_path     = local.gitops_addons_path
+      workload_repo_revision = local.gitops_addons_revision
+    },
+    {
+      workload_sm_secret = aws_ssm_parameter.secret_parameter.name
+      workload_pm_secret = aws_secretsmanager_secret.secret.name
     }
   )
 
   argocd_bootstrap_app_of_apps = {
-    addons = templatefile("${path.module}/bootstrap/addons.yaml", {
-      repoURL        = local.gitops_url
-      targetRevision = local.gitops_revision
-      path           = local.gitops_path
-    })
-    workloads = file("${path.module}/bootstrap/workloads.yaml")
+    addons = file("${path.module}/bootstrap/addons.yaml")
+    addons = file("${path.module}/bootstrap/workloads.yaml")
   }
 
   vpc_cidr = "10.0.0.0/16"
@@ -121,6 +137,35 @@ locals {
     GithubRepo = "github.com/csantanapr/terraform-gitops-bridge"
   }
 }
+
+################################################################################
+# Secret Manager & Parameter Store
+################################################################################
+resource "aws_kms_key" "secrets" {
+  enable_key_rotation = true
+}
+resource "aws_secretsmanager_secret" "secret" {
+  name                    = local.workload_sm_secret
+  recovery_window_in_days = 0
+  kms_key_id              = aws_kms_key.secrets.arn
+}
+resource "aws_secretsmanager_secret_version" "secret" {
+  secret_id = aws_secretsmanager_secret.secret.id
+  secret_string = jsonencode({
+    username = "secretuser",
+    password = "secretpassword"
+  })
+}
+resource "aws_ssm_parameter" "secret_parameter" {
+  name = local.workload_pm_secret
+  type = "SecureString"
+  value = jsonencode({
+    username = "secretuser",
+    password = "secretpassword"
+  })
+  key_id = aws_kms_key.secrets.arn
+}
+
 
 ################################################################################
 # GitOps Bridge: Metadata
@@ -143,20 +188,6 @@ module "gitops_bridge_bootstrap" {
   argocd_cluster               = module.gitops_bridge_metadata.argocd
   argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
 }
-
-################################################################################
-# AWS Secret Manager
-################################################################################
-#tfsec:ignore:aws-ssm-secret-use-customer-key
-resource "aws_secretsmanager_secret" "git_ssh_key" {
-  name                    = local.aws_secret_manager_secret_name
-  recovery_window_in_days = 0 # Set to zero for this example to force delete during Terraform destroy
-}
-resource "aws_secretsmanager_secret_version" "git_ssh_key" {
-  secret_id     = aws_secretsmanager_secret.git_ssh_key.id
-  secret_string = file(pathexpand(local.git_private_ssh_key))
-}
-
 
 ################################################################################
 # EKS Blueprints Addons
