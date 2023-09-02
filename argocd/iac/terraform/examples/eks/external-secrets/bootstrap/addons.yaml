@@ -1,19 +1,33 @@
+---
 apiVersion: argoproj.io/v1alpha1
-kind: Application
+kind: ApplicationSet
 metadata:
   name: bootstrap-addons
-  namespace: 'argocd'
+  namespace: argocd
 spec:
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: 'argocd'
-  project: default
-  source:
-    path: ${path}
-    repoURL: ${repoURL}
-    targetRevision: ${targetRevision}
-    directory:
-      recurse: true
-      exclude: exclude/*
   syncPolicy:
-    automated: {}
+    preserveResourcesOnDeletion: true
+  generators:
+    - clusters:
+        selector:
+          matchExpressions:
+            - key: akuity.io/argo-cd-cluster-name
+              operator: NotIn
+              values: [in-cluster]
+  template:
+    metadata:
+      name: 'bootstrap-addons'
+    spec:
+      project: default
+      source:
+        repoURL: '{{metadata.annotations.gitops_bridge_repo_url}}'
+        path: '{{metadata.annotations.gitops_bridge_repo_path}}'
+        targetRevision: '{{metadata.annotations.gitops_bridge_repo_revision}}'
+        directory:
+          recurse: true
+          exclude: exclude/*
+      destination:
+        namespace: 'argocd'
+        name: '{{name}}'
+      syncPolicy:
+        automated: {}

@@ -1,20 +1,45 @@
+---
 apiVersion: argoproj.io/v1alpha1
-kind: Application
+kind: ApplicationSet
 metadata:
-  name: bootstrap-workloads
-  namespace: 'argocd'
-  finalizers:
-  - resources-finalizer.argocd.argoproj.io
+  name: external-secrets-example
+  namespace: argocd
 spec:
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: 'guestbook'
-  project: default
-  source:
-    path: helm-guestbook
-    repoURL: git@github.com:argoproj/argocd-example-apps.git
-    targetRevision: HEAD
   syncPolicy:
-    automated: {}
-    syncOptions:
-    - CreateNamespace=true
+    preserveResourcesOnDeletion: true
+  generators:
+    - clusters:
+        selector:
+          matchExpressions:
+            - key: akuity.io/argo-cd-cluster-name
+              operator: NotIn
+              values: [in-cluster]
+  template:
+    metadata:
+      name: 'external-secrets-example'
+    spec:
+      project: default
+      source:
+        repoURL: '{{metadata.annotations.workload_repo_url}}'
+        path: '{{metadata.annotations.workload_repo_path}}'
+        targetRevision: '{{metadata.annotations.workload_repo_revision}}'
+        helm:
+          releaseName: 'external-secrets-example'
+          values: |
+            region: '{{metadata.annotations.aws_region}}'
+            externalSecret:
+              clusterSecretStore:
+                secret: '{{metadata.annotations.workload_sm_secret}}'
+              secretStore:
+                secret: '{{metadata.annotations.workload_ps_secret}}'
+      destination:
+        namespace: '{{metadata.annotations.external_secrets_namespace}}'
+        name: '{{name}}'
+      syncPolicy:
+        automated: {}
+        retry:
+          backoff:
+            duration: 1m
+          limit: 10
+        syncOptions:
+          - CreateNamespace=true

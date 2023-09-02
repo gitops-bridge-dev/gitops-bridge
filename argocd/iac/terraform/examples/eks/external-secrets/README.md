@@ -2,13 +2,8 @@
 
 This example shows how to deploy Amazon EKS with addons configured via ArgoCD
 
-The example demonstrate how to use private git repository for workload apps.
-
-The example stores your ssh key in AWS Secret Manager, and External Secret Operator to create the secret
-for ArgoCD to access the git repositories.
-
-## Prerequisites
-- Create a Github ssh key file, example assumes the file path `~/.ssh/id_rsa`, update `main.tf` if using a different location
+The example demonstrate how to use [External Secret Operator(ESO)](https://external-secrets.io) with
+AWS Secret Manager and AWS Systems Manager Parameter Store
 
 Deploy EKS Cluster
 ```shell
@@ -21,16 +16,16 @@ Access Terraform output to configure `kubectl` and `argocd`
 terraform output
 ```
 
-There is a file `github.yaml` located in the addons git repository `clusters/ex-external-secrets/secret/` this file creates the resources `ClusterSecretStore` and `ExternalSecret`. Update git url in this file when you change the git repository for the workloads specified in `bootstrap/workloads.yaml`. Also update the region in this file if you are using a different region for AWS Secret Manager.
-
-To verify that the ArgoCD secret with ssh key is created run the following command
+Verify that the secrets `external-secrets-ps` and `external-secrets-sm`  are present
 ```shell
-kubectl get secret private-repo-creds -n argocd
+kubectl get secrets -n external-secrets
 ```
+
 Expected output, should have 3 data items in secret
 ```
-NAME                 TYPE     DATA   AGE
-private-repo-creds   Opaque   3      6m45s
+NAME                       TYPE     DATA   AGE
+external-secrets-ps        Opaque   2      1m
+external-secrets-sm        Opaque   2      1m
 ```
 
 Destroy EKS Cluster
