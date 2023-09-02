@@ -65,7 +65,7 @@ locals {
 
 
   aws_addons = {
-    enable_cert_manager = true
+    #enable_cert_manager = true
     #enable_aws_efs_csi_driver                    = true
     #enable_aws_fsx_csi_driver                    = true
     #enable_aws_cloudwatch_metrics                = true
@@ -92,7 +92,7 @@ locals {
     #enable_ingress_nginx                         = true
     #enable_kyverno                               = true
     #enable_kube_prometheus_stack                 = true
-    enable_metrics_server = true
+    #enable_metrics_server = true
     #enable_prometheus_adapter                    = true
     #enable_secrets_store_csi_driver              = true
     #enable_vpa                                   = true
@@ -114,19 +114,19 @@ locals {
       gitops_bridge_repo_revision = local.gitops_addons_revision
     },
     {
-      workload_repo_url      = local.gitops_addons_url
-      workload_repo_path     = local.gitops_addons_path
-      workload_repo_revision = local.gitops_addons_revision
+      workload_repo_url      = local.gitops_workload_url
+      workload_repo_path     = local.gitops_workload_path
+      workload_repo_revision = local.gitops_workload_revision
     },
     {
-      workload_sm_secret = aws_ssm_parameter.secret_parameter.name
-      workload_pm_secret = aws_secretsmanager_secret.secret.name
+      workload_sm_secret = aws_secretsmanager_secret.secret.name
+      workload_ps_secret = aws_ssm_parameter.secret_parameter.name
     }
   )
 
   argocd_bootstrap_app_of_apps = {
-    addons = file("${path.module}/bootstrap/addons.yaml")
-    addons = file("${path.module}/bootstrap/workloads.yaml")
+    addons    = file("${path.module}/bootstrap/addons.yaml")
+    workloads = file("${path.module}/bootstrap/workloads.yaml")
   }
 
   vpc_cidr = "10.0.0.0/16"

@@ -3,6 +3,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
   name: external-secrets-example
+  namespace: argocd
 spec:
   syncPolicy:
     preserveResourcesOnDeletion: true
@@ -30,12 +31,12 @@ spec:
               clusterSecretStore:
                 secret: '{{metadata.annotations.workload_sm_secret}}'
               secretStore:
-                secret: '{{metadata.annotations.workload_pm_secret}}'
+                secret: '{{metadata.annotations.workload_ps_secret}}'
       destination:
         namespace: '{{metadata.annotations.external_secrets_namespace}}'
         name: '{{name}}'
       syncPolicy:
-        automated:
+        automated: {}
         retry:
           backoff:
             duration: 1m
