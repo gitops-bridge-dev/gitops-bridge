@@ -43,10 +43,10 @@ provider "kubernetes" {
 }
 
 locals {
-  name            = "ex-${replace(basename(path.cwd), "_", "-")}"
-  environment     = "dev"
-  region          = "us-west-2"
-  cluster_version = "1.27"
+  name                   = "ex-${replace(basename(path.cwd), "_", "-")}"
+  environment            = "dev"
+  region                 = "us-west-2"
+  cluster_version        = "1.27"
   gitops_addons_url      = "${var.gitops_addons_org}/${var.gitops_addons_repo}"
   gitops_addons_basepath = var.gitops_addons_basepath
   gitops_addons_path     = var.gitops_addons_path
@@ -62,7 +62,6 @@ locals {
     enable_external_dns                          = true
     enable_external_secrets                      = true
     enable_aws_load_balancer_controller          = true
-    enable_fargate_fluentbit                     = true
     enable_aws_for_fluentbit                     = true
     enable_aws_node_termination_handler          = true
     enable_karpenter                             = true
@@ -70,15 +69,16 @@ locals {
     enable_aws_gateway_api_controller            = true
     enable_aws_ebs_csi_resources                 = true # generate gp2 and gp3 storage classes for ebs-csi
     enable_aws_secrets_store_csi_driver_provider = true
+    #enable_fargate_fluentbit                     = true
   }
   oss_addons = {
-    enable_argo_rollouts  = true
-    enable_argo_workflows = true
-    #enable_cluster_proportional_autoscaler      = true
-    enable_gatekeeper   = true
-    enable_gpu_operator = true
-    #enable_ingress_nginx                        = true
-    enable_kyverno                  = true
+    #enable_cluster_proportional_autoscaler = true
+    #enable_gatekeeper              = true
+    #enable_kyverno                 = true
+    #enable_ingress_nginx           = true
+    enable_argo_rollouts            = true
+    enable_argo_workflows           = true
+    enable_gpu_operator             = true
     enable_kube_prometheus_stack    = true
     enable_metrics_server           = true
     enable_prometheus_adapter       = true
@@ -97,14 +97,18 @@ locals {
       aws_vpc_id       = module.vpc.vpc_id
     },
     {
+      # Required for external dns addon
+      external_dns_domain_filters = "example.com"
+    },
+    {
       addons_repo_url      = local.gitops_addons_url
       addons_repo_basepath = local.gitops_addons_basepath
       addons_repo_path     = local.gitops_addons_path
       addons_repo_revision = local.gitops_addons_revision
     },
     try(local.aws_addons.enable_velero, false) ? {
-      velero_backup_s3_bucket_prefix  = try(local.velero_backup_s3_bucket_prefix,"")
-      velero_backup_s3_bucket_name    = try(local.velero_backup_s3_bucket_name,"") } : {} # Required when enabling addon velero
+      velero_backup_s3_bucket_prefix = try(local.velero_backup_s3_bucket_prefix, "")
+    velero_backup_s3_bucket_name = try(local.velero_backup_s3_bucket_name, "") } : {} # Required when enabling addon velero
   )
 
   argocd_bootstrap_app_of_apps = {
@@ -191,7 +195,7 @@ module "eks_blueprints_addons" {
   aws_node_termination_handler_asg_arns = [for asg in module.eks.self_managed_node_groups : asg.autoscaling_group_arn]
   ## An S3 Bucket ARN is required. This can be declared with or without a Suffix.
   velero = {
-    s3_backup_location = "${try(module.velero_backup_s3_bucket.s3_bucket_arn,"")}/${local.velero_backup_s3_bucket_prefix}"
+    s3_backup_location = "${try(module.velero_backup_s3_bucket.s3_bucket_arn, "")}/${local.velero_backup_s3_bucket_prefix}"
   }
 
   eks_addons = {
