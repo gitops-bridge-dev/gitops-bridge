@@ -30,4 +30,3 @@ output "access_argocd" {
     echo "ArgoCD Password: $(kubectl get secrets argocd-initial-admin-secret -n argocd --template="{{index .data.password | base64decode}}")"
     EOT
 }
-

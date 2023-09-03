@@ -47,9 +47,10 @@ locals {
   environment     = "dev"
   region          = "us-west-2"
   cluster_version = "1.27"
-  gitops_url      = var.gitops_url
-  gitops_revision = var.gitops_revision
-  gitops_path     = var.gitops_path
+  gitops_addons_url      = "${var.gitops_addons_org}/${var.gitops_addons_repo}"
+  gitops_addons_basepath = var.gitops_addons_basepath
+  gitops_addons_path     = var.gitops_addons_path
+  gitops_addons_revision = var.gitops_addons_revision
 
   aws_addons = {
     enable_cert_manager                          = true
@@ -96,8 +97,10 @@ locals {
       aws_vpc_id       = module.vpc.vpc_id
     },
     {
-      gitops_bridge_repo_url      = local.gitops_url
-      gitops_bridge_repo_revision = local.gitops_revision
+      addons_repo_url      = local.gitops_addons_url
+      addons_repo_basepath = local.gitops_addons_basepath
+      addons_repo_path     = local.gitops_addons_path
+      addons_repo_revision = local.gitops_addons_revision
     },
     try(local.aws_addons.enable_velero, false) ? {
       velero_backup_s3_bucket_prefix  = try(local.velero_backup_s3_bucket_prefix,"")
@@ -105,11 +108,7 @@ locals {
   )
 
   argocd_bootstrap_app_of_apps = {
-    addons = templatefile("${path.module}/bootstrap/addons.yaml", {
-      repoURL        = local.gitops_url
-      targetRevision = local.gitops_revision
-      path           = local.gitops_path
-    })
+    addons    = file("${path.module}/bootstrap/addons.yaml")
     workloads = file("${path.module}/bootstrap/workloads.yaml")
   }
 

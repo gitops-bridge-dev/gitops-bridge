@@ -1,20 +1,32 @@
+---
 apiVersion: argoproj.io/v1alpha1
-kind: Application
+kind: ApplicationSet
 metadata:
-  name: bootstrap-workloads
-  namespace: 'argocd'
-  finalizers:
-  - resources-finalizer.argocd.argoproj.io
+  name: workloads
+  namespace: argocd
 spec:
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: 'guestbook'
-  project: default
-  source:
-    path: ${path}
-    repoURL: ${repoURL}
-    targetRevision: ${targetRevision}
   syncPolicy:
-    automated: {}
-    syncOptions:
-    - CreateNamespace=true
+    preserveResourcesOnDeletion: true
+  generators:
+    - clusters:
+        selector:
+          matchExpressions:
+            - key: akuity.io/argo-cd-cluster-name
+              operator: NotIn
+              values: [in-cluster]
+  template:
+    metadata:
+      name: 'workload'
+    spec:
+      project: default
+      source:
+        repoURL: '{{metadata.annotations.workload_repo_url}}'
+        path: '{{metadata.annotations.workload_repo_path}}'
+        targetRevision: '{{metadata.annotations.workload_repo_revision}}'
+      destination:
+        namespace: 'workload'
+        name: '{{name}}'
+      syncPolicy:
+        automated: {}
+        syncOptions:
+          - CreateNamespace=true

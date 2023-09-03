@@ -43,13 +43,14 @@ provider "kubernetes" {
 }
 
 locals {
-  name            = "ex-${replace(basename(path.cwd), "_", "-")}"
-  environment     = "control-plane"
-  region          = "us-west-2"
-  cluster_version = "1.27"
-  gitops_url      = var.gitops_url
-  gitops_revision = var.gitops_revision
-  gitops_path     = var.gitops_path
+  name                   = "ex-${replace(basename(path.cwd), "_", "-")}"
+  environment            = "control-plane"
+  region                 = "us-west-2"
+  cluster_version        = "1.27"
+  gitops_addons_url      = "${var.gitops_addons_org}/${var.gitops_addons_repo}"
+  gitops_addons_basepath = var.gitops_addons_basepath
+  gitops_addons_path     = var.gitops_addons_path
+  gitops_addons_revision = var.gitops_addons_revision
 
   aws_addons = {
     enable_cert_manager                    = true
@@ -106,17 +107,15 @@ locals {
       aws_upbound_crossplane_iam_role_arn = module.crossplane_irsa_aws.iam_role_arn
     },
     {
-      gitops_bridge_repo_url      = local.gitops_url
-      gitops_bridge_repo_revision = local.gitops_revision
+      addons_repo_url      = local.gitops_addons_url
+      addons_repo_basepath = local.gitops_addons_basepath
+      addons_repo_path     = local.gitops_addons_path
+      addons_repo_revision = local.gitops_addons_revision
     }
   )
 
   argocd_bootstrap_app_of_apps = {
-    addons = templatefile("${path.module}/bootstrap/addons.yaml", {
-      repoURL        = local.gitops_url
-      targetRevision = local.gitops_revision
-      path           = local.gitops_path
-    })
+    addons    = file("${path.module}/bootstrap/addons.yaml")
     workloads = file("${path.module}/bootstrap/workloads.yaml")
   }
 

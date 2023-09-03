@@ -50,15 +50,18 @@ locals {
 
   git_private_ssh_key = "~/.ssh/id_rsa" # Update with the git ssh key to be used by ArgoCD
 
-  gitops_addons_org     = "git@github.com:gitops-bridge-dev"
-  gitops_addons_repo    = "gitops-bridge-argocd-control-plane-template"
-  gitops_addon_path     = "bootstrap/control-plane/addons"
-  gitops_addon_revision = "HEAD"
+  gitops_addons_org      = var.gitops_addons_org
+  gitops_addons_url      = "${var.gitops_addons_org}/${var.gitops_addons_repo}"
+  gitops_addons_basepath = var.gitops_addons_basepath
+  gitops_addons_path     = var.gitops_addons_path
+  gitops_addons_revision = var.gitops_addons_revision
 
-  gitops_workloads_org      = "git@github.com:argoproj"
-  gitops_workloads_repo     = "argocd-example-apps"
-  gitops_workloads_path     = "helm-guestbook"
-  gitops_workloads_revision = "HEAD"
+  gitops_workload_org      = var.gitops_workload_org
+  gitops_workload_repo     = var.gitops_workload_repo
+  gitops_workload_path     = var.gitops_workload_path
+  gitops_workload_revision = var.gitops_workload_revision
+  gitops_workload_url      = "${local.gitops_workload_org}/${local.gitops_workload_repo}"
+
 
   aws_addons = {
     enable_cert_manager = true
@@ -105,22 +108,21 @@ locals {
       aws_vpc_id       = module.vpc.vpc_id
     },
     {
-      gitops_bridge_repo_url      = "${local.gitops_addons_org}/${local.gitops_addons_repo}"
-      gitops_bridge_repo_revision = local.gitops_addon_revision
+      addons_repo_url      = local.gitops_addons_url
+      addons_repo_basepath = local.gitops_addons_basepath
+      addons_repo_path     = local.gitops_addons_path
+      addons_repo_revision = local.gitops_addons_revision
+    },
+    {
+      workload_repo_url      = local.gitops_workload_url
+      workload_repo_path     = local.gitops_workload_path
+      workload_repo_revision = local.gitops_workload_revision
     }
   )
 
   argocd_bootstrap_app_of_apps = {
-    addons = templatefile("${path.module}/bootstrap/addons.yaml", {
-      repoURL        = "${local.gitops_addons_org}/${local.gitops_addons_repo}"
-      path           = local.gitops_addon_path
-      targetRevision = local.gitops_addon_revision
-    })
-    workloads = templatefile("${path.module}/bootstrap/workloads.yaml", {
-      repoURL        = "${local.gitops_workloads_org}/${local.gitops_workloads_repo}"
-      path           = local.gitops_workloads_path
-      targetRevision = local.gitops_workloads_revision
-    })
+    addons    = file("${path.module}/bootstrap/addons.yaml")
+    workloads = file("${path.module}/bootstrap/workloads.yaml")
   }
 
   vpc_cidr = "10.0.0.0/16"
@@ -136,27 +138,27 @@ locals {
 # GitOps Bridge: Private ssh keys for git
 ################################################################################
 resource "kubernetes_namespace" "argocd" {
-  depends_on = [ module.eks_blueprints_addons ]
+  depends_on = [module.eks_blueprints_addons]
   metadata {
     name = "argocd"
   }
 }
 resource "kubernetes_secret" "git_secrets" {
-  depends_on = [ kubernetes_namespace.argocd ]
+  depends_on = [kubernetes_namespace.argocd]
   for_each = {
     git-addons = {
-      type = "git"
-      url = local.gitops_addons_org
+      type          = "git"
+      url           = local.gitops_addons_org
       sshPrivateKey = file(pathexpand(local.git_private_ssh_key))
     }
     git-workloads = {
-      type = "git"
-      url = local.gitops_workloads_org
+      type          = "git"
+      url           = local.gitops_workload_org
       sshPrivateKey = file(pathexpand(local.git_private_ssh_key))
     }
   }
   metadata {
-    name = each.key
+    name      = each.key
     namespace = kubernetes_namespace.argocd.metadata[0].name
     labels = {
       "argocd.argoproj.io/secret-type" = "repo-creds"
@@ -185,8 +187,8 @@ module "gitops_bridge_bootstrap" {
 
   argocd_cluster               = module.gitops_bridge_metadata.argocd
   argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
-  argocd = { create_namespace = false }
-  depends_on = [kubernetes_secret.git_secrets]
+  argocd                       = { create_namespace = false }
+  depends_on                   = [kubernetes_namespace.argocd, kubernetes_secret.git_secrets]
 }
 
 
