@@ -145,7 +145,7 @@ locals {
 # GitOps Bridge: Metadata for Spoke Cluster
 ################################################################################
 module "gitops_bridge_metadata_hub" {
-  source = "../../../../../modules/gitops-bridge-metadata"
+  source = "github.com/gitops-bridge-dev/gitops-bridge-argocd-metadata-terraform?ref=v1.0.0"
 
   cluster_name = module.eks.cluster_name
   environment  = local.environment
@@ -153,8 +153,8 @@ module "gitops_bridge_metadata_hub" {
   addons       = local.addons
 
   argocd = {
-    server               = module.eks.cluster_endpoint
-    argocd_server_config = <<-EOT
+    server = module.eks.cluster_endpoint
+    config = <<-EOT
       {
         "tlsClientConfig": {
           "insecure": false,
@@ -173,7 +173,7 @@ module "gitops_bridge_metadata_hub" {
 # GitOps Bridge: Bootstrap for Hub Cluster
 ################################################################################
 module "gitops_bridge_bootstrap_hub" {
-  source = "../../../../../modules/gitops-bridge-bootstrap"
+  source = "github.com/gitops-bridge-dev/gitops-bridge-argocd-bootstrap-terraform?ref=v1.0.0"
 
   # The ArgoCD remote cluster secret is deploy on hub cluster not on spoke clusters
   providers = {
