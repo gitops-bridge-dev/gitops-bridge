@@ -80,10 +80,8 @@ locals {
     #enable_aws_gateway_api_controller            = true
     #enable_aws_ebs_csi_resources                 = true # generate gp2 and gp3 storage classes for ebs-csi
     #enable_aws_secrets_store_csi_driver_provider = true
-    enable_aws_argocd = true
   }
   oss_addons = {
-    enable_argocd = false # disable default argocd application set, we enable enable_aws_argocd_ingress above
     #enable_argo_rollouts                         = true
     #enable_argo_events                          = true
     #enable_argo_workflows                        = true
@@ -112,8 +110,6 @@ locals {
     {
       argocd_hosts                = "[${local.argocd_host}]"
       external_dns_domain_filters = "[${local.domain_name}]"
-      argocd_iam_role_arn         = ""
-      argocd_namespace            = "argocd"
     },
     {
       addons_repo_url      = local.gitops_addons_url
