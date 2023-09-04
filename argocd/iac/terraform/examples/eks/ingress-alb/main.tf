@@ -85,6 +85,7 @@ locals {
   oss_addons = {
     enable_argocd = false # disable default argocd application set, we enable enable_aws_argocd_ingress above
     #enable_argo_rollouts                         = true
+    #enable_argo_events                          = true
     #enable_argo_workflows                        = true
     #enable_cluster_proportional_autoscaler       = true
     #enable_gatekeeper                            = true

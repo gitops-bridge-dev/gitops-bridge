@@ -80,6 +80,7 @@ locals {
     enable_crossplane     = true # installs crossplane core
     enable_metrics_server = true
     #enable_argo_rollouts                         = true
+    #enable_argo_events                          = true
     #enable_argo_workflows                        = true
     #enable_cluster_proportional_autoscaler       = true
     #enable_gatekeeper                            = true
