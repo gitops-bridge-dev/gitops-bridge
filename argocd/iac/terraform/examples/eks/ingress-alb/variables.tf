@@ -1,3 +1,7 @@
+variable "domain_name" {
+  description = "Route 53 domain name"
+  type = string
+}
 variable "gitops_addons_org" {
   description = "Git repository org/user contains for addons"
   default     = "https://github.com/gitops-bridge-dev"

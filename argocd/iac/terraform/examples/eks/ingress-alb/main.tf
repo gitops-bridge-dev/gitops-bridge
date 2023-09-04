@@ -80,7 +80,7 @@ locals {
     #enable_aws_gateway_api_controller            = true
     #enable_aws_ebs_csi_resources                 = true # generate gp2 and gp3 storage classes for ebs-csi
     #enable_aws_secrets_store_csi_driver_provider = true
-    enable_aws_argocd_ingress = true
+    enable_aws_argocd = true
   }
   oss_addons = {
     enable_argocd = false # disable default argocd application set, we enable enable_aws_argocd_ingress above
@@ -99,7 +99,7 @@ locals {
     #enable_vpa                                   = true
     #enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
-  addons = merge(local.aws_addons, local.oss_addons, { kubernetes_version = local.cluster_version })
+  addons = merge(local.aws_addons, local.oss_addons, { kubernetes_version = local.cluster_version }, { aws_cluster_name = module.eks.cluster_name })
 
   addons_metadata = merge(
     module.eks_blueprints_addons.gitops_metadata,

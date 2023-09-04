@@ -90,7 +90,7 @@ locals {
     #enable_vpa                                   = true
     #enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
-  addons = merge(local.aws_addons, local.oss_addons, { kubernetes_version = local.cluster_version })
+  addons = merge(local.aws_addons, local.oss_addons, { kubernetes_version = local.cluster_version }, { aws_cluster_name = module.eks.cluster_name })
 
   addons_metadata = merge(
     module.eks_blueprints_addons.gitops_metadata,
