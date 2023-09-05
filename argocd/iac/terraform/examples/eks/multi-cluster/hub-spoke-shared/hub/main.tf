@@ -53,6 +53,8 @@ locals {
   gitops_addons_path     = var.gitops_addons_path
   gitops_addons_revision = var.gitops_addons_revision
 
+  argocd_namespace = "argocd"
+
   aws_addons = {
     enable_cert_manager = true
     #enable_aws_efs_csi_driver                    = true
@@ -62,7 +64,7 @@ locals {
     #enable_cluster_autoscaler                    = true
     #enable_external_dns                          = true
     #enable_external_secrets                      = true
-    enable_aws_load_balancer_controller = true
+    #enable_aws_load_balancer_controller          = true
     #enable_fargate_fluentbit                     = true
     #enable_aws_for_fluentbit                     = true
     #enable_aws_node_termination_handler          = true
@@ -84,7 +86,7 @@ locals {
     #enable_ingress_nginx                         = true
     #enable_kyverno                               = true
     #enable_kube_prometheus_stack                 = true
-    enable_metrics_server = true
+    #enable_metrics_server = true
     #enable_prometheus_adapter                    = true
     #enable_secrets_store_csi_driver              = true
     #enable_vpa                                   = true
@@ -101,8 +103,8 @@ locals {
       aws_vpc_id       = module.vpc.vpc_id
     },
     {
-      argocd_iam_role_arn = module.argocd_irsa.iam_role_arn,
-      argocd_namespace    = "argocd"
+      argocd_iam_role_arn = module.argocd_irsa.iam_role_arn
+      argocd_namespace    = local.argocd_namespace
     },
     {
       addons_repo_url      = local.gitops_addons_url
@@ -145,18 +147,7 @@ module "gitops_bridge_bootstrap" {
   argocd_cluster               = module.gitops_bridge_metadata.argocd
   argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
   argocd = {
-    values = [
-      <<-EOT
-      controller:
-        serviceAccount:
-          annotations:
-            eks.amazonaws.com/role-arn: ${module.argocd_irsa.iam_role_arn}
-      server:
-        serviceAccount:
-          annotations:
-            eks.amazonaws.com/role-arn: ${module.argocd_irsa.iam_role_arn}
-      EOT
-    ]
+    namespace = local.argocd_namespace
   }
 }
 
@@ -178,7 +169,7 @@ module "argocd_irsa" {
   oidc_providers = {
     this = {
       provider_arn    = module.eks.oidc_provider_arn
-      namespace       = "argocd"
+      namespace       = local.argocd_namespace
       service_account = "argocd-*"
     }
   }

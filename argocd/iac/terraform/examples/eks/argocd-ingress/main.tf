@@ -80,10 +80,12 @@ locals {
     #enable_aws_gateway_api_controller            = true
     #enable_aws_ebs_csi_resources                 = true # generate gp2 and gp3 storage classes for ebs-csi
     #enable_aws_secrets_store_csi_driver_provider = true
+    enable_aws_argocd_ingress                     = true
   }
   oss_addons = {
+    enable_argocd                                 = false
     #enable_argo_rollouts                         = true
-    #enable_argo_events                          = true
+    #enable_argo_events                           = true
     #enable_argo_workflows                        = true
     #enable_cluster_proportional_autoscaler       = true
     #enable_gatekeeper                            = true
@@ -91,7 +93,7 @@ locals {
     #enable_ingress_nginx                         = true
     #enable_kyverno                               = true
     #enable_kube_prometheus_stack                 = true
-    enable_metrics_server = true
+    #enable_metrics_server = true
     #enable_prometheus_adapter                    = true
     #enable_secrets_store_csi_driver              = true
     #enable_vpa                                   = true

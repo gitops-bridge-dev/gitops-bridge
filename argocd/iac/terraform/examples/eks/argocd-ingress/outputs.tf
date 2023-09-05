@@ -16,6 +16,7 @@ output "configure_argocd" {
     argocd login --port-forward --username admin --password $(argocd admin initial-password | head -1)
     echo "ArgoCD Username: admin"
     echo "ArgoCD Password: $(kubectl get secrets argocd-initial-admin-secret -n argocd --template="{{index .data.password | base64decode}}")"
+    echo Port Forward: http://localhost:8080
     kubectl port-forward -n argocd svc/argo-cd-argocd-server 8080:80
     EOT
 }
