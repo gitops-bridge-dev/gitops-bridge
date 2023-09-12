@@ -164,7 +164,8 @@ module "crossplane_irsa_aws" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.14"
 
-  role_name_prefix = "${local.name}-crossplane-"
+  role_name_prefix           = "${local.name}-crossplane-"
+  assume_role_condition_test = "StringLike"
 
   role_policy_arns = {
     policy = "arn:aws:iam::aws:policy/AdministratorAccess"
