@@ -1,4 +1,3 @@
----
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -20,9 +19,9 @@ spec:
     spec:
       project: default
       source:
-        repoURL: '{{metadata.annotations.gitops_bridge_repo_url}}'
-        path: '{{metadata.annotations.gitops_bridge_repo_basepath}}{{metadata.annotations.gitops_bridge_repo_path}}'
-        targetRevision: '{{metadata.annotations.gitops_bridge_repo_revision}}'
+        repoURL: '{{metadata.annotations.addons_repo_url}}'
+        path: '{{metadata.annotations.addons_repo_basepath}}{{metadata.annotations.addons_repo_path}}'
+        targetRevision: '{{metadata.annotations.addons_repo_revision}}'
         directory:
           recurse: true
           exclude: exclude/*
