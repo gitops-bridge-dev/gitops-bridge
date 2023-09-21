@@ -18,18 +18,6 @@ provider "helm" {
   }
 }
 
-provider "kubectl" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
-    command     = "aws"
-  }
-  load_config_file  = false
-  apply_retry_count = 15
-}
-
 provider "kubernetes" {
   host                   = module.eks.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
@@ -111,7 +99,7 @@ locals {
     velero_backup_s3_bucket_name = try(local.velero_backup_s3_bucket_name, "") } : {} # Required when enabling addon velero
   )
 
-  argocd_bootstrap_app_of_apps = {
+  argocd_apps = {
     addons    = file("${path.module}/bootstrap/addons.yaml")
     workloads = file("${path.module}/bootstrap/workloads.yaml")
   }
@@ -130,25 +118,18 @@ locals {
 }
 
 ################################################################################
-# GitOps Bridge: Metadata
-################################################################################
-module "gitops_bridge_metadata" {
-  source = "github.com/gitops-bridge-dev/gitops-bridge-argocd-metadata-terraform?ref=v1.0.0"
-
-  cluster_name = module.eks.cluster_name
-  environment  = local.environment
-  metadata     = local.addons_metadata
-  addons       = local.addons
-}
-
-################################################################################
 # GitOps Bridge: Bootstrap
 ################################################################################
 module "gitops_bridge_bootstrap" {
-  source = "github.com/gitops-bridge-dev/gitops-bridge-argocd-bootstrap-terraform?ref=v1.0.0"
+  source = "github.com/gitops-bridge-dev/gitops-bridge-argocd-bootstrap-terraform?ref=v2.0.0"
 
-  argocd_cluster               = module.gitops_bridge_metadata.argocd
-  argocd_bootstrap_app_of_apps = local.argocd_bootstrap_app_of_apps
+  cluster = {
+    cluster_name = module.eks.cluster_name
+    environment  = local.environment
+    metadata     = local.addons_metadata
+    addons       = local.addons
+  }
+  apps = local.argocd_apps
 }
 
 
@@ -196,29 +177,6 @@ module "eks_blueprints_addons" {
   ## An S3 Bucket ARN is required. This can be declared with or without a Suffix.
   velero = {
     s3_backup_location = "${try(module.velero_backup_s3_bucket.s3_bucket_arn, "")}/${local.velero_backup_s3_bucket_prefix}"
-  }
-
-  eks_addons = {
-    aws-ebs-csi-driver = {
-      most_recent              = true
-      service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
-    }
-    coredns = {
-      most_recent = true
-
-      timeouts = {
-        create = "25m"
-        delete = "10m"
-      }
-    }
-    kube-proxy = {}
-    /* adot needs to be installed after cert-manager is installed with gitops, uncomment once cluster addons are deployed
-    adot = {
-      most_recent              = true
-      service_account_role_arn = module.adot_irsa.iam_role_arn
-    }
-    */
-    aws-guardduty-agent = {}
   }
 
   tags = local.tags
@@ -285,6 +243,26 @@ module "eks" {
         }
       })
     }
+    aws-ebs-csi-driver = {
+      most_recent              = true
+      service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
+    }
+    coredns = {
+      most_recent = true
+
+      timeouts = {
+        create = "25m"
+        delete = "10m"
+      }
+    }
+    kube-proxy = {}
+    /* adot needs to be installed after cert-manager is installed with gitops, uncomment once cluster addons are deployed
+    adot = {
+      most_recent              = true
+      service_account_role_arn = module.adot_irsa.iam_role_arn
+    }
+    */
+    aws-guardduty-agent = {}
   }
   tags = local.tags
 }
