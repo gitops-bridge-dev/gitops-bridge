@@ -1,4 +1,3 @@
----
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -40,6 +39,6 @@ spec:
         retry:
           backoff:
             duration: 1m
-          limit: 10
+          limit: 20
         syncOptions:
           - CreateNamespace=true
