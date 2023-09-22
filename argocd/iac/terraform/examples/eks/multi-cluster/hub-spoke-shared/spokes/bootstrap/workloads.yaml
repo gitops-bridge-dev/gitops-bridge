@@ -1,20 +1,34 @@
 apiVersion: argoproj.io/v1alpha1
-kind: Application
+kind: ApplicationSet
 metadata:
-  name: workloads-${environment}
-  namespace: 'argocd'
-  finalizers:
-  - resources-finalizer.argocd.argoproj.io
+  name: workloads
+  namespace: argocd
 spec:
-  destination:
-    name: ${cluster}
-    namespace: 'guestbook'
-  project: default
-  source:
-    path: helm-guestbook
-    repoURL: https://github.com/argoproj/argocd-example-apps
-    targetRevision: HEAD
   syncPolicy:
-    automated: {}
-    syncOptions:
-    - CreateNamespace=true
+    preserveResourcesOnDeletion: true
+  generators:
+    - clusters:
+        selector:
+          matchExpressions:
+            - key: akuity.io/argo-cd-cluster-name
+              operator: NotIn
+              values: [in-cluster]
+            - key: environment
+              operator: NotIn
+              values: [control-plane]
+  template:
+    metadata:
+      name: 'workload-{{metadata.labels.environment}}'
+    spec:
+      project: default
+      source:
+        repoURL: '{{metadata.annotations.workload_repo_url}}'
+        path: '{{metadata.annotations.workload_repo_path}}'
+        targetRevision: '{{metadata.annotations.workload_repo_revision}}'
+      destination:
+        namespace: 'workload'
+        name: '{{name}}'
+      syncPolicy:
+        automated: {}
+        syncOptions:
+          - CreateNamespace=true
