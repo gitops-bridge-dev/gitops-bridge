@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: bootstrap-addons
+  name: workloads
   namespace: argocd
 spec:
   syncPolicy:
@@ -13,20 +13,22 @@ spec:
             - key: akuity.io/argo-cd-cluster-name
               operator: NotIn
               values: [in-cluster]
+            - key: environment
+              operator: NotIn
+              values: [control-plane]
   template:
     metadata:
-      name: 'bootstrap-addons'
+      name: 'workload-{{metadata.labels.environment}}'
     spec:
       project: default
       source:
-        repoURL: '{{metadata.annotations.addons_repo_url}}'
-        path: '{{metadata.annotations.addons_repo_basepath}}{{metadata.annotations.addons_repo_path}}'
-        targetRevision: '{{metadata.annotations.addons_repo_revision}}'
-        directory:
-          recurse: true
-          exclude: exclude/*
+        repoURL: '{{metadata.annotations.workload_repo_url}}'
+        path: '{{metadata.annotations.workload_repo_path}}'
+        targetRevision: '{{metadata.annotations.workload_repo_revision}}'
       destination:
-        namespace: 'argocd'
+        namespace: 'workload'
         name: '{{name}}'
       syncPolicy:
         automated: {}
+        syncOptions:
+          - CreateNamespace=true

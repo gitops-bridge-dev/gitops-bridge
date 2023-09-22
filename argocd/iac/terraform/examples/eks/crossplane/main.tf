@@ -138,7 +138,7 @@ module "gitops_bridge_bootstrap" {
 ################################################################################
 locals {
   crossplane_namespace = "crossplane-system"
-  crossplane_sa_prefix = "provider-aws-*"
+  crossplane_sa_prefix = "provider-*" # You can scope down based on the provider name
 }
 
 module "crossplane_irsa_aws" {
