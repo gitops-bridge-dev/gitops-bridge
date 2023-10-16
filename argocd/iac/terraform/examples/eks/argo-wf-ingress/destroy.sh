@@ -7,7 +7,7 @@ TMPFILE=$(mktemp)
 terraform output -raw configure_kubectl > "$TMPFILE"
 source "$TMPFILE"
 
-kubectl delete ing -n argocd argo-cd-argocd-server
+kubectl delete ing -A --all
 
 terraform destroy -target="module.gitops_bridge_bootstrap" -auto-approve
 terraform destroy -target="module.eks_blueprints_addons" -auto-approve
