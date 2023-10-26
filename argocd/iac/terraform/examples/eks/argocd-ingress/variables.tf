@@ -1,6 +1,6 @@
 variable "domain_name" {
   description = "Route 53 domain name"
-  type = string
+  type        = string
 }
 variable "gitops_addons_org" {
   description = "Git repository org/user contains for addons"

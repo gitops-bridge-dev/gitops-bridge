@@ -40,18 +40,18 @@ locals {
   gitops_addons_path     = var.gitops_addons_path
   gitops_addons_revision = var.gitops_addons_revision
 
-  enable_ingress      = true
-  domain_private_zone = false
+  enable_ingress          = true
+  is_route53_private_zone = false
   # change to a valid domain name you created a route53 zone
   # aws route53 create-hosted-zone --name example.com --caller-reference "$(date)"
-  domain_name       = var.domain_name
-  argocd_subdomain  = "argocd"
-  argocd_host       = "${local.argocd_subdomain}.${local.domain_name}"
-  argocd_domain_arn = try(data.aws_route53_zone.domain_name[0].arn, "")
+  domain_name      = var.domain_name
+  argocd_subdomain = "argocd"
+  argocd_host      = "${local.argocd_subdomain}.${local.domain_name}"
+  route53_zone_arn = try(data.aws_route53_zone.this[0].arn, "")
 
 
   aws_addons = {
-    enable_cert_manager = true
+    #enable_cert_manager                          = true
     #enable_aws_efs_csi_driver                    = true
     #enable_aws_fsx_csi_driver                    = true
     #enable_aws_cloudwatch_metrics                = true
@@ -68,10 +68,10 @@ locals {
     #enable_aws_gateway_api_controller            = true
     #enable_aws_ebs_csi_resources                 = true # generate gp2 and gp3 storage classes for ebs-csi
     #enable_aws_secrets_store_csi_driver_provider = true
-    enable_aws_argocd_ingress                     = true
+    enable_aws_argocd_ingress = true
   }
   oss_addons = {
-    enable_argocd                                 = false
+    enable_argocd = false
     #enable_argo_rollouts                         = true
     #enable_argo_events                           = true
     #enable_argo_workflows                        = true
@@ -170,7 +170,7 @@ module "eks_blueprints_addons" {
   enable_velero                       = try(local.aws_addons.enable_velero, false)
   enable_aws_gateway_api_controller   = try(local.aws_addons.enable_aws_gateway_api_controller, false)
 
-  external_dns_route53_zone_arns = [local.argocd_domain_arn] # ArgoCD Server and UI domain name is registered in Route 53
+  external_dns_route53_zone_arns = [local.route53_zone_arn] # ArgoCD Server and UI domain name is registered in Route 53
 
   tags = local.tags
 }
@@ -252,10 +252,10 @@ module "vpc" {
 # Route 53
 ################################################################################
 # To get the hosted zone to be use in argocd domain
-data "aws_route53_zone" "domain_name" {
+data "aws_route53_zone" "this" {
   count        = local.enable_ingress ? 1 : 0
   name         = local.domain_name
-  private_zone = local.domain_private_zone
+  private_zone = local.is_route53_private_zone
 }
 
 
@@ -269,9 +269,9 @@ resource "aws_acm_certificate" "cert" {
   validation_method = "DNS"
 }
 
-resource "aws_route53_record" "cert" {
+resource "aws_route53_record" "validation" {
   count           = local.enable_ingress ? 1 : 0
-  zone_id         = data.aws_route53_zone.domain_name[0].zone_id
+  zone_id         = data.aws_route53_zone.this[0].zone_id
   name            = tolist(aws_acm_certificate.cert[0].domain_validation_options)[0].resource_record_name
   type            = tolist(aws_acm_certificate.cert[0].domain_validation_options)[0].resource_record_type
   records         = [tolist(aws_acm_certificate.cert[0].domain_validation_options)[0].resource_record_value]
@@ -279,8 +279,8 @@ resource "aws_route53_record" "cert" {
   allow_overwrite = true
 }
 
-resource "aws_acm_certificate_validation" "cert" {
+resource "aws_acm_certificate_validation" "this" {
   count                   = local.enable_ingress ? 1 : 0
   certificate_arn         = aws_acm_certificate.cert[0].arn
-  validation_record_fqdns = [for record in aws_route53_record.cert : record.fqdn]
+  validation_record_fqdns = [for record in aws_route53_record.validation : record.fqdn]
 }
