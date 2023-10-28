@@ -22,7 +22,7 @@ of the Kubernetes resources, any changes to these resources outside Terraform fo
 ### ArgoCD Status
 | IaC           | GitOps    | Status |
 | :---           |    :----: | ---:     |
-| Terraform      | ArgoCD    |  Stable [try it!](argocd/iac/terraform/examples/eks/) |
+| Terraform      | ArgoCD    |  Stable [try it!](argocd/iac/terraform/examples/eks/getting-started) |
 | EKSCTL         | ArgoCD    |              |
 | CDK            | ArgoCD    |              |
 | Crossplane     | ArgoCD    |              |
