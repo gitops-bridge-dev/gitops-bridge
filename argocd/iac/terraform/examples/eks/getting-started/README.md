@@ -109,12 +109,6 @@ Wait until all the ArgoCD applications' `HEALTH STATUS` is `Healthy`. Use Crl+C 
 watch kubectl get applications -n argocd
 ```
 
-## Access ArgoCD
-Access ArgoCD's UI, run the command from the output:
-```shell
-terraform output -raw access_argocd
-```
-
 ### Verify the Addons
 Verify that the addons are ready:
 ```shell
@@ -123,6 +117,11 @@ kubectl get deployment -n kube-system \
   metrics-server
 ```
 
+## Access ArgoCD
+Access ArgoCD's UI, run the command from the output:
+```shell
+terraform output -raw access_argocd
+```
 
 
 ## Deploy the Workloads
@@ -151,15 +150,17 @@ kubectl events -n game-2048 --for ingress/game-2048 --watch
 
 
 ### Access the Application using AWS Load Balancer
-Retrieve the ingress URL for the application:
-```shell
-echo "Application URL: http://$(kubectl get -n game-2048 ingress game-2048 -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
-```
-Verify the application enpoint health using `curl`:
+Verify the application endpoint health using `curl`:
 ```shell
 curl -I $(kubectl get -n game-2048 ingress game-2048 -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
 ```
 The first line of the output should have `HTTP/1.1 200 OK`.
+
+Retrieve the ingress URL for the application, and access in the browser:
+```shell
+echo "Application URL: http://$(kubectl get -n game-2048 ingress game-2048 -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
+```
+
 
 ### Container Metrics
 Check the application's CPU and memory metrics:
