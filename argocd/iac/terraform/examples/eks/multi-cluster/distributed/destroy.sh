@@ -1,5 +1,11 @@
 #!/bin/bash
 
+set -uo pipefail
+
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ROOTDIR="$(cd ${SCRIPTDIR}/../..; pwd )"
+[[ -n "${DEBUG:-}" ]] && set -x
+
 
 if [[ $# -eq 0 ]] ; then
     echo "No arguments supplied"
@@ -9,20 +15,24 @@ if [[ $# -eq 0 ]] ; then
 fi
 env=$1
 echo "Destroying $env ..."
-
-set -x
-
 terraform workspace select $env
 
 # Delete the Ingress/SVC before removing the addons
 TMPFILE=$(mktemp)
-terraform output -raw configure_kubectl > "$TMPFILE"
-source "$TMPFILE"
+terraform -chdir=$SCRIPTDIR output -raw configure_kubectl > "$TMPFILE"
+# check if TMPFILE contains the string "No outputs found"
+if [[ ! $(cat $TMPFILE) == *"No outputs found"* ]]; then
+  source "$TMPFILE"
+  kubectl delete -n argocd applicationset workloads
+  echo "Waiting for ingress and load balancer to be deleted"
+  sleep 120
+  kubectl delete -n argocd applicationset cluster-addons
+  kubectl delete -n argocd applicationset addons-argocd
+  kubectl delete -n argocd svc argo-cd-argocd-server
+fi
 
-kubectl delete svc -n argocd argo-cd-argocd-server
-
-terraform destroy -target="module.gitops_bridge_bootstrap" -auto-approve -var-file="workspaces/${env}.tfvars"
-terraform destroy -target="module.eks_blueprints_addons" -auto-approve -var-file="workspaces/${env}.tfvars"
-terraform destroy -target="module.eks" -auto-approve -var-file="workspaces/${env}.tfvars"
-terraform destroy -target="module.vpc" -auto-approve -var-file="workspaces/${env}.tfvars"
-terraform destroy -auto-approve -var-file="workspaces/${env}.tfvars"
+terraform destroy -target="module.gitops_bridge_bootstrap" -auto-approve
+terraform destroy -target="module.eks_blueprints_addons" -auto-approve
+terraform destroy -target="module.eks" -auto-approve
+terraform destroy -target="module.vpc" -auto-approve
+terraform destroy -auto-approve
