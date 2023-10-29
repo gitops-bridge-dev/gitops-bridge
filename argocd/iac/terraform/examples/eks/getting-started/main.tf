@@ -4,49 +4,6 @@ provider "aws" {
 data "aws_caller_identity" "current" {}
 data "aws_availability_zones" "available" {}
 
-
-data "terraform_remote_state" "cluster_hub" {
-  backend = "local"
-
-  config = {
-    path = "${path.module}/../hub/terraform.tfstate"
-  }
-}
-
-################################################################################
-# Kubernetes Access for Hub Cluster
-################################################################################
-
-provider "kubernetes" {
-  host                   = data.terraform_remote_state.cluster_hub.outputs.cluster_endpoint
-  cluster_ca_certificate = base64decode(data.terraform_remote_state.cluster_hub.outputs.cluster_certificate_authority_data)
-
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    command     = "aws"
-    # This requires the awscli to be installed locally where Terraform is executed
-    args = ["eks", "get-token", "--cluster-name", data.terraform_remote_state.cluster_hub.outputs.cluster_name, "--region", data.terraform_remote_state.cluster_hub.outputs.cluster_region]
-  }
-  alias = "hub"
-}
-
-################################################################################
-# Kubernetes Access for Spoke Cluster
-################################################################################
-
-provider "kubernetes" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    command     = "aws"
-    # This requires the awscli to be installed locally where Terraform is executed
-    args = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
-  }
-}
-
-
 provider "helm" {
   kubernetes {
     host                   = module.eks.cluster_endpoint
@@ -61,12 +18,21 @@ provider "helm" {
   }
 }
 
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
 
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    # This requires the awscli to be installed locally where Terraform is executed
+    args = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
+  }
+}
 
 locals {
-  name        = "hub-spoke-2-${terraform.workspace}"
-  environment = terraform.workspace
-  region      = var.region
+  name   = "getting-started"
+  region = var.region
 
   cluster_version = var.kubernetes_version
 
@@ -78,12 +44,10 @@ locals {
   gitops_addons_path     = var.gitops_addons_path
   gitops_addons_revision = var.gitops_addons_revision
 
-  gitops_workload_org      = var.gitops_workload_org
-  gitops_workload_repo     = var.gitops_workload_repo
+  gitops_workload_url      = "${var.gitops_workload_org}/${var.gitops_workload_repo}"
   gitops_workload_basepath = var.gitops_workload_basepath
   gitops_workload_path     = var.gitops_workload_path
   gitops_workload_revision = var.gitops_workload_revision
-  gitops_workload_url      = "${local.gitops_workload_org}/${local.gitops_workload_repo}"
 
   aws_addons = {
     enable_cert_manager                          = try(var.addons.enable_cert_manager, false)
@@ -111,10 +75,9 @@ locals {
     enable_ack_emrcontainers                     = try(var.addons.enable_ack_emrcontainers, false)
     enable_ack_sfn                               = try(var.addons.enable_ack_sfn, false)
     enable_ack_eventbridge                       = try(var.addons.enable_ack_eventbridge, false)
-    enable_aws_argocd                            = try(var.addons.enable_aws_argocd, false)
   }
   oss_addons = {
-    enable_argocd                          = try(var.addons.enable_argocd, false)
+    enable_argocd                          = try(var.addons.enable_argocd, true)
     enable_argo_rollouts                   = try(var.addons.enable_argo_rollouts, false)
     enable_argo_events                     = try(var.addons.enable_argo_events, false)
     enable_argo_workflows                  = try(var.addons.enable_argo_workflows, false)
@@ -149,15 +112,6 @@ locals {
       addons_repo_basepath = local.gitops_addons_basepath
       addons_repo_path     = local.gitops_addons_path
       addons_repo_revision = local.gitops_addons_revision
-    }
-  )
-
-  workloads_metadata = merge(
-    {
-      aws_cluster_name = module.eks.cluster_name
-      aws_region       = local.region
-      aws_account_id   = data.aws_caller_identity.current.account_id
-      aws_vpc_id       = module.vpc.vpc_id
     },
     {
       workload_repo_url      = local.gitops_workload_url
@@ -167,10 +121,6 @@ locals {
     }
   )
 
-  argocd_apps = {
-    workloads = file("${path.module}/bootstrap/workloads.yaml")
-  }
-
   tags = {
     Blueprint  = local.name
     GithubRepo = "github.com/gitops-bridge-dev/gitops-bridge"
@@ -178,84 +128,16 @@ locals {
 }
 
 ################################################################################
-# GitOps Bridge: Bootstrap for Spoke Cluster
+# GitOps Bridge: Bootstrap
 ################################################################################
-# Wait ArgoCD CRDs and "argocd" namespace to be created by hub cluster to this spoke cluster
-resource "time_sleep" "wait_for_argocd_namespace_and_crds" {
-  create_duration = "7m"
-
-  depends_on = [module.gitops_bridge_bootstrap_hub]
-}
-module "gitops_bridge_bootstrap_spoke" {
+module "gitops_bridge_bootstrap" {
   source = "github.com/gitops-bridge-dev/gitops-bridge-argocd-bootstrap-terraform?ref=v2.0.0"
 
-  install = false # Not installing argocd via helm on spoke cluster
   cluster = {
-    cluster_name = module.eks.cluster_name
-    environment  = local.environment
-    metadata     = local.workloads_metadata
-    addons = {
-      enable_argocd = false # ArgoCD is deploy from Hub Cluster
-    }
-  }
-  apps = local.argocd_apps
-
-  depends_on = [time_sleep.wait_for_argocd_namespace_and_crds]
-}
-
-
-################################################################################
-# GitOps Bridge: Bootstrap for Hub Cluster
-################################################################################
-module "gitops_bridge_bootstrap_hub" {
-  source = "github.com/gitops-bridge-dev/gitops-bridge-argocd-bootstrap-terraform?ref=v2.0.0"
-
-  # The ArgoCD remote cluster secret is deploy on hub cluster not on spoke clusters
-  providers = {
-    kubernetes = kubernetes.hub
-  }
-
-  install = false # We are not installing argocd via helm on hub cluster
-  cluster = {
-    cluster_name = module.eks.cluster_name
-    environment  = local.environment
-    metadata     = local.addons_metadata
-    addons       = local.addons
-    server       = module.eks.cluster_endpoint
-    config       = <<-EOT
-      {
-        "tlsClientConfig": {
-          "insecure": false,
-          "caData" : "${module.eks.cluster_certificate_authority_data}"
-        },
-        "awsAuthConfig" : {
-          "clusterName": "${module.eks.cluster_name}",
-          "roleARN": "${aws_iam_role.spoke.arn}"
-        }
-      }
-    EOT
+    metadata = local.addons_metadata
+    addons   = local.addons
   }
 }
-
-################################################################################
-# ArgoCD EKS Access
-################################################################################
-resource "aws_iam_role" "spoke" {
-  name               = "${module.eks.cluster_name}-argocd-spoke"
-  assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
-}
-
-data "aws_iam_policy_document" "assume_role_policy" {
-  statement {
-    actions = ["sts:AssumeRole"]
-    principals {
-      type        = "AWS"
-      identifiers = [data.terraform_remote_state.cluster_hub.outputs.argocd_iam_role_arn]
-    }
-  }
-}
-
-
 
 ################################################################################
 # EKS Blueprints Addons
@@ -308,29 +190,19 @@ module "eks" {
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets
 
-  manage_aws_auth_configmap = true
-  aws_auth_roles = [
-    # Granting access to ArgoCD from hub cluster
-    {
-      rolearn  = aws_iam_role.spoke.arn
-      username = "gitops-role"
-      groups = [
-        "system:masters"
-      ]
-    },
-  ]
-
   eks_managed_node_groups = {
     initial = {
       instance_types = ["t3.medium"]
 
-      min_size     = 3
-      max_size     = 10
-      desired_size = 3
+      min_size     = 1
+      max_size     = 3
+      desired_size = 2
     }
   }
   # EKS Addons
   cluster_addons = {
+    coredns    = {}
+    kube-proxy = {}
     vpc-cni = {
       # Specify the VPC CNI addon should be deployed before compute to ensure
       # the addon is configured before data plane compute resources are created
@@ -345,7 +217,27 @@ module "eks" {
         }
       })
     }
+    aws-ebs-csi-driver = {
+      service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
+    }
   }
+  tags = local.tags
+}
+module "ebs_csi_driver_irsa" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "~> 5.20"
+
+  role_name_prefix = "${module.eks.cluster_name}-ebs-csi-"
+
+  attach_ebs_csi_policy = true
+
+  oidc_providers = {
+    main = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
+    }
+  }
+
   tags = local.tags
 }
 

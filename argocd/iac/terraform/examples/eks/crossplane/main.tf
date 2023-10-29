@@ -31,57 +31,71 @@ provider "kubernetes" {
 }
 
 locals {
-  name                   = "ex-${replace(basename(path.cwd), "_", "-")}"
-  environment            = "control-plane"
-  region                 = "us-west-2"
-  cluster_version        = "1.27"
+  name        = "ex-${replace(basename(path.cwd), "_", "-")}"
+  environment = "control-plane"
+  region      = var.region
+
+  cluster_version = var.kubernetes_version
+
+  vpc_cidr = var.vpc_cidr
+  azs      = slice(data.aws_availability_zones.available.names, 0, 3)
+
+
   gitops_addons_url      = "${var.gitops_addons_org}/${var.gitops_addons_repo}"
   gitops_addons_basepath = var.gitops_addons_basepath
   gitops_addons_path     = var.gitops_addons_path
   gitops_addons_revision = var.gitops_addons_revision
 
   aws_addons = {
-    enable_cert_manager                    = true
-    enable_aws_crossplane                  = true  # installs aws crossplane providers
-    enable_aws_crossplane_provider         = false # installs aws contrib provider
-    enable_aws_crossplane_upbound_provider = true  # installs aws upbound provider
-    enable_crossplane_kubernetes_provider  = true  # installs kubernetes provider
-    enable_crossplane_helm_provider        = true  # installs helm provider
-    #enable_aws_efs_csi_driver                    = true
-    #enable_aws_fsx_csi_driver                    = true
-    #enable_aws_cloudwatch_metrics                = true
-    #enable_aws_privateca_issuer                  = true
-    #enable_cluster_autoscaler                    = true
-    #enable_external_dns                          = true
-    #enable_external_secrets                      = true
-    #enable_aws_load_balancer_controller          = true
-    #enable_fargate_fluentbit                     = true
-    #enable_aws_for_fluentbit                     = true
-    #enable_aws_node_termination_handler          = true
-    #enable_karpenter                             = true
-    #enable_velero                                = true
-    #enable_aws_gateway_api_controller            = true
-    #enable_aws_ebs_csi_resources                 = true # generate gp2 and gp3 storage classes for ebs-csi
-    #enable_aws_secrets_store_csi_driver_provider = true
+    enable_cert_manager                          = try(var.addons.enable_cert_manager, false)
+    enable_aws_efs_csi_driver                    = try(var.addons.enable_aws_efs_csi_driver, false)
+    enable_aws_fsx_csi_driver                    = try(var.addons.enable_aws_fsx_csi_driver, false)
+    enable_aws_cloudwatch_metrics                = try(var.addons.enable_aws_cloudwatch_metrics, false)
+    enable_aws_privateca_issuer                  = try(var.addons.enable_aws_privateca_issuer, false)
+    enable_cluster_autoscaler                    = try(var.addons.enable_cluster_autoscaler, false)
+    enable_external_dns                          = try(var.addons.enable_external_dns, false)
+    enable_external_secrets                      = try(var.addons.enable_external_secrets, false)
+    enable_aws_load_balancer_controller          = try(var.addons.enable_aws_load_balancer_controller, false)
+    enable_fargate_fluentbit                     = try(var.addons.enable_fargate_fluentbit, false)
+    enable_aws_for_fluentbit                     = try(var.addons.enable_aws_for_fluentbit, false)
+    enable_aws_node_termination_handler          = try(var.addons.enable_aws_node_termination_handler, false)
+    enable_karpenter                             = try(var.addons.enable_karpenter, false)
+    enable_velero                                = try(var.addons.enable_velero, false)
+    enable_aws_gateway_api_controller            = try(var.addons.enable_aws_gateway_api_controller, false)
+    enable_aws_ebs_csi_resources                 = try(var.addons.enable_aws_ebs_csi_resources, false)
+    enable_aws_secrets_store_csi_driver_provider = try(var.addons.enable_aws_secrets_store_csi_driver_provider, false)
+    enable_ack_apigatewayv2                      = try(var.addons.enable_ack_apigatewayv2, false)
+    enable_ack_dynamodb                          = try(var.addons.enable_ack_dynamodb, false)
+    enable_ack_s3                                = try(var.addons.enable_ack_s3, false)
+    enable_ack_rds                               = try(var.addons.enable_ack_rds, false)
+    enable_ack_prometheusservice                 = try(var.addons.enable_ack_prometheusservice, false)
+    enable_ack_emrcontainers                     = try(var.addons.enable_ack_emrcontainers, false)
+    enable_ack_sfn                               = try(var.addons.enable_ack_sfn, false)
+    enable_ack_eventbridge                       = try(var.addons.enable_ack_eventbridge, false)
+    enable_aws_argocd_ingress                    = try(var.addons.enable_aws_argocd_ingress, false)
   }
   oss_addons = {
-    enable_crossplane     = true # installs crossplane core
-    enable_metrics_server = true
-    #enable_argo_rollouts                         = true
-    #enable_argo_events                          = true
-    #enable_argo_workflows                        = true
-    #enable_cluster_proportional_autoscaler       = true
-    #enable_gatekeeper                            = true
-    #enable_gpu_operator                          = true
-    #enable_ingress_nginx                         = true
-    #enable_kyverno                               = true
-    #enable_kube_prometheus_stack                 = true
-    #enable_prometheus_adapter                    = true
-    #enable_secrets_store_csi_driver              = true
-    #enable_vpa                                   = true
-    #enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
+    enable_argocd                          = try(var.addons.enable_argocd, true)
+    enable_argo_rollouts                   = try(var.addons.enable_argo_rollouts, false)
+    enable_argo_events                     = try(var.addons.enable_argo_events, false)
+    enable_argo_workflows                  = try(var.addons.enable_argo_workflows, false)
+    enable_cluster_proportional_autoscaler = try(var.addons.enable_cluster_proportional_autoscaler, false)
+    enable_gatekeeper                      = try(var.addons.enable_gatekeeper, false)
+    enable_gpu_operator                    = try(var.addons.enable_gpu_operator, false)
+    enable_ingress_nginx                   = try(var.addons.enable_ingress_nginx, false)
+    enable_kyverno                         = try(var.addons.enable_kyverno, false)
+    enable_kube_prometheus_stack           = try(var.addons.enable_kube_prometheus_stack, false)
+    enable_metrics_server                  = try(var.addons.enable_metrics_server, false)
+    enable_prometheus_adapter              = try(var.addons.enable_prometheus_adapter, false)
+    enable_secrets_store_csi_driver        = try(var.addons.enable_secrets_store_csi_driver, false)
+    enable_vpa                             = try(var.addons.enable_vpa, false)
   }
-  addons = merge(local.aws_addons, local.oss_addons, { kubernetes_version = local.cluster_version }, { aws_cluster_name = module.eks.cluster_name })
+  addons = merge(
+    local.aws_addons,
+    local.oss_addons,
+    { kubernetes_version = local.cluster_version },
+    { aws_cluster_name = module.eks.cluster_name }
+  )
 
   addons_metadata = merge(
     module.eks_blueprints_addons.gitops_metadata,
@@ -108,12 +122,9 @@ locals {
     workloads = file("${path.module}/bootstrap/workloads.yaml")
   }
 
-  vpc_cidr = "10.0.0.0/16"
-  azs      = slice(data.aws_availability_zones.available.names, 0, 3)
-
   tags = {
     Blueprint  = local.name
-    GithubRepo = "github.com/csantanapr/terraform-gitops-bridge"
+    GithubRepo = "github.com/gitops-bridge-dev/gitops-bridge"
   }
 }
 
@@ -179,21 +190,21 @@ module "eks_blueprints_addons" {
   create_kubernetes_resources = false
 
   # EKS Blueprints Addons
-  enable_cert_manager                 = try(local.aws_addons.enable_cert_manager, false)
-  enable_aws_efs_csi_driver           = try(local.aws_addons.enable_aws_efs_csi_driver, false)
-  enable_aws_fsx_csi_driver           = try(local.aws_addons.enable_aws_fsx_csi_driver, false)
-  enable_aws_cloudwatch_metrics       = try(local.aws_addons.enable_aws_cloudwatch_metrics, false)
-  enable_aws_privateca_issuer         = try(local.aws_addons.enable_aws_privateca_issuer, false)
-  enable_cluster_autoscaler           = try(local.aws_addons.enable_cluster_autoscaler, false)
-  enable_external_dns                 = try(local.aws_addons.enable_external_dns, false)
-  enable_external_secrets             = try(local.aws_addons.enable_external_secrets, false)
-  enable_aws_load_balancer_controller = try(local.aws_addons.enable_aws_load_balancer_controller, false)
-  enable_fargate_fluentbit            = try(local.aws_addons.enable_fargate_fluentbit, false)
-  enable_aws_for_fluentbit            = try(local.aws_addons.enable_aws_for_fluentbit, false)
-  enable_aws_node_termination_handler = try(local.aws_addons.enable_aws_node_termination_handler, false)
-  enable_karpenter                    = try(local.aws_addons.enable_karpenter, false)
-  enable_velero                       = try(local.aws_addons.enable_velero, false)
-  enable_aws_gateway_api_controller   = try(local.aws_addons.enable_aws_gateway_api_controller, false)
+  enable_cert_manager                 = local.aws_addons.enable_cert_manager
+  enable_aws_efs_csi_driver           = local.aws_addons.enable_aws_efs_csi_driver
+  enable_aws_fsx_csi_driver           = local.aws_addons.enable_aws_fsx_csi_driver
+  enable_aws_cloudwatch_metrics       = local.aws_addons.enable_aws_cloudwatch_metrics
+  enable_aws_privateca_issuer         = local.aws_addons.enable_aws_privateca_issuer
+  enable_cluster_autoscaler           = local.aws_addons.enable_cluster_autoscaler
+  enable_external_dns                 = local.aws_addons.enable_external_dns
+  enable_external_secrets             = local.aws_addons.enable_external_secrets
+  enable_aws_load_balancer_controller = local.aws_addons.enable_aws_load_balancer_controller
+  enable_fargate_fluentbit            = local.aws_addons.enable_fargate_fluentbit
+  enable_aws_for_fluentbit            = local.aws_addons.enable_aws_for_fluentbit
+  enable_aws_node_termination_handler = local.aws_addons.enable_aws_node_termination_handler
+  enable_karpenter                    = local.aws_addons.enable_karpenter
+  enable_velero                       = local.aws_addons.enable_velero
+  enable_aws_gateway_api_controller   = local.aws_addons.enable_aws_gateway_api_controller
 
   tags = local.tags
 }

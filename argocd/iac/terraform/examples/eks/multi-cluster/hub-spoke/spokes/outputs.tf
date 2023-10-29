@@ -5,4 +5,3 @@ output "configure_kubectl" {
     aws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name}
   EOT
 }
-
