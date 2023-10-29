@@ -30,7 +30,6 @@ provider "kubernetes" {
   alias = "hub"
 }
 
-
 ################################################################################
 # Kubernetes Access for Spoke Cluster
 ################################################################################
@@ -58,7 +57,6 @@ locals {
 
   vpc_cidr = var.vpc_cidr
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
-
 
   gitops_addons_url      = "${var.gitops_addons_org}/${var.gitops_addons_repo}"
   gitops_addons_basepath = var.gitops_addons_basepath

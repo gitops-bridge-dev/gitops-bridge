@@ -60,8 +60,6 @@ The output should match the `arn` for the IAM Role that will assume the IAM Role
 "arn:aws:iam::0123456789:role/hub-spoke-control-plane-argocd-hub"
 ```
 
-kubectl get secret -n argocd hub-spoke-control-plane --template='{{index .data.config | base64decode}}'
-
 ## Deploy the Spoke EKS Cluster
 Initialize Terraform and deploy the EKS clusters:
 ```shell

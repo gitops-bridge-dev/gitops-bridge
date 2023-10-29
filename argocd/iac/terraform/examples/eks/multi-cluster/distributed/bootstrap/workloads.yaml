@@ -15,7 +15,7 @@ spec:
               values: [in-cluster]
   template:
     metadata:
-      name: 'workload'
+      name: 'workload-{{metadata.labels.environment}}'
     spec:
       project: default
       source:
