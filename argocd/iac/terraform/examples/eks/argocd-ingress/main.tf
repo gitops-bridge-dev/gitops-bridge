@@ -31,7 +31,7 @@ provider "kubernetes" {
 }
 
 locals {
-  name                   = "ex-${replace(basename(path.cwd), "_", "-")}"
+  name   = "ex-${replace(basename(path.cwd), "_", "-")}"
   region = var.region
 
   cluster_version = var.kubernetes_version
@@ -142,8 +142,8 @@ module "gitops_bridge_bootstrap" {
   source = "github.com/gitops-bridge-dev/gitops-bridge-argocd-bootstrap-terraform?ref=v2.0.0"
 
   cluster = {
-    metadata     = local.addons_metadata
-    addons       = local.addons
+    metadata = local.addons_metadata
+    addons   = local.addons
   }
   apps = local.argocd_apps
 }
