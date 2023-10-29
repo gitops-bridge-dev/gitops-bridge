@@ -9,19 +9,55 @@ The example reads your private ssh key, and creates two secretes to access the g
 ## Prerequisites
 - Create a Github ssh key file, example assumes the file path `~/.ssh/id_rsa`, update `main.tf` if using a different location
 
-Deploy EKS Cluster
+Before you begin, make sure you have the following command line tools installed:
+- git
+- terraform
+- kubectl
+- argocd
+
+### Fork the Addon GitOps Repo
+1. Fork the git repository for addons [here](https://github.com/gitops-bridge-dev/gitops-bridge-argocd-control-plane-template).
+2. Update the following environment variables to point to your fork by changing the default values:
+```shell
+export TF_VAR_gitops_addons_org=https://github.com/gitops-bridge-dev
+export TF_VAR_gitops_addons_repo=gitops-bridge-argocd-control-plane-template
+```
+
+## Deploy the EKS Cluster
+Initialize Terraform and deploy the EKS cluster:
 ```shell
 terraform init
-terraform apply
+terraform apply -auto-approve
+```
+Retrieve `kubectl` config, then execute the output command:
+```shell
+terraform output -raw configure_kubectl
 ```
 
-Access Terraform output to configure `kubectl` and `argocd`
+
+### Monitor GitOps Progress for Addons
+Wait until all the ArgoCD applications' `HEALTH STATUS` is `Healthy`. Use Crl+C to exit the `watch` command
 ```shell
-terraform output
+watch kubectl get applications -n argocd
 ```
 
-Destroy EKS Cluster
+### Verify the Addons
+Verify that the addons are ready:
 ```shell
-cd hub
+kubectl get deployment -n kube-system \
+  aws-load-balancer-controller \
+  metrics-server
+```
+
+## Access ArgoCD
+Access ArgoCD's UI, run the command from the output:
+```shell
+terraform output -raw access_argocd
+```
+
+
+## Destroy the EKS Cluster
+To tear down all the resources and the EKS cluster, run the following command:
+```shell
 ./destroy.sh
 ```

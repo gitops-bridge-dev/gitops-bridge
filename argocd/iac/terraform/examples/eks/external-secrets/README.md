@@ -42,11 +42,7 @@ Retrieve `kubectl` config, then execute the output command:
 ```shell
 terraform output -raw configure_kubectl
 ```
-## Deploy the Addons
-Bootstrap the addons using ArgoCD:
-```shell
-kubectl apply -f bootstrap/addons.yaml
-```
+`
 
 ### Monitor GitOps Progress for Addons
 Wait until all the ArgoCD applications' `HEALTH STATUS` is `Healthy`. Use Crl+C to exit the `watch` command
