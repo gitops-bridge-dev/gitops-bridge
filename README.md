@@ -11,7 +11,7 @@ The GitOps Bridge becomes extremely important in the context of cloud-managed Ku
 The GitOps Bridge should also be compatible with GitOps engines that run as SaaS and are not installed inside the cluster, such as the Akuity Platform, CodeFresh, Weaveworks, and others.
 
 
-<img src="https://raw.githubusercontent.com/gitops-bridge-dev/gitops-bridge/addons-variables/argocd/iac/terraform/examples/eks/getting-started/static/gitops-bridge.drawio.png" width=100%>
+<img src="https://raw.githubusercontent.com/gitops-bridge-dev/gitops-bridge/main/argocd/iac/terraform/examples/eks/getting-started/static/gitops-bridge.drawio.png" width=100%>
 
 
 The [GitOps Bridge Pattern](https://github.com/gitops-bridge-dev) enables Kubernetes administrators to utilize Infrastructure as Code (IaC) and GitOps tools for deploying Kubernetes Addons and Workloads. Addons often depend on Cloud resources that are external to the cluster. The configuration metadata for these external resources is required by the Addons' Helm charts. While IaC is used to create these cloud resources, it is not used to install the Helm charts. Instead, the IaC tool stores this metadata either within GitOps resources in the cluster or in a Git repository. The GitOps tool then extracts these metadata values and passes them to the Helm chart during the Addon installation process. This mechanism forms the bridge between IaC and GitOps, hence the term "GitOps Bridge."
