@@ -20,7 +20,7 @@ spec:
       project: default
       source:
         repoURL: '{{metadata.annotations.workload_repo_url}}'
-        path: '{{metadata.annotations.workload_repo_path}}'
+        path: '{{metadata.annotations.workload_repo_basepath}}{{metadata.annotations.workload_repo_path}}'
         targetRevision: '{{metadata.annotations.workload_repo_revision}}'
         helm:
           releaseName: 'external-secrets-example'
