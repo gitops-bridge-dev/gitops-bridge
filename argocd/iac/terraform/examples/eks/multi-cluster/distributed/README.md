@@ -71,9 +71,21 @@ terraform output -raw access_argocd
 ### Monitor GitOps Progress for Workloads
 Watch until the Workloads ArgoCD Application is `Healthy`
 ```shell
-watch kubectl get -n argocd applications workloads-dev
+watch kubectl get -n argocd applications workload
 ```
 Wait until the ArgoCD Applications `HEALTH STATUS` is `Healthy`. Crl+C to exit the `watch` command
+
+### Verify the Application
+Verify that the application configuration is present and the pod is running:
+```shell
+kubectl get all -n workload
+```
+
+### Container Metrics
+Check the application's CPU and memory metrics:
+```shell
+kubectl top pods -n workload
+```
 
 ## Destroy the EKS Clusters
 To tear down all the resources and the EKS cluster, run the following command:
