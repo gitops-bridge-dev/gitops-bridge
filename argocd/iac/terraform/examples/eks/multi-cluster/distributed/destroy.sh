@@ -31,8 +31,8 @@ if [[ ! $(cat $TMPFILE) == *"No outputs found"* ]]; then
   kubectl delete -n argocd svc argo-cd-argocd-server
 fi
 
-terraform destroy -target="module.gitops_bridge_bootstrap" -auto-approve
-terraform destroy -target="module.eks_blueprints_addons" -auto-approve
-terraform destroy -target="module.eks" -auto-approve
-terraform destroy -target="module.vpc" -auto-approve
+terraform destroy -auto-approve -var-file="workspaces/${env}.tfvars" -target="module.gitops_bridge_bootstrap" -auto-approve
+terraform destroy -auto-approve -var-file="workspaces/${env}.tfvars" -target="module.eks_blueprints_addons" -auto-approve
+terraform destroy -auto-approve -var-file="workspaces/${env}.tfvars" -target="module.eks" -auto-approve
+terraform destroy -auto-approve -var-file="workspaces/${env}.tfvars" -target="module.vpc" -auto-approve
 terraform destroy -auto-approve

@@ -20,8 +20,8 @@ export TF_VAR_gitops_addons_org=https://github.com/gitops-bridge-dev
 export TF_VAR_gitops_addons_repo=gitops-bridge-argocd-control-plane-template
 ```
 
-## Deploy the EKS Cluster
-Initialize Terraform and deploy the EKS cluster:
+## Deploy the EKS Clusters
+Initialize Terraform and deploy the EKS clusters:
 ```shell
 ./deploy.sh dev
 ./deploy.sh staging
