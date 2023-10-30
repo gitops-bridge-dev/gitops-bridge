@@ -1,4 +1,4 @@
-# GitOps-Bridge: KubeCon/ArgoCon NA 2023
+# Example of EKS with Akuity
 
 ## Prerequisites
 Before you begin, make sure you have the following command line tools installed:
