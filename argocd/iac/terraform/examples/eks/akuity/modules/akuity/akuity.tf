@@ -50,18 +50,9 @@ data "aws_eks_cluster" "this" {
 
 resource "akp_cluster" "gitops-bridge" {
   instance_id = akp_instance.argocd.id
-  # kube_config = {
-  #   host                   = "https://${google_container_cluster.gke-01.endpoint}"
-  #   token                  = data.google_client_config.current.access_token
-  #   client_certificate     = "${base64decode(google_container_cluster.gke-01.master_auth.0.client_certificate)}"
-  #   client_key             = "${base64decode(google_container_cluster.gke-01.master_auth.0.client_key)}"
-  #   cluster_ca_certificate = "${base64decode(google_container_cluster.gke-01.master_auth.0.cluster_ca_certificate)}"
-  # }
   kube_config = {
     host                   = data.aws_eks_cluster.this.endpoint
     token                  = data.aws_eks_cluster_auth.this.token
-    //client_certificate     = "${base64decode(google_container_cluster.gke-01.master_auth.0.client_certificate)}"
-    //client_key             = "${base64decode(google_container_cluster.gke-01.master_auth.0.client_key)}"
     cluster_ca_certificate = "${base64decode(data.aws_eks_cluster.this.certificate_authority[0].data)}"
   }
   name      = "${var.cluster.cluster_name}-${var.cluster.environment}"
