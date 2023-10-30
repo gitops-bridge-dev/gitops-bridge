@@ -1,0 +1,36 @@
+global:
+  iam_role_arn_aws: null
+  enabled_aws: true
+
+controllerConfig:
+  enabled: true
+  metadata:
+    name: "aws-controller-config"
+    annotations: {}
+    labels: {}
+  spec:
+    podSecurityContext:
+      fsGroup: 2000
+    args:
+      - --debug
+
+provider:
+  enabled: true
+  metadata:
+    name: "provider-aws"
+    iam_role_arn: null
+    annotations: {}
+    labels: {}
+  package:
+    registry: xpkg.upbound.io/crossplane-contrib/provider-aws
+    version: "v0.43.1"
+
+providerConfig:
+  enabled: true
+  metadata:
+    name: "aws-provider-config"
+    annotations: {}
+    labels: {}
+  spec:
+    credentials:
+      source: InjectedIdentity

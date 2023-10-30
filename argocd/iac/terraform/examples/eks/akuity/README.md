@@ -24,7 +24,7 @@ export TF_VAR_argocd_admin_password=xxxxxxxxxxx
 ## Fork the Git Repositories
 
 ### Fork the Addon GitOps Repo
-1. Fork the git repository for addons [here](https://github.com/gitops-bridge-dev/kubecon-2023-na-argocon).
+1. Fork the git repository for addons [here](https://github.com/gitops-bridge-dev/gitops-bridge).
 2. Update the following environment variables to point to your fork by changing the default values:
 ```shell
 export TF_VAR_gitops_addons_org=https://github.com/<org or user>
@@ -56,11 +56,11 @@ The output looks like the following:
   "addons_repo_basepath": "gitops/",
   "addons_repo_path": "bootstrap/control-plane/addons",
   "addons_repo_revision": "main",
-  "addons_repo_url": "git@github.com:csantanapr/kubecon-2023-na-argocon",
+  "addons_repo_url": "git@github.com:gitops-bridge/gitops-bridge",
   "workload_repo_basepath": "gitops/",
   "workload_repo_path": "apps",
   "workload_repo_revision": "main",
-  "workload_repo_url": "git@github.com:csantanapr/kubecon-2023-na-argocon"
+  "workload_repo_url": "git@github.com:gitops-bridge/gitops-bridge"
   "aws_account_id": "0123456789",
   "aws_cloudwatch_metrics_iam_role_arn": "arn:aws:iam::0123456789:role/aws-cloudwatch-metrics-20231029150636632700000028",
   "aws_cloudwatch_metrics_namespace": "amazon-cloudwatch",
@@ -133,7 +133,7 @@ akuity argocd cluster get --org-name $TF_VAR_akp_org_name
 ## Deploy the Addons
 Bootstrap the addons using ArgoCD:
 ```shell
-argocd appset create --upsert ../../gitops/bootstrap/control-plane/exclude/addons-akuity.yaml
+argocd appset create --upsert ./gitops/bootstrap/control-plane/exclude/addons-akuity.yaml
 ```
 
 ### Monitor GitOps Progress for Addons
@@ -144,17 +144,17 @@ argocd app list
 The output looks like this
 ```
 NAME                                                         CLUSTER            NAMESPACE          PROJECT  STATUS  HEALTH   SYNCPOLICY  CONDITIONS  REPO                                               PATH                                        TARGET
-argocd/addon-ex-eks-akuity-dev-aws-cloudwatch-metrics        ex-eks-akuity-dev  amazon-cloudwatch  default  Synced  Healthy  Auto        <none>      git@github.com:csantanapr/kubecon-2023-na-argocon                                              main
-argocd/addon-ex-eks-akuity-dev-aws-ebs-csi-resources         ex-eks-akuity-dev                     default  Synced  Healthy  Auto        <none>      git@github.com:csantanapr/kubecon-2023-na-argocon  gitops/charts/addons/aws-ebs-csi/resources  main
-argocd/addon-ex-eks-akuity-dev-aws-for-fluent-bit            ex-eks-akuity-dev  kube-system        default  Synced  Healthy  Auto        <none>      git@github.com:csantanapr/kubecon-2023-na-argocon                                              main
-argocd/addon-ex-eks-akuity-dev-aws-load-balancer-controller  ex-eks-akuity-dev  kube-system        default  Synced  Healthy  Auto        <none>      git@github.com:csantanapr/kubecon-2023-na-argocon                                              main
-argocd/addon-ex-eks-akuity-dev-cert-manager                  ex-eks-akuity-dev  cert-manager       default  Synced  Healthy  Auto        <none>      git@github.com:csantanapr/kubecon-2023-na-argocon                                              main
-argocd/addon-ex-eks-akuity-dev-external-secrets              ex-eks-akuity-dev  external-secrets   default  Synced  Healthy  Auto        <none>      git@github.com:csantanapr/kubecon-2023-na-argocon                                              main
-argocd/addon-ex-eks-akuity-dev-ingress-nginx                 ex-eks-akuity-dev  ingress-nginx      default  Synced  Healthy  Auto        <none>      git@github.com:csantanapr/kubecon-2023-na-argocon                                              main
-argocd/addon-ex-eks-akuity-dev-karpenter                     ex-eks-akuity-dev  karpenter          default  Synced  Healthy  Auto        <none>      git@github.com:csantanapr/kubecon-2023-na-argocon                                              main
-argocd/addon-ex-eks-akuity-dev-kyverno                       ex-eks-akuity-dev  kyverno            default  Synced  Healthy  Auto        <none>      git@github.com:csantanapr/kubecon-2023-na-argocon                                              main
-argocd/addon-ex-eks-akuity-dev-metrics-server                ex-eks-akuity-dev  kube-system        default  Synced  Healthy  Auto        <none>      git@github.com:csantanapr/kubecon-2023-na-argocon                                              main
-argocd/cluster-addons                                        in-cluster         argocd             default  Synced  Healthy  Auto        <none>      git@github.com:csantanapr/kubecon-2023-na-argocon  gitops/bootstrap/control-plane/addons       main
+argocd/addon-ex-eks-akuity-dev-aws-cloudwatch-metrics        ex-eks-akuity-dev  amazon-cloudwatch  default  Synced  Healthy  Auto        <none>      git@github.com:gitops-bridge/gitops-bridge                                              main
+argocd/addon-ex-eks-akuity-dev-aws-ebs-csi-resources         ex-eks-akuity-dev                     default  Synced  Healthy  Auto        <none>      git@github.com:gitops-bridge/gitops-bridge  gitops/charts/addons/aws-ebs-csi/resources  main
+argocd/addon-ex-eks-akuity-dev-aws-for-fluent-bit            ex-eks-akuity-dev  kube-system        default  Synced  Healthy  Auto        <none>      git@github.com:gitops-bridge/gitops-bridge                                              main
+argocd/addon-ex-eks-akuity-dev-aws-load-balancer-controller  ex-eks-akuity-dev  kube-system        default  Synced  Healthy  Auto        <none>      git@github.com:gitops-bridge/gitops-bridge                                              main
+argocd/addon-ex-eks-akuity-dev-cert-manager                  ex-eks-akuity-dev  cert-manager       default  Synced  Healthy  Auto        <none>      git@github.com:gitops-bridge/gitops-bridge                                              main
+argocd/addon-ex-eks-akuity-dev-external-secrets              ex-eks-akuity-dev  external-secrets   default  Synced  Healthy  Auto        <none>      git@github.com:gitops-bridge/gitops-bridge                                              main
+argocd/addon-ex-eks-akuity-dev-ingress-nginx                 ex-eks-akuity-dev  ingress-nginx      default  Synced  Healthy  Auto        <none>      git@github.com:gitops-bridge/gitops-bridge                                              main
+argocd/addon-ex-eks-akuity-dev-karpenter                     ex-eks-akuity-dev  karpenter          default  Synced  Healthy  Auto        <none>      git@github.com:gitops-bridge/gitops-bridge                                              main
+argocd/addon-ex-eks-akuity-dev-kyverno                       ex-eks-akuity-dev  kyverno            default  Synced  Healthy  Auto        <none>      git@github.com:gitops-bridge/gitops-bridge                                              main
+argocd/addon-ex-eks-akuity-dev-metrics-server                ex-eks-akuity-dev  kube-system        default  Synced  Healthy  Auto        <none>      git@github.com:gitops-bridge/gitops-bridge                                              main
+argocd/cluster-addons                                        in-cluster         argocd             default  Synced  Healthy  Auto        <none>      git@github.com:gitops-bridge/gitops-bridge  gitops/bootstrap/control-plane/addons       main
 ```
 
 
@@ -168,7 +168,7 @@ kubectl get deployment -A
 ## Deploy the Workloads
 Deploy a sample application located in [../../gitops/apps/guestbook](../../gitops/apps/guestbook) using ArgoCD:
 ```shell
-argocd appset create --upsert ../../gitops/bootstrap/workloads/exclude/workloads-akuity.yaml
+argocd appset create --upsert ./gitops/bootstrap/workloads/exclude/workloads-akuity.yaml
 ```
 
 ### Monitor GitOps Progress for Workloads
@@ -185,7 +185,7 @@ Project:            default
 Server:             in-cluster
 Namespace:          argocd
 URL:                https://k9gjmlz7hz2jiqe2.cd.akuity.cloud/applications/workload
-Repo:               git@github.com:csantanapr/kubecon-2023-na-argocon
+Repo:               git@github.com:gitops-bridge/gitops-bridge
 Target:             main
 Path:               gitops/bootstrap/workloads
 SyncWindow:         Sync Allowed

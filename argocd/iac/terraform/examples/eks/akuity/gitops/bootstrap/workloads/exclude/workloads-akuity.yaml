@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: workloads
+  namespace: argocd
+spec:
+  syncPolicy:
+    preserveResourcesOnDeletion: false
+  generators:
+    - clusters:
+        selector:
+          matchLabels:
+            akuity.io/argo-cd-cluster-name: in-cluster
+  template:
+    metadata:
+      name: workload
+    spec:
+      project: default
+      source:
+        repoURL: 'git@github.com:csantanapr/kubecon-2023-na-argocon'
+        path: 'gitops/bootstrap/workloads'
+        targetRevision: 'main'
+        directory:
+          recurse: true
+          exclude: exclude/*
+      destination:
+        namespace: 'argocd'
+        name: '{{name}}'
+      syncPolicy:
+        automated: {}

@@ -1,0 +1,25 @@
+{{- if and .Values.global.enabled_aws .Values.provider.enabled }}
+{{- with .Values.provider }}
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: {{ .metadata.name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    {{- range $key, $value := .metadata.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+
+  {{- if .metadata.labels }}
+  labels:
+    {{- range $key, $value := .metadata.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  package: {{ .package.registry }}:{{ default .package.version $.Values.global.aws_version }}
+  controllerConfigRef:
+    name: {{ $.Values.controllerConfig.metadata.name }}
+{{- end }}
+{{- end }}
+

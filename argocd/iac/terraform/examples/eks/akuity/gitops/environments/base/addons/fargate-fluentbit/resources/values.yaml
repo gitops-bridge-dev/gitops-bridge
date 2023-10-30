@@ -1,0 +1,37 @@
+enabled: true
+
+parser: |
+  [PARSER]
+    Name regex
+    Format regex
+    Regex ^(?<time>[^ ]+) (?<stream>[^ ]+) (?<logtag>[^ ]+) (?<message>.+)$
+    Time_Key time
+    Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+    Time_Keep On
+    Decode_Field_As json message
+
+filters: |
+  [FILTER]
+    Name parser
+    Match *
+    Key_Name log
+    Parser regex
+    Preserve_Key True
+    Reserve_Data True
+
+output: |
+  [OUTPUT]
+    Name cloudwatch_logs
+    Match *
+    region {{ .Values.region }}
+    log_group_name {{ .Values.log_group_name }}
+    log_stream_prefix {{ .Values.log_stream_prefix }}
+    auto_create_group true
+
+flb_log_cw: "false"
+
+log_group_name: "replace_with_valid_log_group"
+
+log_stream_prefix: "fargate-logs-"
+
+region: "us-east-1"

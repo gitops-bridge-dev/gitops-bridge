@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: cluster-addons
+  namespace: argocd
+spec:
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  generators:
+    - clusters:
+        selector:
+          matchLabels:
+            akuity.io/argo-cd-cluster-name: in-cluster
+  template:
+    metadata:
+      name: 'cluster-addons'
+    spec:
+      project: default
+      source:
+        repoURL: 'git@github.com:csantanapr/kubecon-2023-na-argocon'
+        path: 'gitops/bootstrap/control-plane/addons'
+        targetRevision: 'main'
+        directory:
+          recurse: true
+          exclude: exclude/*
+      destination:
+        namespace: 'argocd'
+        name: '{{name}}'
+      syncPolicy:
+        automated: {}

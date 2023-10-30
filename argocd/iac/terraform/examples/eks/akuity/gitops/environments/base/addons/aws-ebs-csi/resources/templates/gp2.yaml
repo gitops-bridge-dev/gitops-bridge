@@ -1,0 +1,11 @@
+{{- if .Values.gp2.enabled }}
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gp2
+  annotations:
+    {{- .Values.gp2.annotations | toYaml | nindent 4 }}
+parameters:
+  {{- .Values.gp2.parameters | toYaml | nindent 2 }}
+{{ .Values.gp2.spec | toYaml }}
+{{- end }}

@@ -1,0 +1,47 @@
+{{- if and .Values.global.enabled_aws .Values.providerConfig.enabled }}
+{{- with .Values.providerConfig }}
+apiVersion: aws.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: {{ .metadata.name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    {{- range $key, $value := .metadata.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+
+  {{- if .metadata.labels }}
+  labels:
+    {{- range $key, $value := .metadata.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  {{- .spec | toYaml | nindent 2 }}
+{{- end }}
+
+---
+{{- with .Values.providerConfig }}
+apiVersion: aws.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    {{- range $key, $value := .metadata.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+
+  {{- if .metadata.labels }}
+  labels:
+    {{- range $key, $value := .metadata.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  {{- .spec | toYaml | nindent 2 }}
+{{- end }}
+
+{{- end }}

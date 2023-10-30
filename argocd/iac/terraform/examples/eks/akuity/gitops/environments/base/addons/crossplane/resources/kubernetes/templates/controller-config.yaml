@@ -1,0 +1,22 @@
+{{- if and .Values.global.enabled_kubernetes .Values.controllerConfig.enabled }}
+{{- with .Values.controllerConfig }}
+apiVersion: pkg.crossplane.io/v1alpha1
+kind: ControllerConfig
+metadata:
+  name: {{ .metadata.name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    {{- range $key, $value := .metadata.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+
+  {{- if .metadata.labels }}
+  labels:
+    {{- range $key, $value := .metadata.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  {{- .spec | toYaml | nindent 2 }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,25 @@
+{{- if and .Values.global.enabled_aws_upbound .Values.controllerConfig.enabled }}
+{{- with .Values.controllerConfig }}
+apiVersion: pkg.crossplane.io/v1alpha1
+kind: ControllerConfig
+metadata:
+  name: {{ .metadata.name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    {{- if or $.Values.global.iam_role_arn_aws_upbound .metadata.iam_role_arn }}
+    eks.amazonaws.com/role-arn: {{ default $.Values.global.iam_role_arn_aws_upbound .metadata.role_arn }}
+    {{- end }}
+    {{- range $key, $value := .metadata.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+
+  {{- if .metadata.labels }}
+  labels:
+    {{- range $key, $value := .metadata.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  {{- .spec | toYaml | nindent 2 }}
+{{- end }}
+{{- end }}

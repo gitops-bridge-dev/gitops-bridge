@@ -1,0 +1,42 @@
+global:
+  enabled_kubernetes: true
+
+controllerConfig:
+  enabled: true
+  metadata:
+    name: "kubernetes-controller-config"
+    annotations: {}
+    labels: {}
+  spec:
+    serviceAccountName: kubernetes-provider
+
+provider:
+  enabled: true
+  metadata:
+    name: "kubernetes-provider"
+    annotations: {}
+    labels: {}
+  package:
+    registry: xpkg.upbound.io/crossplane-contrib/provider-kubernetes
+    version: "v0.9.0"
+
+providerConfig:
+  enabled: true
+  metadata:
+    name: "default"
+    annotations: {}
+    labels: {}
+  spec:
+    credentials:
+      source: InjectedIdentity
+
+clusterRoleBinding:
+  enabled: true
+  metadata:
+    name: "kubernetes-provider"
+    annotations: {}
+    labels: {}
+  roleRef:
+    kind: ClusterRole
+    name: cluster-admin
+    apiGroup: rbac.authorization.k8s.io

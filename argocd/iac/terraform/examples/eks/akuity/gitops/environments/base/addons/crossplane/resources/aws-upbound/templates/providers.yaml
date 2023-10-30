@@ -1,0 +1,19 @@
+{{- if .Values.global.enabled_aws_upbound }}
+
+{{- range .Values.providers }}
+
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-{{ . }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  package: {{ $.Values.global.aws_upbound_registry }}/provider-aws-{{ . }}:{{ $.Values.global.aws_upbound_version }}
+  controllerConfigRef:
+    name: {{ $.Values.controllerConfig.metadata.name }}
+---
+{{- end }}
+
+{{- end }}
+

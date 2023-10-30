@@ -1,0 +1,77 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: addons-aws-ack-eventbridge-appset
+spec:
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  generators:
+    - merge:
+        mergeKeys: [server]
+        generators:
+          - clusters:
+              values:
+                addonChart: eventbridge-chart
+                addonChartReleaseName: ack-eventbridge
+                addonChartRepositoryNamespace: aws-controllers-k8s
+                # anything not staging or prod use this version
+                addonChartVersion: '1.0.4'
+                # using oci repostory already configure in argocd
+                # argocd repo add public.ecr.aws --type helm --name aws-public-ecr --enable-oci
+                addonChartRepository: public.ecr.aws
+              selector:
+                matchExpressions:
+                  - key: akuity.io/argo-cd-cluster-name
+                    operator: NotIn
+                    values: [in-cluster]
+                  - key: enable_ack_eventbridge
+                    operator: In
+                    values: ['true']
+          - clusters:
+              selector:
+                matchLabels:
+                  environment: staging
+              values:
+                addonChartVersion: '1.0.4'
+          - clusters:
+              selector:
+                matchLabels:
+                  environment: prod
+              values:
+                addonChartVersion: '1.0.4'
+  template:
+    metadata:
+      name: addon-{{name}}-{{values.addonChartReleaseName}}
+    spec:
+      project: default
+      sources:
+        - repoURL: '{{metadata.annotations.addons_repo_url}}'
+          targetRevision: '{{metadata.annotations.addons_repo_revision}}'
+          ref: values
+        - chart: '{{values.addonChartRepositoryNamespace}}/{{values.addonChart}}'
+          repoURL: '{{values.addonChartRepository}}'
+          targetRevision: '{{values.addonChartVersion}}'
+          helm:
+            releaseName: '{{values.addonChartReleaseName}}'
+            ignoreMissingValueFiles: true
+            valueFiles:
+              - $values/{{metadata.annotations.addons_repo_basepath}}environments/base/addons/{{values.addonChart}}/values.yaml
+              - $values/{{metadata.annotations.addons_repo_basepath}}environments/{{metadata.labels.environment}}/addons/{{values.addonChartReleaseName}}/values.yaml
+              - $values/{{metadata.annotations.addons_repo_basepath}}clusters/{{name}}/addons/{{values.addonChartReleaseName}}/values.yaml
+            values: |
+              aws:
+                region: {{metadata.annotations.aws_region}}
+              nameOverride: '{{values.addonChartRepositoryNamespace}}'
+              serviceAccount:
+                name: {{metadata.annotations.ack_eventbridge_service_account}}
+                annotations:
+                  eks.amazonaws.com/role-arn: {{metadata.annotations.ack_eventbridge_iam_role_arn}}
+      destination:
+        namespace: '{{metadata.annotations.ack_eventbridge_namespace}}'
+        name: '{{name}}'
+      syncPolicy:
+        automated: {}
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true  # Big CRDs.

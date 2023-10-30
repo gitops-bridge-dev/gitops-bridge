@@ -1,0 +1,31 @@
+# Helm chart values
+controller:
+  replicaCount: 3
+  service:
+    #1. default is to create classic load balander
+    type: LoadBalancer
+    #2. Else you can uncomment below section to create a NLB to expose nginx
+    #type: LoadBalancer
+    # annotations:
+    #   service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    #   service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+    #   service.beta.kubernetes.io/aws-load-balancer-security-groups: '{{.metadata.annotations.aws_security_group_ingress_nginx}}'
+    #   service.beta.kubernetes.io/aws-load-balancer-manage-backend-security-group-rules: true
+    # loadBalancerClass: service.k8s.aws/nlb
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: topology.kubernetes.io/zone
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/instance: ingress-nginx
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/instance: ingress-nginx
+  minAvailable: 2
+  ingressClassResource:
+    name: nginx
+    default: false

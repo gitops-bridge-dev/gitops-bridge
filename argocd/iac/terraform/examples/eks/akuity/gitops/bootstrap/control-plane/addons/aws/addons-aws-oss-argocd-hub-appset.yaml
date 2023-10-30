@@ -1,0 +1,75 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: addons-aws-argocd-hub
+spec:
+  goTemplate: true
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  generators:
+    - merge:
+        mergeKeys: [server]
+        generators:
+          - clusters:
+              values:
+                addonChart: argo-cd
+                # anything not staging or prod use this version
+                addonChartVersion: 5.46.7
+                addonChartRepository: https://argoproj.github.io/argo-helm
+              selector:
+                matchExpressions:
+                  - key: akuity.io/argo-cd-cluster-name
+                    operator: NotIn
+                    values: [in-cluster]
+                  - key: enable_aws_argocd
+                    operator: In
+                    values: ['true']
+          - clusters:
+              selector:
+                matchLabels:
+                  environment: staging
+              values:
+                addonChartVersion: 5.46.7
+          - clusters:
+              selector:
+                matchLabels:
+                  environment: prod
+              values:
+                addonChartVersion: 5.46.7
+  template:
+    metadata:
+      name: addon-{{.name}}-aws-{{.values.addonChart}}
+    spec:
+      project: default
+      sources:
+        - repoURL: '{{.metadata.annotations.addons_repo_url}}'
+          targetRevision: '{{.metadata.annotations.addons_repo_revision}}'
+          ref: values
+        - chart: '{{.values.addonChart}}'
+          repoURL: '{{.values.addonChartRepository}}'
+          targetRevision: '{{.values.addonChartVersion}}'
+          helm:
+            releaseName: '{{.values.addonChart}}'
+            ignoreMissingValueFiles: true
+            valueFiles:
+              - $values/{{.metadata.annotations.addons_repo_basepath}}environments/base/addons/{{.values.addonChart}}/values.yaml
+              - $values/{{.metadata.annotations.addons_repo_basepath}}environments/{{.metadata.labels.environment}}/addons/{{.values.addonChart}}/values.yaml
+              - $values/{{.metadata.annotations.addons_repo_basepath}}clusters/{{.name}}/addons/{{.values.addonChart}}/values.yaml
+            values: |
+              controller:
+                serviceAccount:
+                  annotations:
+                    eks.amazonaws.com/role-arn: '{{.metadata.annotations.argocd_iam_role_arn}}'
+              server:
+                serviceAccount:
+                  annotations:
+                    eks.amazonaws.com/role-arn: '{{.metadata.annotations.argocd_iam_role_arn}}'
+      destination:
+        namespace: '{{default "argocd" .metadata.annotations.argocd_namespace}}'
+        name: '{{.name}}'
+      syncPolicy:
+        automated: {}
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true  # Big CRDs.

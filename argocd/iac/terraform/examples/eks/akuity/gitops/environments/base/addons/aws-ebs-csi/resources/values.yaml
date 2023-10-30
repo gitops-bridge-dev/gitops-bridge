@@ -1,0 +1,24 @@
+gp2:
+  enabled: true
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+  parameters:
+    fsType: ext4
+    type: gp2
+  spec:
+    provisioner: kubernetes.io/aws-ebs
+    reclaimPolicy: Delete
+    volumeBindingMode: WaitForFirstConsumer
+gp3:
+  enabled: true
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+  parameters:
+    fsType: ext4
+    type: gp3
+    encrypted: "true"
+  spec:
+    provisioner: ebs.csi.aws.com
+    reclaimPolicy: Delete
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true

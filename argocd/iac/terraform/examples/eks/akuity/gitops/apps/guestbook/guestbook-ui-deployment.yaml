@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guestbook-ui
+spec:
+  selector:
+    matchLabels:
+      app: guestbook-ui
+  template:
+    metadata:
+      labels:
+        app: guestbook-ui
+    spec:
+      containers:
+      - image: nginx
+      #- image: gcr.io/heptio-images/ks-guestbook-demo:0.2
+        name: guestbook-ui
+        ports:
+        - name: http
+          containerPort: 80
