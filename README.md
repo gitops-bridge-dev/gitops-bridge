@@ -52,11 +52,11 @@ of the Kubernetes resources, any changes to these resources outside Terraform fo
 | IaC            | GitOps    | Status |
 | :---           |    :----: | ---:     |
 | Terraform      | FluxCD    |  [In Progress](https://github.com/gitops-bridge-dev/gitops-bridge/issues/32) |
-| EKSCTL         | ArgoCD    |              |
-| CDK            | ArgoCD    |              |
-| Crossplane     | ArgoCD    |              |
-| CAPI           | ArgoCD    |              |
-| Pulumi         | ArgoCD    |              |
+| EKSCTL         | FluxCD    |              |
+| CDK            | FluxCD    |              |
+| Crossplane     | FluxCD    |              |
+| CAPI           | FluxCD    |              |
+| Pulumi         | FluxCD    |              |
 
 #### Researched Resources:
 - https://docs.akuity.io/tutorials/adv-gitops
