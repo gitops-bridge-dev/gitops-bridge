@@ -1,0 +1,10 @@
+config:
+  aws:region: us-east-1
+  cidrBlock: 10.0.0.0/16
+  awsAccountId: "54321"
+  clusterType: "spoke"
+  hubStackName: "hub"
+  githubOrg: "gitops-bridge"
+  githubRepo: "repoName"
+  secretPath: "foo/bar/spoke.yaml"
+  implementationType: "github"
