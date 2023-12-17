@@ -53,6 +53,8 @@ locals {
     enable_aws_cloudwatch_metrics                = try(var.addons.enable_aws_cloudwatch_metrics, false)
     enable_aws_privateca_issuer                  = try(var.addons.enable_aws_privateca_issuer, false)
     enable_cluster_autoscaler                    = try(var.addons.enable_cluster_autoscaler, false)
+    enable_aws_crossplane_provider               = try(var.addons.enable_aws_crossplane_provider, false)
+    enable_aws_crossplane_upbound_provider       = try(var.addons.enable_aws_crossplane_upbound_provider, false)
     enable_external_dns                          = try(var.addons.enable_external_dns, false)
     enable_external_secrets                      = try(var.addons.enable_external_secrets, false)
     enable_aws_load_balancer_controller          = try(var.addons.enable_aws_load_balancer_controller, false)
@@ -80,6 +82,9 @@ locals {
     enable_argo_events                     = try(var.addons.enable_argo_events, false)
     enable_argo_workflows                  = try(var.addons.enable_argo_workflows, false)
     enable_cluster_proportional_autoscaler = try(var.addons.enable_cluster_proportional_autoscaler, false)
+    enable_crossplane                      = try(var.addons.enable_crossplane, false)
+    enable_crossplane_kubernetes_provider  = try(var.addons.enable_crossplane_kubernetes_provider, false)
+    enable_crossplane_helm_provider        = try(var.addons.enable_crossplane_helm_provider, false)
     enable_gatekeeper                      = try(var.addons.enable_gatekeeper, false)
     enable_gpu_operator                    = try(var.addons.enable_gpu_operator, false)
     enable_ingress_nginx                   = try(var.addons.enable_ingress_nginx, false)
@@ -132,7 +137,7 @@ locals {
 # GitOps Bridge: Bootstrap
 ################################################################################
 module "gitops_bridge_bootstrap" {
-  source = "github.com/gitops-bridge-dev/gitops-bridge-argocd-bootstrap-terraform?ref=v2.0.0"
+  source  = "gitops-bridge-dev/gitops-bridge/helm"
 
   cluster = {
     cluster_name = module.eks.cluster_name
@@ -149,7 +154,7 @@ module "gitops_bridge_bootstrap" {
 ################################################################################
 locals {
   crossplane_namespace = "crossplane-system"
-  crossplane_sa_prefix = "provider-*" # You can scope down based on the provider name
+  crossplane_sa = "provider-aws"
 }
 
 module "crossplane_irsa_aws" {
@@ -157,7 +162,6 @@ module "crossplane_irsa_aws" {
   version = "~> 5.14"
 
   role_name_prefix           = "${local.name}-crossplane-"
-  assume_role_condition_test = "StringLike"
 
   role_policy_arns = {
     policy = "arn:aws:iam::aws:policy/AdministratorAccess"
@@ -166,7 +170,7 @@ module "crossplane_irsa_aws" {
   oidc_providers = {
     main = {
       provider_arn               = module.eks.oidc_provider_arn
-      namespace_service_accounts = ["${local.crossplane_namespace}:${local.crossplane_sa_prefix}"]
+      namespace_service_accounts = ["${local.crossplane_namespace}:${local.crossplane_sa}"]
     }
   }
 
