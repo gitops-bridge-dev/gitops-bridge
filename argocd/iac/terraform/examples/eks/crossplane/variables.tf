@@ -18,10 +18,10 @@ variable "addons" {
   type        = any
   default = {
     enable_aws_crossplane_provider         = true # installs aws contrib provider
-    enable_aws_crossplane_upbound_provider = true  # installs aws upbound provider
-    enable_crossplane_kubernetes_provider  = true  # installs kubernetes provider
-    enable_crossplane_helm_provider        = true  # installs helm provider
-    enable_crossplane                      = true  # installs crossplane core
+    enable_aws_crossplane_upbound_provider = true # installs aws upbound provider
+    enable_crossplane_kubernetes_provider  = true # installs kubernetes provider
+    enable_crossplane_helm_provider        = true # installs helm provider
+    enable_crossplane                      = true # installs crossplane core
   }
 }
 # Addons Git

@@ -137,7 +137,7 @@ locals {
 # GitOps Bridge: Bootstrap
 ################################################################################
 module "gitops_bridge_bootstrap" {
-  source  = "gitops-bridge-dev/gitops-bridge/helm"
+  source = "gitops-bridge-dev/gitops-bridge/helm"
 
   cluster = {
     cluster_name = module.eks.cluster_name
@@ -154,14 +154,14 @@ module "gitops_bridge_bootstrap" {
 ################################################################################
 locals {
   crossplane_namespace = "crossplane-system"
-  crossplane_sa = "provider-aws"
+  crossplane_sa        = "provider-aws"
 }
 
 module "crossplane_irsa_aws" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.14"
 
-  role_name_prefix           = "${local.name}-crossplane-"
+  role_name_prefix = "${local.name}-crossplane-"
 
   role_policy_arns = {
     policy = "arn:aws:iam::aws:policy/AdministratorAccess"
