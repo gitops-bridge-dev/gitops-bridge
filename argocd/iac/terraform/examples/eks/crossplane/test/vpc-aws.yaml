@@ -1,0 +1,14 @@
+apiVersion: ec2.aws.crossplane.io/v1beta1
+kind: VPC
+metadata:
+  name: gitops-bridge-aws
+spec:
+  forProvider:
+    cidrBlock: 10.0.0.0/16
+    enableDnsHostNames: true
+    enableDnsSupport: true
+    instanceTenancy: default
+    region: us-east-1
+    tags:
+    - key: Name
+      value: gitops-bridge-aws
