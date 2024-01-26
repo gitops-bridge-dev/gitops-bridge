@@ -1,4 +1,4 @@
-# Hello World ArgoCD on Amazon EKS
+# Crossplane and ArgoCD on EKS
 
 Example on how to deploy Amazon EKS with addons configured via ArgoCD.
 In this example the ArgoCD is use to deploy Crossplane with AWS Providers configured with IRSA
