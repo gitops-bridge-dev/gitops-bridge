@@ -6,6 +6,7 @@ variable "enable_ingress" {
 variable "domain_name" {
   description = "Route 53 domain name"
   type        = string
+  default     = ""
 }
 variable "vpc_cidr" {
   description = "VPC CIDR"
@@ -20,7 +21,7 @@ variable "region" {
 variable "kubernetes_version" {
   description = "Kubernetes version"
   type        = string
-  default     = "1.24"
+  default     = "1.29"
 }
 variable "addons" {
   description = "Kubernetes addons"
@@ -32,7 +33,7 @@ variable "addons" {
     enable_argo_workflows               = true # set to false if enable_aws_argo_workflows_ingress = true
     enable_aws_argo_workflows_ingress   = false # set to true if enable_argo_workflows is false
 
-    enable_external_dns                 = true # set to true if enable_aws_argo_workflows_ingress = true
+    enable_external_dns                 = false # set to true if enable_aws_argo_workflows_ingress = true
   }
 }
 # Addons Git
