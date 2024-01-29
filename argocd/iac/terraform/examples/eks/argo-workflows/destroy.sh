@@ -14,6 +14,9 @@ if [[ ! $(cat $TMPFILE) == *"No outputs found"* ]]; then
   source "$TMPFILE"
   kubectl delete -n argocd applicationset workloads
   kubectl delete -n argocd applicationset cluster-addons
+  kubectl delete -n argocd applicationset addons-argocd
+  kubectl delete -n argocd applicationset addons-argo-workflows
+  kubectl delete svc -n argocd argo-cd-argocd-server
   kubectl delete -n argocd applicationset addons-aws-argo-workflows-ingress
   kubectl delete -n argo-workflows ing --all
 fi
