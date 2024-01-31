@@ -1,4 +1,4 @@
-# AWS Secret Manager for ArgoCD Admin Password
+# Argo Workflows
 
 Example on how to deploy Amazon EKS with addons configured via ArgoCD.
 In this example we show how to deploy Argo Workflows
