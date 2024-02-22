@@ -8,3 +8,4 @@ config:
   githubRepo: "repoName"
   secretPath: "foo/bar/spoke.yaml"
   implementationType: "github"
+  clusterComponents: {}

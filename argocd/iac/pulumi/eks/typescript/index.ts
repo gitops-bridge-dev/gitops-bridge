@@ -1,5 +1,4 @@
 import * as pulumi from "@pulumi/pulumi";
-import * as aws from "@pulumi/aws";
 import * as awsx from "@pulumi/awsx";
 import * as eks from "@pulumi/eks";
 import { createArgoRole } from "./iam"
@@ -59,7 +58,7 @@ if (config.require("clusterType") === "spoke") {
 const eksCluster = new eks.Cluster(`${stackName}-cluster`, {
   name: `${stackName}-cluster`,
   vpcId: vpc.vpcId,
-  version: "1.28",
+  version: "1.29",
   publicSubnetIds: vpc.publicSubnetIds,
   privateSubnetIds: vpc.privateSubnetIds,
   roleMappings: roleMappings,
