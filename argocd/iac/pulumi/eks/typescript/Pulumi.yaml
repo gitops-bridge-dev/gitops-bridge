@@ -1,0 +1,3 @@
+name: gitops-bridge-ts
+runtime: nodejs
+description: GitOps Bridge Implementation with Pulumi Typescript

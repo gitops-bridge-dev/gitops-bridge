@@ -1,0 +1,10 @@
+config:
+  aws:region: us-east-1
+  awsAccountId: "1234"
+  cidrBlock: 10.0.0.0/16
+  githubOrg: "gitops-bridge"
+  githubRepo: "repoName"
+  secretPath: "hub.yaml"
+  clusterType: "hub"
+  implementationType: "github"
+  clusterComponents: {}
