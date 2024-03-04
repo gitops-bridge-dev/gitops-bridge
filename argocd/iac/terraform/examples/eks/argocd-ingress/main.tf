@@ -113,7 +113,7 @@ locals {
       aws_vpc_id       = module.vpc.vpc_id
     },
     {
-      argocd_hosts                = "[${local.argocd_host}]"
+      argocd_domain               = local.argocd_host
       external_dns_domain_filters = "[${local.domain_name}]"
     },
     {
