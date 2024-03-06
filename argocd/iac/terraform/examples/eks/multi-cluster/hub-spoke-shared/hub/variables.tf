@@ -11,7 +11,7 @@ variable "region" {
 variable "kubernetes_version" {
   description = "Kubernetes version"
   type        = string
-  default     = "1.28"
+  default     = "1.29"
 }
 variable "addons" {
   description = "Kubernetes addons"
@@ -19,10 +19,7 @@ variable "addons" {
   default = {
     enable_aws_load_balancer_controller = true
     enable_metrics_server               = true
-    # Enable argocd with IRSA
-    enable_aws_argocd = true
-    # Disable argocd without IRSA
-    enable_argocd = false
+    enable_argocd = true
   }
 }
 # Addons Git

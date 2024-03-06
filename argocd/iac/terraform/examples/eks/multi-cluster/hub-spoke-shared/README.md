@@ -50,16 +50,6 @@ Access ArgoCD's UI, run the command from the output:
 terraform output -raw access_argocd
 ```
 
-## Verify that ArgoCD Service Accouts has the annotation for IRSA
-```shell
-kubectl get sa -n argocd argocd-application-controller -o json | jq '.metadata.annotations."eks.amazonaws.com/role-arn"'
-kubectl get sa -n argocd argocd-server  -o json | jq '.metadata.annotations."eks.amazonaws.com/role-arn"'
-```
-The output should match the `arn` for the IAM Role that will assume the IAM Role in spoke/remote clusters
-```text
-"arn:aws:iam::0123456789:role/hub-spoke-control-plane-argocd-hub"
-```
-
 ## Deploy the Spoke EKS Cluster
 Initialize Terraform and deploy the EKS clusters:
 Is recommended to use a new terminal window for each cluster
