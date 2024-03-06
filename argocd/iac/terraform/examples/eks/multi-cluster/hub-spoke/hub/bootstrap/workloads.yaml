@@ -25,6 +25,9 @@ spec:
         repoURL: '{{metadata.annotations.workload_repo_url}}'
         path: '{{metadata.annotations.workload_repo_basepath}}{{metadata.annotations.workload_repo_path}}'
         targetRevision: '{{metadata.annotations.workload_repo_revision}}'
+        directory:
+          recurse: true
+          exclude: exclude/*
       destination:
         namespace: 'workload'
         name: '{{name}}'
