@@ -111,10 +111,9 @@ locals {
     enable_ack_emrcontainers                     = try(var.addons.enable_ack_emrcontainers, false)
     enable_ack_sfn                               = try(var.addons.enable_ack_sfn, false)
     enable_ack_eventbridge                       = try(var.addons.enable_ack_eventbridge, false)
-    enable_aws_argocd                            = try(var.addons.enable_aws_argocd, false)
   }
   oss_addons = {
-    enable_argocd                          = try(var.addons.enable_argocd, false)
+    enable_argocd                          = try(var.addons.enable_argocd, true)
     enable_argo_rollouts                   = try(var.addons.enable_argo_rollouts, false)
     enable_argo_events                     = try(var.addons.enable_argo_events, false)
     enable_argo_workflows                  = try(var.addons.enable_argo_workflows, false)
@@ -187,7 +186,7 @@ resource "time_sleep" "wait_for_argocd_namespace_and_crds" {
   depends_on = [module.gitops_bridge_bootstrap_hub]
 }
 module "gitops_bridge_bootstrap_spoke" {
-  source = "github.com/gitops-bridge-dev/gitops-bridge-argocd-bootstrap-terraform?ref=v2.0.0"
+  source = "gitops-bridge-dev/gitops-bridge/helm"
 
   install = false # Not installing argocd via helm on spoke cluster
   cluster = {
@@ -208,7 +207,7 @@ module "gitops_bridge_bootstrap_spoke" {
 # GitOps Bridge: Bootstrap for Hub Cluster
 ################################################################################
 module "gitops_bridge_bootstrap_hub" {
-  source = "github.com/gitops-bridge-dev/gitops-bridge-argocd-bootstrap-terraform?ref=v2.0.0"
+  source = "gitops-bridge-dev/gitops-bridge/helm"
 
   # The ArgoCD remote cluster secret is deploy on hub cluster not on spoke clusters
   providers = {
@@ -240,20 +239,21 @@ module "gitops_bridge_bootstrap_hub" {
 ################################################################################
 # ArgoCD EKS Access
 ################################################################################
-resource "aws_iam_role" "spoke" {
-  name               = "${module.eks.cluster_name}-argocd-spoke"
-  assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
-}
-
 data "aws_iam_policy_document" "assume_role_policy" {
   statement {
-    actions = ["sts:AssumeRole"]
+    actions = ["sts:AssumeRole","sts:TagSession"]
     principals {
       type        = "AWS"
       identifiers = [data.terraform_remote_state.cluster_hub.outputs.argocd_iam_role_arn]
     }
   }
 }
+resource "aws_iam_role" "spoke" {
+  name               = "${module.eks.cluster_name}-argocd-spoke"
+  assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
+}
+
+
 
 
 
@@ -298,7 +298,7 @@ module "eks_blueprints_addons" {
 #tfsec:ignore:aws-eks-enable-control-plane-logging
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 19.13"
+  version = "~> 20.5"
 
   cluster_name                   = local.name
   cluster_version                = local.cluster_version
@@ -308,17 +308,25 @@ module "eks" {
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets
 
-  manage_aws_auth_configmap = true
-  aws_auth_roles = [
-    # Granting access to ArgoCD from hub cluster
-    {
-      rolearn  = aws_iam_role.spoke.arn
-      username = "gitops-role"
-      groups = [
-        "system:masters"
-      ]
-    },
-  ]
+  # Cluster access entry
+  # To add the current caller identity as an administrator
+  enable_cluster_creator_admin_permissions = true
+
+  access_entries = {
+    # One access entry with a policy associated
+    argocd = {
+      principal_arn     = aws_iam_role.spoke.arn
+
+      policy_associations = {
+        argocd = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type       = "cluster"
+          }
+        }
+      }
+    }
+  }
 
   eks_managed_node_groups = {
     initial = {
@@ -331,6 +339,10 @@ module "eks" {
   }
   # EKS Addons
   cluster_addons = {
+    eks-pod-identity-agent = {
+      most_recent = true
+      before_compute = true
+    }
     vpc-cni = {
       # Specify the VPC CNI addon should be deployed before compute to ensure
       # the addon is configured before data plane compute resources are created
