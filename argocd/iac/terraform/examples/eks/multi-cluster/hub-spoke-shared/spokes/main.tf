@@ -249,7 +249,7 @@ data "aws_iam_policy_document" "assume_role_policy" {
   }
 }
 resource "aws_iam_role" "spoke" {
-  name               = "${module.eks.cluster_name}-argocd-spoke"
+  name               = "${local.name}-argocd-spoke"
   assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
 }
 
