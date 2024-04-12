@@ -16,6 +16,5 @@ terraform output
 
 Destroy EKS Cluster
 ```shell
-cd hub
 ./destroy.sh
 ```
