@@ -1,6 +1,6 @@
 # Multi-Cluster centralized hub-spoke topology
 
-This example uses Pod Identity
+This example uses IRSA
 
 This example deploys ArgoCD on the Hub cluster (ie. management/control-plane cluster).
 The spoke clusters are registered as remote clusters in the Hub Cluster's ArgoCD
@@ -50,6 +50,16 @@ watch kubectl get applications -n argocd
 Access ArgoCD's UI, run the command from the output:
 ```shell
 terraform output -raw access_argocd
+```
+
+## Verify that ArgoCD Service Accouts has the annotation for IRSA
+```shell
+kubectl get sa -n argocd argocd-application-controller -o json | jq '.metadata.annotations."eks.amazonaws.com/role-arn"'
+kubectl get sa -n argocd argocd-server  -o json | jq '.metadata.annotations."eks.amazonaws.com/role-arn"'
+```
+The output should match the `arn` for the IAM Role that will assume the IAM Role in spoke/remote clusters
+```text
+"arn:aws:iam::0123456789:role/hub-spoke-control-plane-argocd-hub"
 ```
 
 ## Deploy the Spoke EKS Cluster
