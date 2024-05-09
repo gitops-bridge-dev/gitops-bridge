@@ -151,12 +151,12 @@ resource "kubernetes_secret" "git_secrets" {
   for_each = {
     git-addons = {
       type          = "git"
-      url           = local.gitops_addons_org
+      url           = local.gitops_addons_url
       sshPrivateKey = file(pathexpand(local.git_private_ssh_key))
     }
     git-workloads = {
       type          = "git"
-      url           = local.gitops_workload_org
+      url           = local.gitops_workload_url
       sshPrivateKey = file(pathexpand(local.git_private_ssh_key))
     }
   }
