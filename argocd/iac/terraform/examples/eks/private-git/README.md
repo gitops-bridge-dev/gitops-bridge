@@ -19,7 +19,7 @@ Before you begin, make sure you have the following command line tools installed:
 1. Fork the git repository for addons [here](https://github.com/gitops-bridge-dev/gitops-bridge-argocd-control-plane-template).
 2. Update the following environment variables to point to your fork by changing the default values:
 ```shell
-export TF_VAR_gitops_addons_org=https://github.com/gitops-bridge-dev
+export TF_VAR_gitops_addons_org=git@github.com:gitops-bridge-dev
 export TF_VAR_gitops_addons_repo=gitops-bridge-argocd-control-plane-template
 ```
 
