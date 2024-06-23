@@ -233,7 +233,12 @@ module "gitops_bridge_bootstrap" {
     addons       = local.addons
   }
   apps       = local.argocd_apps
-  argocd     = { create_namespace = false }
+  argocd = {
+    create_namespace = false
+    chart            = "argocd-chart"
+    chart_version    = "7.0.0"
+    repository       = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.id}.amazonaws.com"
+  }
   depends_on = [kubernetes_namespace.argocd, kubernetes_secret.git_secrets]
 }
 

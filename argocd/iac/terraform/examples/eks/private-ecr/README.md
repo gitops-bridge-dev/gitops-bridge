@@ -4,7 +4,10 @@ This example shows how to deploy Amazon EKS with addons configured via ArgoCD
 
 The example demonstrate how to use private ECR repository for addons and workload.
 
-The Example using terraform data resource to register ECR with the initiall username password and then we are using external secrets to refresh the ECR token.
+The Example using terraform ECR data resource to register ECR with the initial username password to argo cd as a repository and then using external secrets to refresh the ECR token.
+
+On the apose-manifest-example folder there are examples of how to use external secrets and how you can configure an appset to use private ECR repo.
+
 
 ## Prerequisites
 - Have a private ECR repo in our case we have External secrets in the private ECR
