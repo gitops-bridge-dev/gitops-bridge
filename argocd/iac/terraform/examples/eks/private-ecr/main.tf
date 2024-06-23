@@ -178,7 +178,6 @@ resource "kubernetes_secret" "git_secrets" {
 # ArgoCD EKS Access
 ################################################################################
 module "argocd_irsa" {
-  #checkov:skip=CKV_TF_1:We are using version control for those modules
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.20"
 
