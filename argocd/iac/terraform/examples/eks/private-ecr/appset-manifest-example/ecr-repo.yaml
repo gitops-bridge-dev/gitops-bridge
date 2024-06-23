@@ -1,0 +1,36 @@
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: ECRAuthorizationToken
+metadata:
+  name: argocd-secrets-ecr
+  namespace: argocd
+spec:
+  region: eu-west-2
+  auth:
+    jwt:
+      serviceAccountRef:
+        # Since argocd-server is pulling the helm chart we use its service account
+        name: argocd-server
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: argocd-secrets-ecr-auth-token-external-secret
+  namespace: argocd
+spec:
+  refreshInterval: 8h
+  target:
+    name: argocd-private-ecr-credentials
+    creationPolicy: Merge
+    deletionPolicy: Retain
+    template:
+      engineVersion: v2
+      mergePolicy: Merge
+      data:
+        password: '{{ .password }}'
+        username: '{{ .username }}'
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: ECRAuthorizationToken
+          name: argocd-secrets-ecr
