@@ -37,6 +37,8 @@ locals {
   name   = "ex-${replace(basename(path.cwd), "_", "-")}"
   region = var.region
 
+  argocd_namespace = "argocd"
+
   cluster_version = var.kubernetes_version
 
   vpc_cidr = var.vpc_cidr
@@ -128,13 +130,11 @@ locals {
       workload_repo_basepath = local.gitops_workload_basepath
       workload_repo_path     = local.gitops_workload_path
       workload_repo_revision = local.gitops_workload_revision
+    },
+    {
+      addons_chart_repository:  "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.id}.amazonaws.com"
     }
   )
-
-  argocd_apps = {
-    addons    = file("${path.module}/bootstrap/addons.yaml")
-    workloads = file("${path.module}/bootstrap/workloads.yaml")
-  }
 
   tags = {
     Blueprint  = local.name
@@ -148,7 +148,7 @@ locals {
 resource "kubernetes_namespace" "argocd" {
   depends_on = [module.eks_blueprints_addons]
   metadata {
-    name = "argocd"
+    name = local.argocd_namespace
   }
 }
 resource "kubernetes_secret" "git_secrets" {
@@ -206,14 +206,6 @@ resource "aws_iam_policy" "irsa_policy" {
 data "aws_iam_policy_document" "irsa_policy" {
   statement {
     effect    = "Allow"
-    resources = ["*"]
-    actions   = [
-      "sts:AssumeRole"
-    ]
-  }
-
-  statement {
-    effect    = "Allow"
     actions   = [
       "ecr:*"
     ]
@@ -232,11 +224,10 @@ module "gitops_bridge_bootstrap" {
     metadata     = local.addons_metadata
     addons       = local.addons
   }
-  apps       = local.argocd_apps
   argocd = {
     create_namespace = false
-    chart            = "argocd-chart"
-    chart_version    = "7.0.0"
+    chart            = "argo-cd"
+    chart_version    = "7.3.4"
     repository       = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.id}.amazonaws.com"
   }
   depends_on = [kubernetes_namespace.argocd, kubernetes_secret.git_secrets]

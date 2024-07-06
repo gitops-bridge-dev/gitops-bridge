@@ -1,16 +1,3 @@
-apiVersion: generators.external-secrets.io/v1alpha1
-kind: ECRAuthorizationToken
-metadata:
-  name: argocd-secrets-ecr
-  namespace: argocd
-spec:
-  region: eu-west-2
-  auth:
-    jwt:
-      serviceAccountRef:
-        # Since argocd-server is pulling the helm chart we use its service account
-        name: argocd-server
----
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
