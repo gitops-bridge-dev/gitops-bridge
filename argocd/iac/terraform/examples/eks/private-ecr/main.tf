@@ -132,7 +132,7 @@ locals {
       workload_repo_revision = local.gitops_workload_revision
     },
     {
-      addons_chart_repository:  "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.id}.amazonaws.com"
+      addons_chart_repository =  "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.id}.amazonaws.com"
     }
   )
 
