@@ -38,7 +38,7 @@ variable "gitops_addons_repo" {
 variable "gitops_addons_revision" {
   description = "Git repository revision/branch/ref for addons"
   type        = string
-  default     = "main"
+  default     = "single-cluster-v2"
 }
 variable "gitops_addons_basepath" {
   description = "Git repository base path for addons"
@@ -65,7 +65,7 @@ variable "gitops_workload_repo" {
 variable "gitops_workload_revision" {
   description = "Git repository revision/branch/ref for workload"
   type        = string
-  default     = "main"
+  default     = "single-cluster-v2"
 }
 variable "gitops_workload_basepath" {
   description = "Git repository base path for workload"

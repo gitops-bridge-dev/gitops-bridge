@@ -1,1 +1,2 @@
-foo: common
+server:
+  enabled: false
