@@ -26,15 +26,7 @@ spec:
             repoURLValuesRevision: '{{.metadata.annotations.addons_repo_revision}}'
             repoURLGitBasePath: '{{.metadata.annotations.addons_repo_basepath}}stacks/'
             repoURLGitRevision: '{{.metadata.annotations.addons_repo_revision}}'
-            applicationsets:
-              argocd:
-                enabled: true
-              aws_load_balancer_controller:
-                enabled: true
-              gatekeeper:
-                enabled: true
-              metrics_server:
-                enabled: true
+            useSelector: true
       destination:
         namespace: argocd
         name: '{{.name}}'
