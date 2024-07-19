@@ -1,0 +1,26 @@
+version: v1.30-v1.1.0
+addons:
+  argocd:
+    chart: argo-cd
+    releaseName: argocd
+    repoUrl: https://argoproj.github.io/argo-helm
+    targetRevision: "6.6.0"
+    namespace: argocd
+  aws_load_balancer_controller:
+    chart: aws-load-balancer-controller
+    releaseName: aws-load-balancer-controller
+    repoUrl: https://aws.github.io/eks-charts
+    targetRevision: "1.7.1"
+    namespace: kube-system
+  gatekeeper:
+    chart: gatekeeper
+    releaseName: gatekeeper
+    repoUrl: https://open-policy-agent.github.io/gatekeeper/charts
+    targetRevision: "3.15.0"
+    namespace: gatekeeper-system
+  metrics_server:
+    chart: gatekeeper
+    releaseName: metrics-server
+    repoUrl: https://kubernetes-sigs.github.io/metrics-server
+    targetRevision: "3.12.0"
+    namespace: kube-system

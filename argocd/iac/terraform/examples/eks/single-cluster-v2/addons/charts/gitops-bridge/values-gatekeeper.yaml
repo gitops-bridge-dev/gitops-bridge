@@ -1,0 +1,10 @@
+applicationsets:
+  argocd:
+    enabled: false
+  aws_load_balancer_controller:
+    enabled: false
+  gatekeeper:
+    enabled: true
+
+
+

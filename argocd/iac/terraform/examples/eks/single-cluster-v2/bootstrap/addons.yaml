@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: cluster-addons
+  namespace: argocd
+spec:
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  goTemplate: true
+  goTemplateOptions:
+    - missingkey=error
+  generators:
+    - clusters: {}
+  template:
+    metadata:
+      name: cluster-addons
+    spec:
+      project: default
+      source:
+        repoURL: '{{.metadata.annotations.addons_repo_url}}'
+        path: '{{.metadata.annotations.addons_repo_basepath}}charts/gitops-bridge'
+        targetRevision: '{{.metadata.annotations.addons_repo_revision}}'
+        helm:
+          valuesObject:
+            repoURLValuesBasePath: '{{.metadata.annotations.addons_repo_basepath}}'
+            repoURLGitBasePath: '{{.metadata.annotations.addons_repo_basepath}}'
+            applicationsets:
+              argocd:
+                enabled: true
+              aws_load_balancer_controller:
+                enabled: true
+              gatekeeper:
+                enabled: true
+              metrics_server:
+                enabled: true
+      destination:
+        namespace: argocd
+        name: '{{.name}}'
+      syncPolicy:
+        automated: {}
