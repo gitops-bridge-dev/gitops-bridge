@@ -125,6 +125,11 @@ locals {
     }
   )
 
+  argocd_apps = {
+    addons    = file("${path.module}/bootstrap/addons.yaml")
+    workloads = file("${path.module}/bootstrap/workloads.yaml")
+  }
+
   tags = {
     Blueprint  = local.name
     GithubRepo = "github.com/gitops-bridge-dev/gitops-bridge"
@@ -141,6 +146,8 @@ module "gitops_bridge_bootstrap" {
     metadata = local.addons_metadata
     addons   = local.addons
   }
+
+  apps = local.argocd_apps
 }
 
 ################################################################################
