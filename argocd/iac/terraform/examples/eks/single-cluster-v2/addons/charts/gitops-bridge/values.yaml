@@ -15,6 +15,7 @@ applicationsets:
         - key: enable_argocd
           operator: In
           values: ['true']
+    namespace: '.addons.argocd.namespace'
   aws_load_balancer_controller:
     enabled: true
     selector:
@@ -29,6 +30,7 @@ applicationsets:
         name: '{{.metadata.annotations.aws_load_balancer_controller_service_account}}'
         annotations:
           eks.amazonaws.com/role-arn: '{{.metadata.annotations.aws_load_balancer_controller_iam_role_arn}}'
+    namespace: '.metadata.annotations.aws_load_balancer_controller_namespace'
     ignoreDifferences:
         - kind: Secret
           name: aws-load-balancer-tls
@@ -46,6 +48,7 @@ applicationsets:
         - key: enable_gatekeeper
           operator: In
           values: ['true']
+    namespace: '.addons.gatekeeper.namespace'
   metrics_server:
     enabled: true
     selector:
@@ -53,4 +56,5 @@ applicationsets:
         - key: enable_metrics_serve
           operator: In
           values: ['true']
+    namespace: '.addons.metrics_server.namespace'
 
