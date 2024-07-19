@@ -38,7 +38,7 @@ spec:
               repoURL: {{ $repoURLGit }}
               revision: {{ $repoURLGitrevision }}
               files:
-                - path: "{{ $repoURLGitBasePath }}**/stack{{`{{.metadata.annotations.platform_stack_version}}`}}.yaml"
+                - path: "{{ $repoURLGitBasePath }}stack{{`{{.metadata.annotations.platform_stack_version}}`}}.yaml"
   template:
     metadata:
       name: addon-{{ $nameNormalize }}

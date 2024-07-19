@@ -23,7 +23,7 @@ spec:
         helm:
           valuesObject:
             repoURLValuesBasePath: '{{.metadata.annotations.addons_repo_basepath}}'
-            repoURLGitBasePath: '{{.metadata.annotations.addons_repo_basepath}}'
+            repoURLGitBasePath: '{{.metadata.annotations.addons_repo_basepath}}stacks/'
             applicationsets:
               argocd:
                 enabled: true

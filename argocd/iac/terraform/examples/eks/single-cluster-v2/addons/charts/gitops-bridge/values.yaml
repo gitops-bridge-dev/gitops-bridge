@@ -1,6 +1,6 @@
 repoURLGit: "'{{.metadata.annotations.addons_repo_url}}'"
 repoURLGitrevision: HEAD
-repoURLGitBasePath: ""
+repoURLGitBasePath: "**"
 repoURLValues: "'{{.metadata.annotations.addons_repo_url}}'"
 repoURLValuesrevision: HEAD
 repoURLValuesBasePath: ""
