@@ -57,4 +57,11 @@ applicationsets:
           operator: In
           values: ['true']
     namespace: '.addons.metrics_server.namespace'
-
+  aws_ebs_csi_resources:
+    enabled: true
+    selector:
+      matchExpressions:
+        - key: enable_aws_ebs_csi_resources
+          operator: In
+          values: ['true']
+    namespace: '.addons.argocd.namespace'
