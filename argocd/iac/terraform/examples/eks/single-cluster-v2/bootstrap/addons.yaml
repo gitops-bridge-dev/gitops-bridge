@@ -23,6 +23,7 @@ spec:
         helm:
           valuesObject:
             repoURLValuesBasePath: '{{.metadata.annotations.addons_repo_basepath}}'
+            repoURLValuesRevision: '{{.metadata.annotations.addons_repo_revision}}'
             repoURLGitBasePath: '{{.metadata.annotations.addons_repo_basepath}}stacks/'
             repoURLGitRevision: '{{.metadata.annotations.addons_repo_revision}}'
             applicationsets:

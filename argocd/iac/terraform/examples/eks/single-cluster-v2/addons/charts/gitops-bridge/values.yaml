@@ -2,7 +2,7 @@ repoURLGit: "'{{.metadata.annotations.addons_repo_url}}'"
 repoURLGitRevision: HEAD
 repoURLGitBasePath: "**"
 repoURLValues: "'{{.metadata.annotations.addons_repo_url}}'"
-repoURLValuesrevision: HEAD
+repoURLValuesRevision: HEAD
 repoURLValuesBasePath: ""
 project: default
 namespace: argocd
