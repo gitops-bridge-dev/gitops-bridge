@@ -1,7 +1,7 @@
 {{- $namespace := .Values.namespace }}
 {{- $useSelector := .Values.useSelector -}}
 {{- $repoURLGit := .Values.repoURLGit -}}
-{{- $repoURLGitrevision := .Values.repoURLGitrevision -}}
+{{- $repoURLGitRevision := .Values.repoURLGitRevision -}}
 {{- $repoURLGitBasePath := .Values.repoURLGitBasePath -}}
 {{- $repoURLValues := .Values.repoURLValues -}}
 {{- $repoURLValuesrevision := .Values.repoURLValuesrevision -}}
@@ -36,7 +36,7 @@ spec:
                 {{- end }}
           - git:
               repoURL: {{ $repoURLGit }}
-              revision: {{ $repoURLGitrevision }}
+              revision: {{ $repoURLGitRevision }}
               files:
                 - path: "{{ $repoURLGitBasePath }}stack{{`{{.metadata.annotations.platform_stack_version}}`}}.yaml"
   template:

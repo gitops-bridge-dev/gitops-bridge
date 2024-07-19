@@ -24,6 +24,7 @@ spec:
           valuesObject:
             repoURLValuesBasePath: '{{.metadata.annotations.addons_repo_basepath}}'
             repoURLGitBasePath: '{{.metadata.annotations.addons_repo_basepath}}stacks/'
+            repoURLGitRevision: '{{.metadata.annotations.addons_repo_revision}}'
             applicationsets:
               argocd:
                 enabled: true
