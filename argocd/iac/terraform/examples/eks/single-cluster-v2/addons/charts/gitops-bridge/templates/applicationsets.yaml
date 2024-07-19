@@ -63,7 +63,7 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
       destination:
-        namespace: '{{`{{default .addons.`}}{{ $name }}{{`.namespace .metadata.annotations.`}}{{ $name }}{{`}}`}}'
+        namespace: '{{`{{coalesce .metadata.annotations.`}}{{ $name }}{{`_namespace .addons.`}}{{ $name }}{{`.namespace}}`}}'
         name: '{{`{{.name}}`}}'
       syncPolicy:
         automated:
