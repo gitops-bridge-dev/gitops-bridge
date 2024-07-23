@@ -75,7 +75,7 @@ applicationsets:
     namespace: '.metadata.annotations.karpenter_namespace'
     values:
       settings:
-        clusterName: '{{metadata.annotations.aws_cluster_name}}'
+        clusterName: '{{.metadata.annotations.aws_cluster_name}}'
         interruptionQueue: '{{.metadata.annotations.karpenter_sqs_queue_name}}'
       serviceAccount:
         name: '{{.metadata.annotations.karpenter_service_account}}'
