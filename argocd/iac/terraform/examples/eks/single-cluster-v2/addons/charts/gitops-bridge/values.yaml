@@ -53,7 +53,7 @@ applicationsets:
     enabled: true
     selector:
       matchExpressions:
-        - key: enable_metrics_serve
+        - key: enable_metrics_server
           operator: In
           values: ['true']
     namespace: '.addons.metrics_server.namespace'
