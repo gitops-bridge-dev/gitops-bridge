@@ -73,3 +73,11 @@ applicationsets:
           operator: In
           values: ['true']
     namespace: '.metadata.annotations.karpenter_namespace'
+    values:
+      settings:
+        clusterName: '{{metadata.annotations.aws_cluster_name}}'
+        interruptionQueue: '{{metadata.annotations.karpenter_sqs_queue_name}}'
+      serviceAccount:
+        name: '{{.metadata.annotations.karpenter_service_account}}'
+        annotations:
+          eks.amazonaws.com/role-arn: '{{.metadata.annotations.karpenter_iam_role_arn}}'
