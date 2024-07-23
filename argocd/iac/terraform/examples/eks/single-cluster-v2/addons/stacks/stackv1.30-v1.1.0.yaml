@@ -30,3 +30,9 @@ addons:
     repoUrl: https://gitops-bridge-dev.github.io/gitops-bridge-helm-charts
     targetRevision: "1.0.0"
     namespace: kube-system
+  karpenter:
+    chart: karpenter/karpenter
+    releaseName: karpenter
+    repoUrl: public.ecr.aws
+    targetRevision: "0.37.0"
+    namespace: kube-system

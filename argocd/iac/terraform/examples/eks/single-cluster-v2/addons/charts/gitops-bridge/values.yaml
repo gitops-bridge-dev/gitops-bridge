@@ -65,3 +65,11 @@ applicationsets:
           operator: In
           values: ['true']
     namespace: '.addons.argocd.namespace'
+  karpenter:
+    enabled: true
+    selector:
+      matchExpressions:
+        - key: enable_karpenter
+          operator: In
+          values: ['true']
+    namespace: '.metadata.annotations.karpenter_namespace'

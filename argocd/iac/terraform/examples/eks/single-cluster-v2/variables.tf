@@ -13,6 +13,12 @@ variable "kubernetes_version" {
   type        = string
   default     = "1.28"
 }
+variable "environment" {
+  description = "Environment"
+  type        = string
+  default     = "dev"
+}
+
 variable "addons" {
   description = "Kubernetes addons"
   type        = any
@@ -21,6 +27,7 @@ variable "addons" {
     enable_aws_ebs_csi_resources        = true # generate gp2 and gp3 storage classes for ebs-csi
     enable_metrics_server               = true
     enable_gatekeeper                   = true
+    enable_karpenter                   = true
     enable_argocd                       = true
   }
 }

@@ -34,6 +34,8 @@ locals {
   name   = "getting-started"
   region = var.region
 
+  environment = var.environment
+
   cluster_version = var.kubernetes_version
 
   vpc_cidr = var.vpc_cidr
@@ -104,6 +106,9 @@ locals {
     {
     platform_stack_version = var.platform_stack_version
     },
+    {
+      aws_karpenter_role_name = "${module.eks.cluster_name}-karpenter"
+    },
     module.eks_blueprints_addons.gitops_metadata,
     {
       aws_cluster_name = module.eks.cluster_name
@@ -143,6 +148,7 @@ module "gitops_bridge_bootstrap" {
   source = "gitops-bridge-dev/gitops-bridge/helm"
 
   cluster = {
+    environment  = local.environment
     metadata = local.addons_metadata
     addons   = local.addons
   }
@@ -182,6 +188,11 @@ module "eks_blueprints_addons" {
   enable_velero                       = local.aws_addons.enable_velero
   enable_aws_gateway_api_controller   = local.aws_addons.enable_aws_gateway_api_controller
 
+  karpenter_node = {
+    # Use static name so that it matches what is defined in `karpenter.yaml` example manifest
+    iam_role_use_name_prefix = false
+  }
+
   tags = local.tags
 }
 
@@ -209,10 +220,36 @@ module "eks" {
       max_size     = 3
       desired_size = 2
     }
+    labels = {
+        # Used to ensure Karpenter runs on nodes that it does not manage
+        "karpenter.sh/controller" = "true"
+      }
+
+      taints = {
+        # The pods that do not tolerate this taint should run on nodes
+        # created by Karpenter
+        karpenter = {
+          key    = "karpenter.sh/controller"
+          value  = "true"
+          effect = "NO_SCHEDULE"
+        }
+      }
   }
   # EKS Addons
   cluster_addons = {
-    coredns    = {}
+    coredns = {
+      configuration_values = jsonencode({
+        tolerations = [
+          # Allow CoreDNS to run on the same nodes as the Karpenter controller
+          # for use during cluster creation when Karpenter nodes do not yet exist
+          {
+            key    = "karpenter.sh/controller"
+            value  = "true"
+            effect = "NoSchedule"
+          }
+        ]
+      })
+    }
     kube-proxy = {}
     vpc-cni = {
       # Specify the VPC CNI addon should be deployed before compute to ensure
@@ -232,7 +269,12 @@ module "eks" {
       service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
     }
   }
-  tags = local.tags
+  tags = merge(local.tags, {
+    # NOTE - if creating multiple security groups with this module, only tag the
+    # security group that Karpenter should utilize with the following tag
+    # (i.e. - at most, only one security group should have this tag in your account)
+    "karpenter.sh/discovery" = local.name
+  })
 }
 module "ebs_csi_driver_irsa" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
@@ -275,6 +317,8 @@ module "vpc" {
 
   private_subnet_tags = {
     "kubernetes.io/role/internal-elb" = 1
+    # Tags subnets for Karpenter auto-discovery
+    "karpenter.sh/discovery" = local.name
   }
 
   tags = local.tags
