@@ -148,7 +148,7 @@ module "gitops_bridge_bootstrap" {
   source = "gitops-bridge-dev/gitops-bridge/helm"
 
   cluster = {
-    name = module.eks.cluster_name
+    cluster_name = module.eks.cluster_name
     environment  = local.environment
     metadata = local.addons_metadata
     addons   = local.addons
