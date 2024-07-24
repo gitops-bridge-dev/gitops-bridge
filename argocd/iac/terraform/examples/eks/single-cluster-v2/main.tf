@@ -156,6 +156,7 @@ module "gitops_bridge_bootstrap" {
 
   apps = local.argocd_apps
   argocd = {
+    name = "argocd"
     values = [file("${path.module}/argocd-initial-values.yaml")]
   }
 
