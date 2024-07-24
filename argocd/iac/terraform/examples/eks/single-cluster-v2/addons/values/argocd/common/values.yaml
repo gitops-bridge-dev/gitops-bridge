@@ -1,3 +1,8 @@
+global:
+  tolerations:
+  - key: "karpenter.sh/controller"
+    value: "true"
+    effect: "NoSchedule"
 controller:
   replicas: 1 # Additional replicas will cause sharding of managed clusters across number of replicas.
   metrics:
