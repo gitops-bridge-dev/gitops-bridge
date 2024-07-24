@@ -25,10 +25,11 @@ spec:
         name: '{{name}}'
       syncPolicy:
         automated:
+          selfHeal: true
           allowEmpty: true
-        syncOptions:
-        - CreateNamespace=true
+          prune: false
         retry:
-          backoff:
-            duration: 1m
-          limit: 60
+          limit: 100
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true  # Big CRDs.

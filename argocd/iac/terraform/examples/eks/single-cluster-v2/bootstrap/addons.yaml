@@ -31,4 +31,12 @@ spec:
         namespace: argocd
         name: '{{.name}}'
       syncPolicy:
-        automated: {}
+        automated:
+          selfHeal: true
+          allowEmpty: true
+          prune: false
+        retry:
+          limit: 100
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true  # Big CRDs.
