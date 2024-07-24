@@ -148,12 +148,17 @@ module "gitops_bridge_bootstrap" {
   source = "gitops-bridge-dev/gitops-bridge/helm"
 
   cluster = {
+    name = module.eks.cluster_name
     environment  = local.environment
     metadata = local.addons_metadata
     addons   = local.addons
   }
 
   apps = local.argocd_apps
+  argocd = {
+    values = [file("${path.module}/argocd-initial-values.yaml")]
+  }
+
 }
 
 ################################################################################
@@ -219,37 +224,18 @@ module "eks" {
       min_size     = 1
       max_size     = 3
       desired_size = 2
-    }
-    labels = {
-        # Used to ensure Karpenter runs on nodes that it does not manage
-        "karpenter.sh/controller" = "true"
-      }
-
       taints = {
-        # The pods that do not tolerate this taint should run on nodes
-        # created by Karpenter
-        karpenter = {
-          key    = "karpenter.sh/controller"
-          value  = "true"
-          effect = "NO_SCHEDULE"
+        dedicated = {
+          key    = "CriticalAddonsOnly"
+          operator   = "Exists"
+          effect    = "NO_SCHEDULE"
         }
       }
+    }
   }
   # EKS Addons
   cluster_addons = {
-    coredns = {
-      configuration_values = jsonencode({
-        tolerations = [
-          # Allow CoreDNS to run on the same nodes as the Karpenter controller
-          # for use during cluster creation when Karpenter nodes do not yet exist
-          {
-            key    = "karpenter.sh/controller"
-            value  = "true"
-            effect = "NoSchedule"
-          }
-        ]
-      })
-    }
+    coredns = {}
     kube-proxy = {}
     vpc-cni = {
       # Specify the VPC CNI addon should be deployed before compute to ensure
