@@ -16,7 +16,7 @@ if [[ ! $(cat $TMPFILE) == *"No outputs found"* ]]; then
   kubectl delete -n argocd application workloads
   kubectl delete -n argocd applicationset cluster-addons
   kubectl delete -n argocd applicationset addons-argocd
-  kubectl delete -n argocd svc argo-cd-argocd-server
+  kubectl delete -n argocd svc argocd-server
 fi
 
 terraform destroy -target="module.gitops_bridge_bootstrap" -auto-approve
