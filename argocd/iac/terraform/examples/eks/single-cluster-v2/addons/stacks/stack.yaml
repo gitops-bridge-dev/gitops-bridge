@@ -19,7 +19,7 @@ addons:
     targetRevision: "3.15.0"
     namespace: gatekeeper-system
   metrics_server:
-    chart: gatekeeper
+    chart: metrics-server
     releaseName: metrics-server
     repoUrl: https://kubernetes-sigs.github.io/metrics-server
     targetRevision: "3.12.0"
