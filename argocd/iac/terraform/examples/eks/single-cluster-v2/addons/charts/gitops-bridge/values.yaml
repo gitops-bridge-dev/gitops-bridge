@@ -10,7 +10,7 @@ namespace: argocd
 useSelector: false
 syncPolicy:
   automated:
-    selfHeal: true
+    selfHeal: false
     allowEmpty: true
     prune: false
   retry:

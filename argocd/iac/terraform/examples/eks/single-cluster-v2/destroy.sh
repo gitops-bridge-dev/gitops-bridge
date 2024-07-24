@@ -13,7 +13,7 @@ terraform -chdir=$SCRIPTDIR output -raw configure_kubectl > "$TMPFILE"
 if [[ ! $(cat $TMPFILE) == *"No outputs found"* ]]; then
   source "$TMPFILE"
   kubectl delete -n argocd applicationset workloads
-  kubectl delete -n game-2048 ingress game-2048
+  kubectl delete -n argocd application workloads
   kubectl delete -n argocd applicationset cluster-addons
   kubectl delete -n argocd applicationset addons-argocd
   kubectl delete -n argocd svc argo-cd-argocd-server
