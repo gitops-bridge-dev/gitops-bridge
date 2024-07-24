@@ -1,0 +1,40 @@
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: default
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  amiFamily: {{ .Values.amiFamily | default .Values.global.amiFamily | quote }}
+  metadataOptions:
+    httpEndpoint: enabled
+    httpProtocolIPv6: disabled
+    httpPutResponseHopLimit: 1
+    httpTokens: required
+  role: {{ .Values.nodeRole | default .Values.global.nodeRole | quote }}
+  securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: {{ .Values.clusterName | default .Values.global.clusterName | quote }}
+  subnetSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: {{ .Values.clusterName | default .Values.global.clusterName | quote }}
+  blockDeviceMappings:
+    # Root device
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 10Gi
+        volumeType: gp3
+        encrypted: true
+    # Data device: Container resources such as images and logs
+    - deviceName: /dev/xvdb
+      ebs:
+        volumeSize: {{ .Values.volumeSize | default .Values.global.volumeSize | quote }}
+        volumeType: gp3
+        encrypted: true
+  userData: |
+    [settings.kubernetes]
+    kube-api-qps = 30
+    [settings.kubernetes.node-labels]
+    "bottlerocket.aws/updater-interface-version" = "2.0.0"
+    [settings.kubernetes.eviction-hard]
+    "memory.available" = "5%"

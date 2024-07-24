@@ -1,3 +1,4 @@
+stackPath: '**/stack{{(.metadata.annotations.platform_stack_version | default "")}}.yaml'
 repoURLGit: "'{{.metadata.annotations.addons_repo_url}}'"
 repoURLGitRevision: HEAD
 repoURLGitBasePath: "**"
@@ -7,6 +8,16 @@ repoURLValuesBasePath: ""
 project: default
 namespace: argocd
 useSelector: false
+syncPolicy:
+  automated:
+    selfHeal: true
+    allowEmpty: true
+    prune: false
+  retry:
+    limit: 100
+  syncOptions:
+    - CreateNamespace=true
+    - ServerSideApply=true  # Big CRDs.
 applicationsets:
   argocd:
     enabled: true
@@ -65,6 +76,7 @@ applicationsets:
           operator: In
           values: ['true']
     namespace: '.addons.argocd.namespace'
+    kustomize: {}
   karpenter:
     enabled: true
     selector:
@@ -81,3 +93,10 @@ applicationsets:
         name: '{{.metadata.annotations.karpenter_service_account}}'
         annotations:
           eks.amazonaws.com/role-arn: '{{.metadata.annotations.karpenter_iam_role_arn}}'
+    resources:
+      helm:
+        valuesObject:
+            clusterName: '{{.metadata.annotations.aws_cluster_name}}'
+            nodeRole: '{{.metadata.annotations.karpenter_node_iam_role_name}}'
+
+

@@ -1,0 +1,9 @@
+resources:
+- configmap.yaml
+# patches:
+# - target:
+#     kind: ConfigMap
+#   patch: |-
+#     - op: replace
+#       path: /data/foo
+#       value: '{{.metadata.annotations.aws_vpc_id}}'
