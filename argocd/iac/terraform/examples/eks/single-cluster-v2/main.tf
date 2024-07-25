@@ -214,9 +214,21 @@ module "eks" {
   cluster_version                = local.cluster_version
   cluster_endpoint_public_access = true
 
-
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets
+
+  manage_aws_auth_configmap = true
+  aws_auth_roles = [
+    # We need to add in the Karpenter node IAM role for nodes launched by Karpenter
+    {
+      rolearn  = module.eks_blueprints_addons.karpenter.node_iam_role_arn
+      username = "system:node:{{EC2PrivateDNSName}}"
+      groups = [
+        "system:bootstrappers",
+        "system:nodes",
+      ]
+    },
+  ]
 
   eks_managed_node_groups = {
     initial = {
