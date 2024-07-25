@@ -35,7 +35,7 @@ spec:
         operator: In
         values:
         - amd64
-        - arm64
+        #- arm64
       - key: karpenter.k8s.aws/instance-cpu
         operator: In
         values:
@@ -98,7 +98,7 @@ spec:
         operator: In
         values:
         - amd64
-        - arm64
+        #- arm64
       - key: karpenter.k8s.aws/instance-cpu
         operator: In
         values:
@@ -157,7 +157,7 @@ spec:
         operator: In
         values:
         - amd64
-        - arm64
+        #- arm64
       - key: karpenter.k8s.aws/instance-cpu
         operator: In
         values:
