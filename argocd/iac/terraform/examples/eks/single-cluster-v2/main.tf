@@ -158,6 +158,7 @@ module "gitops_bridge_bootstrap" {
   argocd = {
     name = "argocd"
     values = [file("${path.module}/argocd-initial-values.yaml")]
+    chart_version= "7.3.11"
   }
 
 }
