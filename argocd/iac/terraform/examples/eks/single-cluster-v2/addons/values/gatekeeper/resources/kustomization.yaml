@@ -15,3 +15,6 @@ patches:
       - op: add
         path: /metadata/annotations/argocd.argoproj.io~1sync-wave
         value: "2"
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-options
+        value: "SkipDryRunOnMissingResource=true"

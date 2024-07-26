@@ -18,7 +18,6 @@ syncPolicy:
   syncOptions:
     - CreateNamespace=true
     - ServerSideApply=true  # Big CRDs.
-    - SkipDryRunOnMissingResource=true
 applicationsets:
   argocd:
     enabled: true
