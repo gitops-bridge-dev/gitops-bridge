@@ -261,7 +261,8 @@ module "eks" {
           # Reference docs https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html
           ENABLE_PREFIX_DELEGATION = "true"
           WARM_PREFIX_TARGET       = "1"
-        }
+        },
+        enableNetworkPolicy : "true"
       })
     }
     aws-ebs-csi-driver = {
