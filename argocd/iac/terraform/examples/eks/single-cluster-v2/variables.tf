@@ -82,7 +82,7 @@ variable "gitops_workload_basepath" {
 variable "gitops_workload_path" {
   description = "Git repository path for workload"
   type        = string
-  default     = "getting-started/k8s"
+  default     = "single-cluster-v2/k8s"
 }
 
 variable "platform_stack_version" {
