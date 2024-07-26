@@ -60,6 +60,8 @@ applicationsets:
           operator: In
           values: ['true']
     namespace: '.addons.gatekeeper.namespace'
+    resources:
+      enabled: true
   metrics_server:
     enabled: true
     selector:

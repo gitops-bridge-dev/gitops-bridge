@@ -60,3 +60,20 @@ spec:
               name: game-2048
               port:
                 name: http
+---
+# network policy that disallow egress requests to http port 8080
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: game-2048
+  namespace: game-2048
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: game-2048
+  policyTypes:
+  - Egress
+  egress:
+  - ports:
+    - port: 8080
+      protocol: TCP

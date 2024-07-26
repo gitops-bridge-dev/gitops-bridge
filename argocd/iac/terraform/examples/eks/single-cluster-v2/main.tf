@@ -218,7 +218,7 @@ module "eks" {
   subnet_ids = module.vpc.private_subnets
 
   manage_aws_auth_configmap = true
-  aws_auth_roles = [
+  aws_auth_roles = local.aws_addons.enable_karpenter ? [
     # We need to add in the Karpenter node IAM role for nodes launched by Karpenter
     {
       rolearn  = module.eks_blueprints_addons.karpenter.node_iam_role_arn
@@ -227,8 +227,8 @@ module "eks" {
         "system:bootstrappers",
         "system:nodes",
       ]
-    },
-  ]
+    }
+  ] : []
 
   eks_managed_node_groups = {
     initial = {
@@ -237,13 +237,13 @@ module "eks" {
       min_size     = 1
       max_size     = 3
       desired_size = 2
-      taints = {
+      taints = local.aws_addons.enable_karpenter ? {
         dedicated = {
           key    = "CriticalAddonsOnly"
           operator   = "Exists"
           effect    = "NO_SCHEDULE"
         }
-      }
+      } : {}
     }
   }
   # EKS Addons
