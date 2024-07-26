@@ -4,7 +4,7 @@ addons:
     chart: argo-cd
     releaseName: argocd
     repoUrl: https://argoproj.github.io/argo-helm
-    targetRevision: "6.6.0"
+    targetRevision: "7.3.11"
     namespace: argocd
   aws_load_balancer_controller:
     chart: aws-load-balancer-controller
