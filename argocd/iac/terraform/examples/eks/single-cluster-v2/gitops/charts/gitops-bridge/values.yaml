@@ -34,14 +34,17 @@ valueFilesResources:
 addons:
   argocd:
     enabled: true
+    releaseName: argocd
+    namespace: argocd
     selector:
       matchExpressions:
         - key: enable_argocd
           operator: In
           values: ['true']
-    namespace: argocd
   aws_load_balancer_controller:
     enabled: true
+    releaseName: aws-load-balancer-controller
+    namespace: '.metadata.annotations.aws_load_balancer_controller_namespace'
     selector:
       matchExpressions:
         - key: enable_aws_load_balancer_controller
@@ -54,7 +57,6 @@ addons:
         name: '{{.metadata.annotations.aws_load_balancer_controller_service_account}}'
         annotations:
           eks.amazonaws.com/role-arn: '{{.metadata.annotations.aws_load_balancer_controller_iam_role_arn}}'
-    namespace: '.metadata.annotations.aws_load_balancer_controller_namespace'
     ignoreDifferences:
         - kind: Secret
           name: aws-load-balancer-tls
@@ -67,39 +69,42 @@ addons:
           jqPathExpressions: ['.webhooks[].clientConfig.caBundle']
   gatekeeper:
     enabled: true
+    releaseName: gatekeeper
+    namespace: gatekeeper-system
     selector:
       matchExpressions:
         - key: enable_gatekeeper
           operator: In
           values: ['true']
-    namespace: gatekeeper-system
     resources:
       path: kustomize/resources/gatekeeper
   metrics_server:
     enabled: true
+    releaseName: metrics-server
+    namespace: kube-system
     selector:
       matchExpressions:
         - key: enable_metrics_server
           operator: In
           values: ['true']
-    namespace: kube-system
   aws_ebs_csi_resources:
     enabled: true
+    releaseName: aws-ebs-csi-classes
+    namespace: kube-system
     selector:
       matchExpressions:
         - key: enable_aws_ebs_csi_resources
           operator: In
           values: ['true']
-    namespace: kube-system
-    kustomize: {}
   karpenter:
     enabled: true
+    releaseName: karpenter
+    namespace: '.metadata.annotations.karpenter_namespace'
     selector:
       matchExpressions:
         - key: enable_karpenter
           operator: In
           values: ['true']
-    namespace: '.metadata.annotations.karpenter_namespace'
     values:
       settings:
         clusterName: '{{.metadata.annotations.aws_cluster_name}}'

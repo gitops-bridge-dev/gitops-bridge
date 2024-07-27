@@ -56,7 +56,7 @@ spec:
         repoURL: '{{`{{.addons.`}}{{ $name }}{{`.repoUrl}}`}}'
         targetRevision: '{{`{{.addons.`}}{{ $name }}{{`.targetRevision}}`}}'
         helm:
-          releaseName: '{{`{{.addons.`}}{{ $name }}{{`.releaseName}}`}}'
+          releaseName: '{{ $addon.releaseName }}'
           ignoreMissingValueFiles: true
           {{ with $valueFiles -}}
           valueFiles:
