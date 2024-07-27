@@ -22,15 +22,15 @@ valueFiles:
   - addons
   - environments/{{.metadata.labels.environment}}/addons
   - clusters/{{.nameNormalized}}/addons
-  - tenants/{{.metadata.labels.tenant | default ""}}/addons
-  - tenants/{{.metadata.labels.tenant | default ""}}/environments/{{.metadata.labels.environment}}/addons
-  - tenants/{{.metadata.labels.tenant | default ""}}/clusters/{{.nameNormalized}}/addons
+  # - tenants/{{.metadata.labels.tenant | default ""}}/addons
+  # - tenants/{{.metadata.labels.tenant | default ""}}/environments/{{.metadata.labels.environment}}/addons
+  # - tenants/{{.metadata.labels.tenant | default ""}}/clusters/{{.nameNormalized}}/addons
 valueFilesResources:
   - environments/{{.metadata.labels.environment}}/addons
   - clusters/{{.nameNormalized}}/addons
-  - tenants/{{.metadata.labels.tenant | default ""}}/addons
-  - tenants/{{.metadata.labels.tenant | default ""}}/environments/{{.metadata.labels.environment}}/addons
-  - tenants/{{.metadata.labels.tenant | default ""}}/clusters/{{.nameNormalized}}/addons
+  # - tenants/{{.metadata.labels.tenant | default ""}}/addons
+  # - tenants/{{.metadata.labels.tenant | default ""}}/environments/{{.metadata.labels.environment}}/addons
+  # - tenants/{{.metadata.labels.tenant | default ""}}/clusters/{{.nameNormalized}}/addons
 applicationsets:
   argocd:
     enabled: true
