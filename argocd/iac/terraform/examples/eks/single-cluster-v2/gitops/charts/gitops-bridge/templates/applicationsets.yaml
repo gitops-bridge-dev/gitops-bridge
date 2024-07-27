@@ -1,5 +1,7 @@
 {{- $namespace := .Values.namespace }}
 {{- $useSelector := .Values.useSelector -}}
+{{- $useStack := .Values.useStack -}}
+{{- $stackGenerator := .Values.stackGenerator -}}
 {{- $repoURLGit := .Values.repoURLGit -}}
 {{- $repoURLGitRevision := .Values.repoURLGitRevision -}}
 {{- $repoURLGitBasePath := .Values.repoURLGitBasePath -}}
@@ -27,8 +29,10 @@ spec:
   goTemplateOptions:
     - missingkey=error
   generators:
+    {{- if $useStack }}
     - matrix:
         generators:
+    {{- end }}
           - clusters:
               selector:
                 matchLabels:
@@ -36,11 +40,14 @@ spec:
                 {{- if and $addon.selector $useSelector }}
                   {{- toYaml $addon.selector | nindent 16 }}
                 {{- end }}
+          {{- if $useStack }}
           - git:
               repoURL: {{ $repoURLGit }}
               revision: {{ $repoURLGitRevision }}
               files:
-              - path: '{{ $stackPath}}'
+              - path: '{{ $stackPath }}'
+          {{- end }}
+
   template:
     metadata:
       name: addon-{{ $nameNormalize }}{{ if $useSelector }}-{{`{{.nameNormalized}}`}}{{ end }}
@@ -52,9 +59,15 @@ spec:
       - repoURL: {{ $repoURLValues }}
         targetRevision: {{ $repoURLValuesRevision }}
         ref: values
+      {{- if $useStack }}
       - chart: '{{`{{.addons.`}}{{ $name }}{{`.chart}}`}}'
         repoURL: '{{`{{.addons.`}}{{ $name }}{{`.repoUrl}}`}}'
         targetRevision: '{{`{{.addons.`}}{{ $name }}{{`.targetRevision}}`}}'
+      {{- else }}
+      - chart: '{{ $addon.chart }}'
+        repoURL: '{{ $addon.repoUrl }}'
+        targetRevision: '{{ $addon.targetRevision }}'
+      {{- end }}
         helm:
           releaseName: '{{ $addon.releaseName }}'
           ignoreMissingValueFiles: true
@@ -79,7 +92,7 @@ spec:
         path: '{{ $repoURLValuesBasePath }}{{ $addon.resources.helm.path }}'
         {{- end }}
         helm:
-          releaseName: '{{`{{.addons.`}}{{ $name }}{{`.releaseName}}`}}'
+          releaseName: '{{ $addon.releaseName }}'
           ignoreMissingValueFiles: true
           {{ with $valueFiles -}}
           valueFiles:
@@ -94,7 +107,6 @@ spec:
         {{- end }}
       {{- end }}
       destination:
-        # if $addon.namespace starts with a dot then I want to make namespace to be foo else bar
         {{- if hasPrefix "." $addon.namespace }}
         namespace: '{{`{{`}}{{ $addon.namespace }}{{`}}`}}'
         {{- else }}
