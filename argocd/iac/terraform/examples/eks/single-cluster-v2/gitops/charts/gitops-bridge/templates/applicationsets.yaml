@@ -10,7 +10,7 @@
 {{- $syncPolicy := .Values.syncPolicy -}}
 {{- $stackPath := .Values.stackPath -}}
 {{- $valueFiles := .Values.valueFiles -}}
-{{- range $name, $addon := .Values.applicationsets }}
+{{- range $name, $addon := .Values.addons }}
 {{- $nameNormalize := printf "%s" $name | replace "_" "-" | trunc 63 | trimSuffix "-"  -}}
 {{- if $addon.enabled }}
 {{- with $addon -}}

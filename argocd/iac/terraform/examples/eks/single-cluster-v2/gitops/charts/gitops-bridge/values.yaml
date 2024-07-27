@@ -31,7 +31,7 @@ valueFilesResources:
   # - tenants/{{.metadata.labels.tenant | default ""}}/addons
   # - tenants/{{.metadata.labels.tenant | default ""}}/environments/{{.metadata.labels.environment}}/addons
   # - tenants/{{.metadata.labels.tenant | default ""}}/clusters/{{.nameNormalized}}/addons
-applicationsets:
+addons:
   argocd:
     enabled: true
     selector:
