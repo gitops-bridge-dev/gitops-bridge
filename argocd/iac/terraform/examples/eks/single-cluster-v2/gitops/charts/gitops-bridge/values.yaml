@@ -39,7 +39,7 @@ addons:
         - key: enable_argocd
           operator: In
           values: ['true']
-    namespace: '.addons.argocd.namespace'
+    namespace: argocd
   aws_load_balancer_controller:
     enabled: true
     selector:
