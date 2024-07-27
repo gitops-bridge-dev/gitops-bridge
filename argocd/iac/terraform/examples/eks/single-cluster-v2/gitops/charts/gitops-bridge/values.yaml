@@ -72,7 +72,7 @@ applicationsets:
         - key: enable_gatekeeper
           operator: In
           values: ['true']
-    namespace: '.addons.gatekeeper.namespace'
+    namespace: gatekeeper-system
     resources:
       path: kustomize/resources/gatekeeper
   metrics_server:
@@ -82,7 +82,7 @@ applicationsets:
         - key: enable_metrics_server
           operator: In
           values: ['true']
-    namespace: '.addons.metrics_server.namespace'
+    namespace: kube-system
   aws_ebs_csi_resources:
     enabled: true
     selector:
@@ -90,7 +90,7 @@ applicationsets:
         - key: enable_aws_ebs_csi_resources
           operator: In
           values: ['true']
-    namespace: '.addons.argocd.namespace'
+    namespace: kube-system
     kustomize: {}
   karpenter:
     enabled: true

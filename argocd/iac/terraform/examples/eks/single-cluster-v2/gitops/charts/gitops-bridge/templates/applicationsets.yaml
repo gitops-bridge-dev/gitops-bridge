@@ -94,7 +94,12 @@ spec:
         {{- end }}
       {{- end }}
       destination:
+        # if $addon.namespace starts with a dot then I want to make namespace to be foo else bar
+        {{- if hasPrefix "." $addon.namespace }}
         namespace: '{{`{{`}}{{ $addon.namespace }}{{`}}`}}'
+        {{- else }}
+        namespace: '{{ $addon.namespace }}'
+        {{- end }}
         name: '{{`{{.name}}`}}'
       {{- if $addon.syncPolicy }}
       syncPolicy:
