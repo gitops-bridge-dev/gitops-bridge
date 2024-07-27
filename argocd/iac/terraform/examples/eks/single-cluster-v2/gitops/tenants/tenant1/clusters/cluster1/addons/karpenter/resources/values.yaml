@@ -1,0 +1,3 @@
+# karpenter resources like nodepool and nodeclass
+environment: dev
+

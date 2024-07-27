@@ -1,0 +1,113 @@
+{{- $namespace := .Values.namespace }}
+{{- $useSelector := .Values.useSelector -}}
+{{- $repoURLGit := .Values.repoURLGit -}}
+{{- $repoURLGitRevision := .Values.repoURLGitRevision -}}
+{{- $repoURLGitBasePath := .Values.repoURLGitBasePath -}}
+{{- $repoURLValues := .Values.repoURLValues -}}
+{{- $repoURLValuesRevision := .Values.repoURLValuesRevision -}}
+{{- $repoURLValuesBasePath := .Values.repoURLValuesBasePath -}}
+{{- $project := .Values.project -}}
+{{- $syncPolicy := .Values.syncPolicy -}}
+{{- $stackPath := .Values.stackPath -}}
+{{- $valueFiles := .Values.valueFiles -}}
+{{- range $name, $addon := .Values.applicationsets }}
+{{- $nameNormalize := printf "%s" $name | replace "_" "-" | trunc 63 | trimSuffix "-"  -}}
+{{- if $addon.enabled }}
+{{- with $addon -}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: {{ $nameNormalize }}
+  namespace: {{ $namespace }}
+spec:
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  goTemplate: true
+  goTemplateOptions:
+    - missingkey=error
+  generators:
+    - matrix:
+        generators:
+          - clusters:
+              selector:
+                matchLabels:
+                  argocd.argoproj.io/secret-type: cluster
+                {{- if and $addon.selector $useSelector }}
+                  {{- toYaml $addon.selector | nindent 16 }}
+                {{- end }}
+          - git:
+              repoURL: {{ $repoURLGit }}
+              revision: {{ $repoURLGitRevision }}
+              files:
+              - path: '{{ $stackPath}}'
+  template:
+    metadata:
+      name: addon-{{ $nameNormalize }}{{ if $useSelector }}-{{`{{.nameNormalized}}`}}{{ end }}
+      annotations:
+        argocd.argoproj.io/manifest-generate-paths: {{ $repoURLValuesBasePath }}values/{{ $nameNormalize }}/common/values.yaml;{{ $repoURLValuesBasePath }}values/{{ $nameNormalize }}/{{`{{.metadata.labels.environment}}`}}/values.yaml;{{ $repoURLValuesBasePath }}values/{{ $nameNormalize }}/clusters/{{`{{.nameNormalized}}`}}/values.yaml
+    spec:
+      project: {{ $project }}
+      sources:
+      - repoURL: {{ $repoURLValues }}
+        targetRevision: {{ $repoURLValuesRevision }}
+        ref: values
+      - chart: '{{`{{.addons.`}}{{ $name }}{{`.chart}}`}}'
+        repoURL: '{{`{{.addons.`}}{{ $name }}{{`.repoUrl}}`}}'
+        targetRevision: '{{`{{.addons.`}}{{ $name }}{{`.targetRevision}}`}}'
+        helm:
+          releaseName: '{{`{{.addons.`}}{{ $name }}{{`.releaseName}}`}}'
+          ignoreMissingValueFiles: true
+          {{ with $valueFiles -}}
+          valueFiles:
+          {{- range . }}
+            - $values/{{ $repoURLValuesBasePath }}{{ . }}/{{ $nameNormalize }}/values.yaml
+          {{- end }}
+          {{- end }}
+          {{- with $addon.values }}
+          valuesObject:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- if $addon.resources }}
+      - repoURL: {{ $repoURLValues }}
+        targetRevision: {{ $repoURLValuesRevision }}
+        {{- if $addon.resources.path }}
+        path: '{{ $repoURLValuesBasePath }}{{ $addon.resources.path }}'
+        {{- end }}
+        {{- if $addon.resources.helm }}
+        {{- if $addon.resources.helm.path }}
+        path: '{{ $repoURLValuesBasePath }}{{ $addon.resources.helm.path }}'
+        {{- end }}
+        helm:
+          releaseName: '{{`{{.addons.`}}{{ $name }}{{`.releaseName}}`}}'
+          ignoreMissingValueFiles: true
+          {{ with $valueFiles -}}
+          valueFiles:
+          {{- range . }}
+            - $values/{{ $repoURLValuesBasePath }}{{ . }}/{{ $nameNormalize }}/resources/values.yaml
+          {{- end }}
+          {{- end }}
+          {{- if $addon.resources.helm.valuesObject }}
+          valuesObject:
+            {{- toYaml $addon.resources.helm.valuesObject | nindent 12 }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+      destination:
+        namespace: '{{`{{`}}{{ $addon.namespace }}{{`}}`}}'
+        name: '{{`{{.name}}`}}'
+      {{- if $addon.syncPolicy }}
+      syncPolicy:
+        {{- toYaml $addon.syncPolicy | nindent 8 }}
+      {{ else }}
+      syncPolicy:
+        {{- toYaml $syncPolicy | nindent 8 }}
+      {{- end }}
+      {{- with $addon.ignoreDifferences }}
+      ignoreDifferences:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+{{- end }}
+{{- end }}
+{{- end }}

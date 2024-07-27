@@ -50,7 +50,7 @@ variable "gitops_addons_revision" {
 variable "gitops_addons_basepath" {
   description = "Git repository base path for addons"
   type        = string
-  default     = "argocd/iac/terraform/examples/eks/single-cluster-v2/addons/"
+  default     = "argocd/iac/terraform/examples/eks/single-cluster-v2/gitops/"
 }
 variable "gitops_addons_path" {
   description = "Git repository path for addons"
