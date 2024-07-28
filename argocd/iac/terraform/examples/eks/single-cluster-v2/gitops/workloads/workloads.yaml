@@ -42,7 +42,7 @@ spec:
           releaseName: 'teams'
           ignoreMissingValueFiles: true
           valueFiles:
-            - '$values/{{.path}}/values.yaml'
+            - '$values/{{.path.path}}/values.yaml'
       - repoURL: '{{.metadata.annotations.workload_repo_url}}'
         path: '{{.metadata.annotations.workload_repo_basepath}}apps/{{.path.basename}}'
         targetRevision: '{{.metadata.annotations.workload_repo_revision}}'
