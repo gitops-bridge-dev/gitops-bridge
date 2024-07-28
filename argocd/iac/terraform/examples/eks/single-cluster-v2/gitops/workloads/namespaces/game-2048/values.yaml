@@ -1,0 +1,56 @@
+name: tenant1
+labels:
+  environment: dev
+namespaces:
+  game-2048:
+    labels:
+      additionalLabels:
+        app.kubernetes.io/created-by: eks-workshop
+    limitRanges:
+    - name: default
+      labels:
+        app.kubernetes.io/created-by: eks-workshop
+      limits:
+        - default: # this section defines default limits
+            cpu: 500m
+          defaultRequest: # this section defines default requests
+            cpu: 500m
+          max: # max and min define the limit range
+            cpu: "2"
+          min:
+            cpu: 100m
+          type: Container
+    resourceQuotas:
+    - name: default
+      labels:
+        app.kubernetes.io/created-by: eks-workshop
+      spec:
+        hard:
+          cpu: "5000"
+          memory: 200Gi
+          pods: "20"
+        scopeSelector:
+          matchExpressions:
+          - operator : In
+            scopeName: PriorityClass
+            values: ["high"]
+networkPolicies:
+  enabled: true
+  egress:
+    deny:
+      all:
+        # -- create a NetworkPolicy that denies all outgoing traffic
+        enabled: true
+        # -- define a PodSelector that should be used. Uses all Pods by default
+        podSelector: {}
+    allow:
+      dns:
+        # -- create a NetworkPolicy that allows outgoing traffic to the Kubernetes DNS
+        enabled: true
+        # -- The namespace where the Kubneretes DNS is running
+        namespace: "kube-system"
+        # -- The labels of the Kubernetes DNS
+        podLabels:
+          k8s-app: kube-dns
+        # -- define a PodSelector that should be used. Uses all Pods by default
+        podSelector: {}

@@ -77,7 +77,7 @@ variable "gitops_workload_revision" {
 variable "gitops_workload_basepath" {
   description = "Git repository base path for workload"
   type        = string
-  default     = "argocd/iac/terraform/examples/eks/"
+  default     = "argocd/iac/terraform/examples/eks/single-cluster-v2/gitops/workloads/"
 }
 variable "gitops_workload_path" {
   description = "Git repository path for workload"

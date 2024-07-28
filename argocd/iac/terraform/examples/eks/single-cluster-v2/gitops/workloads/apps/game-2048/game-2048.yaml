@@ -1,13 +1,6 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: game-2048
-spec: {}
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: game-2048
   name: game-2048
 spec:
   selector:
@@ -28,7 +21,6 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  namespace: game-2048
   name: game-2048
 spec:
   ports:
@@ -43,7 +35,6 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  namespace: game-2048
   name: game-2048
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
@@ -60,13 +51,4 @@ spec:
               name: game-2048
               port:
                 name: http
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: game-2048
-  namespace: game-2048
-spec:
-  podSelector: {}
-  policyTypes:
-  - Egress
+
