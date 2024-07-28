@@ -12,8 +12,8 @@
 {{- $syncPolicy := .Values.syncPolicy -}}
 {{- $stackPath := .Values.stackPath -}}
 {{- $valueFiles := .Values.valueFiles -}}
-{{- $valuesFileTenants := .Values.valuesFileTenants -}}
-{{- $useValuesFileTenants := .Values.useValuesFileTenants -}}
+{{- $valuesFilePrefix := .Values.valuesFilePrefix -}}
+{{- $useValuesFilePrefix := .Values.useValuesFilePrefix -}}
 {{- range $name, $addon := .Values.addons }}
 {{- $nameNormalize := printf "%s" $name | replace "_" "-" | trunc 63 | trimSuffix "-"  -}}
 {{- if $addon.enabled }}
@@ -24,6 +24,10 @@ kind: ApplicationSet
 metadata:
   name: {{ $nameNormalize }}
   namespace: {{ $namespace }}
+  {{- if $addon.syncWaveOrder}}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $addon.syncWaveOrder | quote}}
+  {{- end }}
 spec:
   syncPolicy:
     preserveResourcesOnDeletion: true
@@ -54,7 +58,12 @@ spec:
     metadata:
       name: addon-{{ $nameNormalize }}{{ if $useSelector }}-{{`{{.nameNormalized}}`}}{{ end }}
       annotations:
-        argocd.argoproj.io/manifest-generate-paths: {{ $repoURLValuesBasePath }}values/{{ $nameNormalize }}/common/values.yaml;{{ $repoURLValuesBasePath }}values/{{ $nameNormalize }}/{{`{{.metadata.labels.environment}}`}}/values.yaml;{{ $repoURLValuesBasePath }}values/{{ $nameNormalize }}/clusters/{{`{{.nameNormalized}}`}}/values.yaml
+        argocd.argoproj.io/manifest-generate-paths: {{ with $valueFiles }}{{ range . }}{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/values.yaml;{{ end }}{{ end }}
+      labels:
+        component: '{{ $nameNormalize }}'
+        addon: 'true'
+        environment: '{{`{{.metadata.labels.environment}}`}}'
+        cluster: '{{`{{.name}}`}}'
     spec:
       project: {{ $project }}
       sources:
@@ -76,7 +85,7 @@ spec:
           {{ with $valueFiles -}}
           valueFiles:
           {{- range . }}
-            - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFileTenants }}{{ $valuesFileTenants }}{{ end }}{{ . }}/{{ $nameNormalize }}/values.yaml'
+            - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/values.yaml'
           {{- end }}
           {{- end }}
           {{- with $addon.values }}
@@ -99,7 +108,7 @@ spec:
           {{ with $valueFiles -}}
           valueFiles:
           {{- range . }}
-            - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFileTenants }}{{ $valuesFileTenants }}{{ end }}{{ . }}/{{ $nameNormalize }}/resources/values.yaml'
+            - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/resources/values.yaml'
           {{- end }}
           {{- end }}
           {{- if $addon.resources.helm.valuesObject }}

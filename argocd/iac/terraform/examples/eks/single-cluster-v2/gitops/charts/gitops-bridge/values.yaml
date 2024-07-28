@@ -26,8 +26,8 @@ valueFiles:
 valueFilesResources:
   - environments/{{.metadata.labels.environment}}/addons
   - clusters/{{.nameNormalized}}/addons
-useValuesFileTenants: false
-valuesFileTenants: tenants/{{.metadata.labels.tenant}}/
+useValuesFilePrefix: false
+valuesFilePrefix: tenants/{{.metadata.labels.tenant}}/
 addons:
   argocd:
     enabled: true
@@ -49,6 +49,7 @@ addons:
     repoUrl: https://aws.github.io/eks-charts
     targetRevision: "1.7.1"
     namespace: '.metadata.annotations.aws_load_balancer_controller_namespace'
+    syncWaveOrder: -1
     selector:
       matchExpressions:
         - key: enable_aws_load_balancer_controller
