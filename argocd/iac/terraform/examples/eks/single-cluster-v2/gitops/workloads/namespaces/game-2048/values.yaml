@@ -1,6 +1,19 @@
 name: tenant1
 labels:
   environment: dev
+networkPolicies:
+  enabled: true
+  egress:
+    deny:
+      all:
+        enabled: true
+    allow:
+      dns:
+        enabled: true
+  ingress:
+    deny:
+      all:
+        enabled: false
 namespaces:
   game-2048:
     labels:
@@ -34,10 +47,5 @@ namespaces:
           - operator : In
             scopeName: PriorityClass
             values: ["high"]
-    networkPolicies:
-    - name: egress-deny-all
-      spec:
-        podSelector: {}
-        policyTypes:
-        - Egress
+
 

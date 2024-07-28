@@ -37,7 +37,7 @@ spec:
         ref: values
       - chart: team
         repoURL: 'https://gitops-bridge-dev.github.io/gitops-bridge-helm-charts'
-        targetRevision: '1.0.0'
+        targetRevision: '2.0.0'
         helm:
           releaseName: 'teams'
           ignoreMissingValueFiles: true

@@ -16,6 +16,7 @@ if [[ ! $(cat $TMPFILE) == *"No outputs found"* ]]; then
   kubectl scale deploy -n gatekeeper-system gatekeeper-audit --replicas=0
   kubectl scale deploy -n gatekeeper-system gatekeeper-controller-manager --replicas=0
   kubectl scale deploy -n kube-system metrics-server --replicas=0
+  sleep 60
   kubectl delete nodes -l karpenter.sh/registered=true
   kubectl delete -n game-2048 ing game-2048
   kubectl delete -n argocd svc argocd-server
