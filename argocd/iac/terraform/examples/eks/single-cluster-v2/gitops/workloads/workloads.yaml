@@ -44,7 +44,7 @@ spec:
           valueFiles:
             - '$values/{{.path}}/values.yaml'
       - repoURL: '{{.metadata.annotations.workload_repo_url}}'
-        path: '{{{.metadata.annotations.workload_repo_basepath}}apps/{{.path.basename}}'
+        path: '{{.metadata.annotations.workload_repo_basepath}}apps/{{.path.basename}}'
         targetRevision: '{{metadata.annotations.workload_repo_revision}}'
       destination:
         namespace: '{{.path.basename}}'
