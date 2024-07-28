@@ -33,7 +33,7 @@ spec:
       project: 'default'
       sources:
       - repoURL: '{{.metadata.annotations.workload_repo_url}}'
-        targetRevision: HEAD
+        targetRevision: '{{.metadata.annotations.workload_repo_revision}}'
         ref: values
       - chart: team
         repoURL: 'https://gitops-bridge-dev.github.io/gitops-bridge-helm-charts'
@@ -45,7 +45,7 @@ spec:
             - '$values/{{.path}}/values.yaml'
       - repoURL: '{{.metadata.annotations.workload_repo_url}}'
         path: '{{.metadata.annotations.workload_repo_basepath}}apps/{{.path.basename}}'
-        targetRevision: '{{metadata.annotations.workload_repo_revision}}'
+        targetRevision: '{{.metadata.annotations.workload_repo_revision}}'
       destination:
         namespace: '{{.path.basename}}'
         name: '{{.name}}'
