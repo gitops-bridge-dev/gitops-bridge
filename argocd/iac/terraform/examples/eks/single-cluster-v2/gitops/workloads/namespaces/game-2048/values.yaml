@@ -34,26 +34,10 @@ namespaces:
           - operator : In
             scopeName: PriorityClass
             values: ["high"]
-networkPolicies:
-  enabled: true
-  egress:
-    deny:
-      all:
-        # -- create a NetworkPolicy that denies all outgoing traffic
-        enabled: true
-        # -- define a PodSelector that should be used. Uses all Pods by default
+    networkPolicies:
+    - name: egress-deny-all
+      spec:
         podSelector: {}
-    allow:
-      dns:
-        # -- create a NetworkPolicy that allows outgoing traffic to the Kubernetes DNS
-        enabled: true
-        # -- The namespace where the Kubneretes DNS is running
-        namespace: "kube-system"
-        # -- The labels of the Kubernetes DNS
-        podLabels:
-          k8s-app: kube-dns
-        # -- define a PodSelector that should be used. Uses all Pods by default
-        podSelector: {}
-  ingress:
-    deny:
-      all: false
+        policyTypes:
+        - Egress
+
