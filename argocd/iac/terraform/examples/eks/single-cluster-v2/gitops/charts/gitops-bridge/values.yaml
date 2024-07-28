@@ -83,8 +83,13 @@ addons:
         - key: enable_gatekeeper
           operator: In
           values: ['true']
+    # resources:
+    #   path: kustomize/resources/gatekeeper
     resources:
-      path: kustomize/resources/gatekeeper
+      helm:
+        path: charts/resources/gatekeeper
+        valuesObject:
+          environment: '{{.metadata.labels.environment}}'
   metrics_server:
     enabled: true
     releaseName: metrics-server
@@ -134,7 +139,7 @@ addons:
       helm:
         path: charts/resources/karpenter
         valuesObject:
+          environment: '{{.metadata.labels.environment}}'
           clusterName: '{{.metadata.annotations.aws_cluster_name}}'
           nodeRole: '{{.metadata.annotations.karpenter_node_iam_role_name}}'
-
 
