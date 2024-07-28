@@ -12,6 +12,8 @@
 {{- $syncPolicy := .Values.syncPolicy -}}
 {{- $stackPath := .Values.stackPath -}}
 {{- $valueFiles := .Values.valueFiles -}}
+{{- $valuesFileTenants := .Values.valuesFileTenants -}}
+{{- $useValuesFileTenants := .Values.useValuesFileTenants -}}
 {{- range $name, $addon := .Values.addons }}
 {{- $nameNormalize := printf "%s" $name | replace "_" "-" | trunc 63 | trimSuffix "-"  -}}
 {{- if $addon.enabled }}
@@ -74,7 +76,7 @@ spec:
           {{ with $valueFiles -}}
           valueFiles:
           {{- range . }}
-            - '$values/{{ $repoURLValuesBasePath }}{{ . }}/{{ $nameNormalize }}/values.yaml'
+            - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFileTenants }}{{ $valuesFileTenants }}{{ end }}{{ . }}/{{ $nameNormalize }}/values.yaml'
           {{- end }}
           {{- end }}
           {{- with $addon.values }}
@@ -97,7 +99,7 @@ spec:
           {{ with $valueFiles -}}
           valueFiles:
           {{- range . }}
-            - '$values/{{ $repoURLValuesBasePath }}{{ . }}/{{ $nameNormalize }}/resources/values.yaml'
+            - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFileTenants }}{{ $valuesFileTenants }}{{ end }}{{ . }}/{{ $nameNormalize }}/resources/values.yaml'
           {{- end }}
           {{- end }}
           {{- if $addon.resources.helm.valuesObject }}
