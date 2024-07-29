@@ -6,11 +6,6 @@ metadata:
     argocd.argoproj.io/sync-wave: "1"
 spec:
   amiFamily: {{ .Values.amiFamily | default .Values.global.amiFamily | quote }}
-  metadataOptions:
-    httpEndpoint: enabled
-    httpProtocolIPv6: disabled
-    httpPutResponseHopLimit: 1
-    httpTokens: required
   role: {{ .Values.nodeRole | default .Values.global.nodeRole | quote }}
   securityGroupSelectorTerms:
   - tags:
@@ -31,10 +26,3 @@ spec:
         volumeSize: {{ .Values.volumeSize | default .Values.global.volumeSize | quote }}
         volumeType: gp3
         encrypted: true
-  userData: |
-    [settings.kubernetes]
-    kube-api-qps = 30
-    [settings.kubernetes.node-labels]
-    "bottlerocket.aws/updater-interface-version" = "2.0.0"
-    [settings.kubernetes.eviction-hard]
-    "memory.available" = "5%"
