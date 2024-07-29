@@ -13,7 +13,8 @@ controller:
   env:
     - name: ARGOCD_K8S_CLIENT_QPS #required for Crossplane too many CRDs https://github.com/argoproj/argo-cd/pull/448
       value: '300'
-
+    - name: ARGOCD_SYNC_WAVE_DELAY
+      value: '30'
 repoServer:
   autoscaling:
     enabled: true

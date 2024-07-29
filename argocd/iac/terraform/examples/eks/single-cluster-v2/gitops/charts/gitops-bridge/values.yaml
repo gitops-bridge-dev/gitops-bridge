@@ -20,7 +20,7 @@ syncPolicy:
     - CreateNamespace=true
     - ServerSideApply=true  # Big CRDs.
 valueFiles:
-  - addons
+  - default/addons
   - environments/{{.metadata.labels.environment}}/addons
   - clusters/{{.nameNormalized}}/addons
 valueFilesResources:
@@ -85,7 +85,7 @@ addons:
           operator: In
           values: ['true']
     # resources:
-    #   path: kustomize/resources/gatekeeper
+    #   path: manifests/resources/gatekeeper
     resources:
       helm:
         path: charts/resources/gatekeeper

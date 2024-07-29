@@ -2,6 +2,7 @@ resources:
 - disallowedrepos
 # commonAnnotations:
 #   argocd.argoproj.io/sync-wave: "1"
+#   argocd.argoproj.io/sync-options: "SkipDryRunOnMissingResource=true"
 patches:
   - target:
       kind: ConstraintTemplate
