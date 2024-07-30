@@ -14,6 +14,9 @@
 {{- $valueFiles := .Values.valueFiles -}}
 {{- $valuesFilePrefix := .Values.valuesFilePrefix -}}
 {{- $useValuesFilePrefix := .Values.useValuesFilePrefix -}}
+{{- $syncPolicyAppSet := .Values.syncPolicyAppSet -}}
+{{- $goTemplate := .Values.goTemplate -}}
+{{- $goTemplateOptions := .Values.goTemplateOptions -}}
 {{- range $name, $addon := .Values.addons }}
 {{- $nameNormalize := printf "%s" $name | replace "_" "-" | trunc 63 | trimSuffix "-"  -}}
 {{- if $addon.enabled }}
@@ -24,16 +27,28 @@ kind: ApplicationSet
 metadata:
   name: {{ $nameNormalize }}
   namespace: {{ $namespace }}
-  {{- if $addon.syncWaveOrder}}
   annotations:
-    argocd.argoproj.io/sync-wave: {{ $addon.syncWaveOrder | quote}}
-  {{- end }}
+    {{- include "gitops-bridge.annotations" $ | nindent 4 }}
+    {{- if $addon.annotationsAppSet }}{{- toYaml $addon.annotationsAppSet | nindent 4 }}{{- end }}
+  labels:
+    {{- include "gitops-bridge.labels" $ | nindent 4 }}
+    {{- if $addon.labelsAppSet }}{{- toYaml $addon.labelsAppSet | nindent 4 }}{{- end }}
 spec:
+  {{- if $addon.syncPolicyAppSet }}
   syncPolicy:
-    preserveResourcesOnDeletion: true
-  goTemplate: true
+    {{- toYaml $addon.syncPolicyAppSet | nindent 4 }}
+  {{- else }}
+  syncPolicy:
+    {{- toYaml $syncPolicyAppSet | nindent 4 }}
+  {{- end }}
+  goTemplate: {{ default $goTemplate $addon.goTemplate }}
+  {{- if $addon.goTemplateOptions }}
   goTemplateOptions:
-    - missingkey=error
+  {{ toYaml $addon.goTemplateOptions | nindent 2 }}
+  {{ else }}
+  goTemplateOptions:
+  {{ toYaml $goTemplateOptions }}
+  {{- end }}
   generators:
     {{- if $useStack }}
     - matrix:
@@ -53,13 +68,16 @@ spec:
               files:
               - path: '{{ $stackPath }}'
           {{- end }}
-
   template:
     metadata:
       name: addon-{{ $nameNormalize }}{{ if $useSelector }}-{{`{{.nameNormalized}}`}}{{ end }}
       annotations:
         argocd.argoproj.io/manifest-generate-paths: {{ with $valueFiles }}{{ range . }}{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/values.yaml;{{ end }}{{ end }}
+        {{- include "gitops-bridge.annotations" $ | nindent 8 }}
+        {{- if $addon.annotationsApp }}{{- toYaml $addon.annotationsApp | nindent 8 }}{{- end }}
       labels:
+        {{- include "gitops-bridge.labels" $ | nindent 8 }}
+        {{- if $addon.labelsApp }}{{- toYaml $addon.labelsApp | nindent 8 }}{{- end }}
         component: '{{ $nameNormalize }}'
         addon: 'true'
         environment: '{{`{{.metadata.labels.environment}}`}}'
@@ -99,9 +117,6 @@ spec:
         path: '{{ $repoURLValuesBasePath }}{{ $addon.resources.path }}'
         {{- end }}
         {{- if $addon.resources.helm }}
-        {{- if $addon.resources.helm.path }}
-        path: '{{ $repoURLValuesBasePath }}{{ $addon.resources.helm.path }}'
-        {{- end }}
         helm:
           releaseName: '{{ $addon.releaseName }}'
           ignoreMissingValueFiles: true
@@ -111,10 +126,7 @@ spec:
             - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/resources/values.yaml'
           {{- end }}
           {{- end }}
-          {{- if $addon.resources.helm.valuesObject }}
-          valuesObject:
-            {{- toYaml $addon.resources.helm.valuesObject | nindent 12 }}
-          {{- end }}
+          {{- toYaml $addon.resources.helm | nindent 10 }}
         {{- end }}
       {{- end }}
       destination:

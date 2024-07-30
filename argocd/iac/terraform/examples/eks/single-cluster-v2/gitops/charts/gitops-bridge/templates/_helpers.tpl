@@ -31,35 +31,31 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
-Common labels
+Common Helm and Kubernetes labels
 */}}
 {{- define "gitops-bridge.labels" -}}
 helm.sh/chart: {{ include "gitops-bridge.chart" . }}
-{{ include "gitops-bridge.selectorLabels" . }}
+app.kubernetes.io/name: {{ include "gitops-bridge.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- if .Values.labels }}
+{{ toYaml .Values.labels }}
+{{- end }}
 {{- end }}
 
 {{/*
-Selector labels
+Common Helm and Kubernetes Annotations
 */}}
-{{- define "gitops-bridge.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "gitops-bridge.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+{{- define "gitops-bridge.annotations" -}}
+helm.sh/chart: {{ include "gitops-bridge.chart" . }}
+{{- if .Values.annotations }}
+{{ toYaml .Values.annotations }}
+{{- end }}
 {{- end }}
 
-{{/*
-Create the name of the service account to use
-*/}}
-{{- define "gitops-bridge.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "gitops-bridge.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
-{{- end }}
 
 {{- define "toValidName" -}}
 {{- printf "%s" . | regexReplaceAll "[^a-z0-9.-]" "-" | lower -}}

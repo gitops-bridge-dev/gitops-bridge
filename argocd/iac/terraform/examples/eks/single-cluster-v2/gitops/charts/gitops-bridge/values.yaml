@@ -1,3 +1,7 @@
+syncPolicyAppSet:
+  preserveResourcesOnDeletion: true
+goTemplate: true
+goTemplateOptions: ["missingkey=error"]
 stackPath: '**/stack{{(.metadata.annotations.platform_stack_version | default "")}}.yaml'
 repoURLGit: "'{{.metadata.annotations.addons_repo_url}}'"
 repoURLGitRevision: HEAD
@@ -49,7 +53,8 @@ addons:
     repoUrl: https://aws.github.io/eks-charts
     targetRevision: "1.7.1"
     namespace: '.metadata.annotations.aws_load_balancer_controller_namespace'
-    syncWaveOrder: -1
+    annotationsAppSet:
+      argocd.argoproj.io/sync-wave: '-1'
     selector:
       matchExpressions:
         - key: enable_aws_load_balancer_controller
@@ -87,8 +92,8 @@ addons:
     # resources:
     #   path: manifests/resources/gatekeeper
     resources:
+      path: charts/resources/gatekeeper
       helm:
-        path: charts/resources/gatekeeper
         valuesObject:
           environment: '{{.metadata.labels.environment}}'
   metrics_server:
@@ -137,10 +142,11 @@ addons:
         annotations:
           eks.amazonaws.com/role-arn: '{{.metadata.annotations.karpenter_iam_role_arn}}'
     resources:
+      path: charts/resources/karpenter
       helm:
-        path: charts/resources/karpenter
         valuesObject:
           environment: '{{.metadata.labels.environment}}'
           clusterName: '{{.metadata.annotations.aws_cluster_name}}'
           nodeRole: '{{.metadata.annotations.karpenter_node_iam_role_name}}'
+
 
