@@ -270,12 +270,12 @@ module "eks" {
       service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
     }
   }
-  tags = merge(local.tags, {
-    # NOTE - if creating multiple security groups with this module, only tag the
+  node_security_group_tags = {
     # security group that Karpenter should utilize with the following tag
     # (i.e. - at most, only one security group should have this tag in your account)
-    "karpenter.sh/discovery" = local.name
-  })
+        "karpenter.sh/discovery" = local.name
+  }
+  tags = local.tags
 }
 module "ebs_csi_driver_irsa" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
