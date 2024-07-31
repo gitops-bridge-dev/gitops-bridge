@@ -104,6 +104,11 @@ spec:
           valueFiles:
           {{- range . }}
             - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/values.yaml'
+            {{- if $useStack }}
+            - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/{{`{{.addons.`}}{{ $name }}{{`.targetRevision}}`}}/values.yaml'
+            {{- else }}
+            - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/{{ $addon.targetRevision }}/values.yaml'
+            {{- end }}
           {{- end }}
           {{- end }}
           {{- with $addon.values }}

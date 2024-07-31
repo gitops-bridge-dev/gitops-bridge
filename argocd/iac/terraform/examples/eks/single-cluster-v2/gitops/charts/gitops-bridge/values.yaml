@@ -13,13 +13,18 @@ project: default
 namespace: argocd
 useSelector: false
 useStack: true
+useStackChart: true
 syncPolicy:
   automated:
     selfHeal: false
     allowEmpty: true
     prune: false
   retry:
-    limit: 100
+    limit: -1 # number of failed sync attempt retries; unlimited number of attempts if less than 0
+    backoff:
+      duration: 5s # the amount to back off. Default unit is seconds, but could also be a duration (e.g. "2m", "1h")
+      factor: 2 # a factor to multiply the base duration after each failed retry
+      maxDuration: 10m # the maximum amount of time allowed for the backoff strategy
   syncOptions:
     - CreateNamespace=true
     - ServerSideApply=true  # Big CRDs.
