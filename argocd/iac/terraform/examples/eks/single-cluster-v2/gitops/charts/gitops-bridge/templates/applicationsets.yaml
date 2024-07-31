@@ -1,6 +1,7 @@
 {{- $namespace := .Values.namespace }}
 {{- $useSelector := .Values.useSelector -}}
 {{- $useStack := .Values.useStack -}}
+{{- $useStackChart := .Values.useStackChart -}}
 {{- $stackGenerator := .Values.stackGenerator -}}
 {{- $repoURLGit := .Values.repoURLGit -}}
 {{- $repoURLGitRevision := .Values.repoURLGitRevision -}}
@@ -17,8 +18,12 @@
 {{- $syncPolicyAppSet := .Values.syncPolicyAppSet -}}
 {{- $goTemplate := .Values.goTemplate -}}
 {{- $goTemplateOptions := .Values.goTemplateOptions -}}
+{{- $templatePatch := .Values.templatePatch -}}
+{{- $applyNestedSelectors := .Values.applyNestedSelectors -}}
+{{- $hasapplyNestedSelectors := hasKey .Values "applyNestedSelectors" -}}
 {{- range $name, $addon := .Values.addons }}
 {{- $nameNormalize := printf "%s" $name | replace "_" "-" | trunc 63 | trimSuffix "-"  -}}
+{{- $addonhasapplyNestedSelectors := hasKey $addon "applyNestedSelectors" -}}
 {{- if $addon.enabled }}
 {{- with $addon -}}
 ---
@@ -36,10 +41,10 @@ metadata:
 spec:
   {{- if $addon.syncPolicyAppSet }}
   syncPolicy:
-    {{- toYaml $addon.syncPolicyAppSet | nindent 4 }}
+  {{- toYaml $addon.syncPolicyAppSet | nindent 4 }}
   {{- else }}
   syncPolicy:
-    {{- toYaml $syncPolicyAppSet | nindent 4 }}
+  {{- toYaml $syncPolicyAppSet | nindent 4 }}
   {{- end }}
   goTemplate: {{ default $goTemplate $addon.goTemplate }}
   {{- if $addon.goTemplateOptions }}
@@ -48,6 +53,32 @@ spec:
   {{ else }}
   goTemplateOptions:
   {{ toYaml $goTemplateOptions }}
+  {{- end }}
+  {{- if $addon.ignoreApplicationDifferences }}
+  ignoreApplicationDifferences:
+  {{- toYaml $addon.ignoreApplicationDifferences | nindent 2 }}
+  {{- end }}
+  {{- if $addon.preservedFields }}
+  preservedFields:
+  {{- toYaml $addon.preservedFields | nindent 4 }}
+  {{- end }}
+  {{- if $addon.strategy }}
+  strategy:
+  {{- toYaml $addon.strategy | nindent 4 }}
+  {{- end }}
+  {{- if $addon.templatePatch }}
+  templatePatch: {{- $addon.templatePatch  | toYaml | indent 1  }}
+  {{- else }}
+  {{- if $templatePatch }}
+  templatePatch: {{- $templatePatch  | toYaml | indent 1   }}
+  {{- end }}
+  {{- end }}
+  {{- if $addonhasapplyNestedSelectors }}
+  applyNestedSelectors: {{ $addon.applyNestedSelectors }}
+  {{- else }}
+  {{- if $hasapplyNestedSelectors }}
+  applyNestedSelectors: {{ $applyNestedSelectors }}
+  {{- end }}
   {{- end }}
   generators:
     {{- if $useStack }}
@@ -89,13 +120,22 @@ spec:
         targetRevision: {{ $repoURLValuesRevision }}
         ref: values
       {{- if $useStack }}
-      - chart: '{{`{{.addons.`}}{{ $name }}{{`.chart}}`}}'
-        repoURL: '{{`{{.addons.`}}{{ $name }}{{`.repoUrl}}`}}'
+      - repoURL: '{{`{{.addons.`}}{{ $name }}{{`.repoUrl}}`}}'
         targetRevision: '{{`{{.addons.`}}{{ $name }}{{`.targetRevision}}`}}'
+        {{- if $useStackChart }}
+        chart: '{{`{{.addons.`}}{{ $name }}{{`.chart}}`}}'
+        {{- else }}
+        path: '{{`{{.addons.`}}{{ $name }}{{`.path}}`}}'
+        {{- end }}
       {{- else }}
-      - chart: '{{ $addon.chart }}'
-        repoURL: '{{ $addon.repoUrl }}'
+      - repoURL: '{{ $addon.repoUrl }}'
         targetRevision: '{{ $addon.targetRevision }}'
+        {{- if $addon.chart }}
+        chart: '{{ $addon.chart }}'
+        {{- end }}
+        {{- if $addon.path }}
+        path: '{{ $addon.path }}'
+        {{- end }}
       {{- end }}
         helm:
           releaseName: '{{ $addon.releaseName }}'
@@ -121,6 +161,9 @@ spec:
         {{- if $addon.resources.path }}
         path: '{{ $repoURLValuesBasePath }}{{ $addon.resources.path }}'
         {{- end }}
+        {{- if $addon.resources.chart }}
+        chart: '{{ $addon.resources.chart }}'
+        {{- end }}
         {{- if $addon.resources.helm }}
         helm:
           releaseName: '{{ $addon.releaseName }}'
@@ -129,6 +172,11 @@ spec:
           valueFiles:
           {{- range . }}
             - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/resources/values.yaml'
+            {{- if $useStack }}
+            - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/{{`{{.addons.`}}{{ $name }}{{`.targetRevision}}`}}/resources/values.yaml'
+            {{- else }}
+            - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/{{ $addon.targetRevision }}/resources/values.yaml'
+            {{- end }}
           {{- end }}
           {{- end }}
           {{- toYaml $addon.resources.helm | nindent 10 }}
