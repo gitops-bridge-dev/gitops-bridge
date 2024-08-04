@@ -18,6 +18,11 @@ variable "environment" {
   type        = string
   default     = "dev"
 }
+variable "tenant" {
+  description = "Tenant for addon stacks"
+  type        = string
+  default     = "tenant1" # make it empty string if you don't want to use tenant
+}
 
 variable "addons" {
   description = "Kubernetes addons"

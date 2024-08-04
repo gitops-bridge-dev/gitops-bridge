@@ -1,12 +1,145 @@
-global:
-  clusterName: "foo"
-  volumeSize: "10Gi"
-  nodeRole: "karpenter"
-  amiFamily: Bottlerocket
-  environment: "production"
-# clusterName: "foo"
-# volumeSize: "10Gi"
-# nodeRole: "karpenter"
-# amiFamily: Bottlerocket
-# environment: "production"
+ ## Global Configuration
 
+ # Karpenter API Version in CRD
+ApiVersion: v1beta1
+
+ # Nodes Configuration
+clusterName: "eks-cluster"    # My Cluster Name
+amiFamily: AL2    # Bottlerocket  #AL2023, Can be overridden by amiSelectorTerms
+IamRole: eks_nodes_role
+
+subnetSelectorTerms: []
+ #   - tags:
+ #       cluster: eks-cluster
+ #       karpenter.sh/discovery/eks-cluster: '*'
+ #   - id: subnet-id
+ ##   Reusing same Tag Name
+ #    - tags:
+ #        Name: "eks-subnet-1"
+ #    - tags:
+ #        Name: "eks-subnet-2"
+
+securityGroupSelectorTerms: []
+ #  - tags:
+ #       cluster: eks-cluster
+ #       karpenter.sh/discovery/eks-cluster: '*'
+ #  - name: my-security-group
+ #  - id: sg-063d7acfb4b06c82c
+ ##   Reusing same Tag Name
+ #    - tags:
+ #        Name: "my-security-group-1"
+ #    - tags:
+ #        Name: "my-security-group-2"
+
+nodeGroupLabelName: nodegroup
+
+nodeTags:
+  team: devops
+  component: eks-karpenter-nodes
+
+availabilityZones: []
+
+ # MetaData Options
+metaDataHttpEndpoint: enabled
+metaDataHttpProtocolIPv6: disabled
+metaDataHttpPutResponseHopLimit: 2
+metaDataHttpTokens: required
+
+ # Storage
+blockDeviceMappings:
+  - deviceName: /dev/xvda
+    ebs:
+      volumeSize: 100Gi
+      volumeType: gp3
+      encrypted: false
+      deleteOnTermination: true
+      iops: 3000
+      throughput: 125
+
+detailedMonitoring: false
+associatePublicIPAddress: false
+ # Consolidation Options
+expireAfter: "720h"
+consolidationPolicy: "WhenUnderutilized"
+consolidateAfter: "5m"
+
+ # Default Instance Sizing
+instances:
+  minGeneration: 5
+  architecture: "amd64"
+  categories:
+  - m
+  - r
+  - c
+  cores:
+  - "4"
+  - "8"
+  - "16"
+  capacityType:
+  - spot
+  - on-demand
+  operatingSystems:
+    - linux
+
+autoTaint: "false"
+ ## Exclude weak types of AMD instances
+ # excludeFamilies:
+ #  - c6a
+ #  - m6a
+ #  - r6a
+ #  - c5a
+ #  - m5a
+ #  - r5a
+ #  - c6ad
+ #  - m6ad
+ #  - r6ad
+ #  - m5ad
+ #  - r5ad
+ #  - r5ad
+
+ ## Exclude Expensive types like Metal
+ # excludeInstanceSize:
+ #  - metal
+
+ # Kubelet Configuration paramemters
+ # kubeletClusterDNS: []
+kubeletSystemReservedCpu: 250m
+kubeletSystemReservedMemory: 200Mi
+kubeletSystemReservedEphemeralStorage: 2Gi
+kubeletKubeReservedCpu: 250m
+kubeletKubeReservedMemory: 1Gi
+kubeletKubeReservedEphemeralStorage: 4Gi
+kubeletEvictionHardMemoryAvailable: 768Mi
+kubeletEvictionHardNodefsAvailable: 8%
+kubeletEvictionHardNodefsInodesFree: 8%
+kubeletEvictionSoftMemoryAvailable: 1280Mi
+kubeletEvictionSoftNodefsAvailable: 10%
+kubeletEvictionSoftNodefsInodesFree: 15%
+kubeletEvictionSoftImagefsAvailable: 10%
+kubeletEvictionSoftImagefsInodesFree: 10%
+kubeletEvictionSoftPidAvailable: 10%
+kubeletEvictionSoftGracePeriodImagefsAvailable: 10m0s
+kubeletEvictionSoftGracePeriodImagefsInodesFree: 10m0s
+kubeletEvictionSoftGracePeriodMemoryAvailable: 5m0s
+kubeletEvictionSoftGracePeriodNodefsAvailable: 10m0s
+kubeletEvictionSoftGracePeriodNodefsInodesFree: 10m0s
+kubeletEvictionSoftGracePeriodPidAvailable: 2m0s
+ # kubeletImageGCHighThresholdPercent: 85
+ # kubeletImageGCLowThresholdPercent: 80
+ # kubeletImageMinimumGCAge: 2m0s
+ # kubeletCpuCFSQuota: true
+ # kubeletPodsPerCore: 5
+ # kubeletMaxPods: 110
+weight: 1
+ ## Create Low Priority Class For Generating Headroom
+headRoom: false
+
+ # PlaceHolder fo NodeGroups
+nodeGroups: {}
+
+# additionalRequirements:
+#  - key: "karpenter.k8s.aws/instance-local-nvme"
+#    operator: "Exists"
+
+cilium: false
+ciliumEffect: "NoExecute"    # "NoSchedule"

@@ -1,0 +1,73 @@
+clusterName: "eks-dev"
+
+subnetSelectorTerms:
+  - tags:
+      Name: eks-dev-eu-west-1a
+  - tags:
+      Name: eks-dev-eu-west-1b
+  - tags:
+      Name: eks-dev-eu-west-1c
+
+securityGroupSelectorTerms:
+  - tags:
+      Name: eks-nodes
+  - tags:
+      Name: eks-dev
+
+availabilityZones:
+  - eu-west-1a
+  - eu-west-1b
+  - eu-west-1c
+
+excludeInstanceSize:
+  - metal
+
+blockDeviceMappings:
+  - deviceName: /dev/xvda
+    ebs:
+      volumeSize: 100Gi
+      volumeType: gp3
+      encrypted: true
+      deleteOnTermination: true
+      iops: 3000
+      throughput: 125
+
+instances:
+  minGeneration: 4
+  architecture: "amd64"
+  categories:
+  - m
+  - r
+  - c
+  cores:
+  - "4"
+  - "8"
+  - "12"
+  - "16"
+  - "24"
+  - "32"
+  - "48"
+  capacityType:
+  - spot
+
+
+nodeTags:
+  team: devops
+  component: eks-karpenter-nodes
+  created_by: helm
+
+amiFamily: AL2
+autoTaint: "true"
+excludeFamilies:
+ - c6a
+ - m6a
+ - r6a
+ - c5a
+ - m5a
+ - r5a
+ - c6ad
+ - m6ad
+ - r6ad
+ - m5ad
+ - r5ad
+ - r5ad

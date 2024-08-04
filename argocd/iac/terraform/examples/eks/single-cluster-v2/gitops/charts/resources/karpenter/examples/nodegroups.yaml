@@ -1,0 +1,108 @@
+nodeGroups:
+  nodes-default:
+    autoTaint: "false"
+    weight: 2
+    instances:
+      categories:
+        - m
+        - r
+    capacitySpread:
+      start: 1
+      end: 5
+  nodes-default-od:
+    autoTaint: "false"
+    nodeGroupLabel: nodes-default
+    capacitySpread:
+      start: 6
+      end: 6
+    instances:
+      minGeneration: 5
+      categories:
+        - m
+        - r
+      capacityType:
+        - on-demand
+    nodeClassRef:
+      name: nodes-default-amd64
+  nodes-workers:
+    weight: 2
+    instances:
+      categories:
+        - m
+        - r
+    capacitySpread:
+      start: 1
+      end: 5
+  nodes-workers-c:
+    nodeGroupLabel: nodes-workers
+    capacitySpread:
+      start: 1
+      end: 5
+    instances:
+      categories:
+        - c
+    nodeClassRef:
+      name: nodes-workers-amd64
+  nodes-canary:
+    instances: {}
+    capacitySpread:
+      start: 1
+      end: 5
+  nodes-jobs:
+    expireAfter: "Never"
+    instances:
+      capacityType:
+        - on-demand
+      cores:
+        - "8"
+        - "16"
+    consolidationPolicy: "WhenEmpty"
+    blockDeviceMappings:
+      - deviceName: /dev/xvda
+        ebs:
+          deleteOnTermination: true
+          encrypted: true
+          iops: 9000
+          throughput: 125
+          volumeSize: 500Gi
+          volumeType: gp3
+  nodes-ingress:
+    registryCache: "false"
+    expireAfter: "Never"
+    instances:
+      architecture: "multiarch"
+      capacityType:
+        - on-demand
+      minGeneration: 7
+      cores:
+        - "8"
+  nodes-monitoring:
+    labels:
+      prometheus-scrape: "true" #Not Real Use-case
+    additionalNodeTags:
+      innercomponent: monitoring
+    expireAfter: "Never"
+    instances:
+      architecture: "multiarch"
+      capacityType:
+        - on-demand
+    excludeFamilies: []
+  nodes-gpu:
+    labels:
+      gpu: "true"
+    instances:
+      instanceTypes:
+      - g5.xlarge
+      - g5.2xlarge
+      - g5.4xlarge
+      categories:
+      - g
+    limits:
+      cpu: "128"
+    taints:
+      - key: "dedicated"
+        value: "gpu"
+        effect: "NoSchedule"
+  nodes-cilium-managed:
+    instances: {}
+    cilium: true

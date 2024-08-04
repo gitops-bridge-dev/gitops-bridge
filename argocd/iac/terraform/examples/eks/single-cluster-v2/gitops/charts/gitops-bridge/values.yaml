@@ -166,7 +166,13 @@ addons:
         valuesObject:
           environment: '{{.metadata.labels.environment}}'
           clusterName: '{{.metadata.annotations.aws_cluster_name}}'
-          nodeRole: '{{.metadata.annotations.karpenter_node_iam_role_name}}'
+          IamRole: '{{.metadata.annotations.karpenter_node_iam_role_name}}'
+          securityGroupSelectorTerms:
+          - tags:
+              karpenter.sh/discovery: '{{.metadata.annotations.aws_cluster_name}}'
+          subnetSelectorTerms:
+          - tags:
+              karpenter.sh/discovery: '{{.metadata.annotations.aws_cluster_name}}'
   volcano:
     enabled: false
     releaseName: volcano

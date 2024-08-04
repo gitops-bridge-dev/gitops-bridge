@@ -35,6 +35,7 @@ locals {
   region = var.region
 
   environment = var.environment
+  tenant = var.tenant
 
   cluster_version = var.kubernetes_version
 
@@ -98,8 +99,8 @@ locals {
   addons = merge(
     local.aws_addons,
     local.oss_addons,
+    { tenant = local.tenant },
     { kubernetes_version = local.cluster_version },
-    {argocd.argoproj.io/kubernetes-version = local.cluster_version},
     { aws_cluster_name = module.eks.cluster_name }
   )
 

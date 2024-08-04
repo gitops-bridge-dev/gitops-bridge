@@ -1,0 +1,28 @@
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: default
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  amiFamily: {{ .Values.amiFamily | default .Values.global.amiFamily | quote }}
+  role: {{ .Values.nodeRole | default .Values.global.nodeRole | quote }}
+  securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: {{ .Values.clusterName | default .Values.global.clusterName | quote }}
+  subnetSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: {{ .Values.clusterName | default .Values.global.clusterName | quote }}
+  blockDeviceMappings:
+    # Root device
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 10Gi
+        volumeType: gp3
+        encrypted: true
+    # Data device: Container resources such as images and logs
+    - deviceName: /dev/xvdb
+      ebs:
+        volumeSize: {{ .Values.volumeSize | default .Values.global.volumeSize | quote }}
+        volumeType: gp3
+        encrypted: true

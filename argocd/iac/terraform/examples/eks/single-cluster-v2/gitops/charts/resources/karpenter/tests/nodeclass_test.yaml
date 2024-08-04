@@ -1,0 +1,148 @@
+suite: test nodeclasses
+templates:
+  - nodeclass.yaml
+values:
+  - values.yaml
+tests:
+  - it: should only render 2 nodeclasses
+    asserts:
+    - hasDocuments:
+        count: 2
+  - it: Verify nodes-default
+    documentIndex: 0
+    asserts:
+      - isKind:
+          of: EC2NodeClass
+      - equal:
+          path: metadata.name
+          value: nodes-default-amd64
+      - equal:
+          path: spec.role
+          value: eks_nodes_role
+      - isNull:
+          path: spec.instanceProfile
+      - equal:
+          path: spec.amiFamily
+          value: AL2
+      - equal:
+          path: spec.subnetSelectorTerms[0].tags.Name
+          value: eks-subnet-1
+      - equal:
+          path: spec.securityGroupSelectorTerms[1].tags.Name
+          value: my-security-group-2
+      - equal:
+          path: spec.tags.nodegroup
+          value: nodes-default
+      - equal:
+          path: spec.tags.component
+          value: eks-karpenter-nodes
+      - equal:
+          path: spec.tags.cluster
+          value: eks-dev
+      - equal:
+          path: spec.blockDeviceMappings[0].deviceName
+          value: /dev/xvda
+      - equal:
+          path: spec.blockDeviceMappings[0].ebs.volumeSize
+          value: 100Gi
+      - isNull:
+          path: spec.instanceStorePolicy
+      - equal:
+          path: spec.metadataOptions.httpTokens
+          value: required
+      - equal:
+          path: spec.metadataOptions.httpEndpoint
+          value: enabled
+      - equal:
+          path: spec.metadataOptions.httpProtocolIPv6
+          value: disabled
+      - equal:
+          path: spec.metadataOptions.httpPutResponseHopLimit
+          value: 2
+      - equal:
+          path: spec.detailedMonitoring
+          value: false
+      - equal:
+          path: spec.associatePublicIPAddress
+          value: false
+
+
+  - it: Verify nodes-workers
+    documentIndex: 1
+    asserts:
+      - isKind:
+          of: EC2NodeClass
+      - equal:
+          path: metadata.name
+          value: nodes-workers-arm64
+      - isNull:
+          path: spec.role
+      - equal:
+          path: spec.instanceProfile
+          value: arn:aws:blablablabla
+      - equal:
+          path: spec.amiFamily
+          value: BottleRocket
+      - equal:
+          path: spec.amiSelectorTerms[0].tags.environment
+          value: test
+      - equal:
+          path: spec.amiSelectorTerms[1].name
+          value: my-ami
+      - equal:
+          path: spec.amiSelectorTerms[2].id
+          value: ami-123
+      - equal:
+          path: spec.subnetSelectorTerms[0].tags.Name
+          value: eks-subnet-workers-1
+      - equal:
+          path: spec.securityGroupSelectorTerms[1].tags.Name
+          value: my-security-group-workers-2
+      - equal:
+          path: spec.tags.nodegroup
+          value: nodes-workers
+      - equal:
+          path: spec.tags.component
+          value: eks-karpenter-nodes
+      - equal:
+          path: spec.tags.cluster
+          value: eks-dev
+      - equal:
+          path: spec.tags.testtag1
+          value: tag1
+      - equal:
+          path: spec.tags.testtag2
+          value: tag2
+      - equal:
+          path: spec.blockDeviceMappings[0].deviceName
+          value: /dev/xvda
+      - equal:
+          path: spec.blockDeviceMappings[0].ebs.volumeSize
+          value: 150Gi
+      - equal:
+          path: spec.instanceStorePolicy
+          value: test
+      - equal:
+          path: spec.metadataOptions.httpTokens
+          value: required
+      - equal:
+          path: spec.metadataOptions.httpEndpoint
+          value: enabled
+      - equal:
+          path: spec.metadataOptions.httpProtocolIPv6
+          value: disabled
+      - equal:
+          path: spec.metadataOptions.httpPutResponseHopLimit
+          value: 2
+      - equal:
+          path: spec.userData
+          value: |
+            echo "Nodepool name is nodes-workers"
+      - equal:
+          path: spec.detailedMonitoring
+          value: true
+      - equal:
+          path: spec.associatePublicIPAddress
+          value: true
+
+

@@ -1,0 +1,12 @@
+global:
+  clusterName: "foo"
+  volumeSize: "10Gi"
+  nodeRole: "karpenter"
+  amiFamily: Bottlerocket
+  environment: "production"
+# clusterName: "foo"
+# volumeSize: "10Gi"
+# nodeRole: "karpenter"
+# amiFamily: Bottlerocket
+# environment: "production"
+

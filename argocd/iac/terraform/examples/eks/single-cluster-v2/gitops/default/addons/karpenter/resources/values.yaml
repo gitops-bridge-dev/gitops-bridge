@@ -1,3 +1,54 @@
 # karpenter resources like nodepool and nodeclass
 environment: dev
 
+nodeGroups:
+  nodes-default:
+    instances:
+        categories:
+          - c
+          - m
+          - r
+
+instances:
+  minGeneration: 5
+  architecture: "amd64"
+  categories:
+  - m
+  - r
+  cores:
+  - "4"
+  - "8"
+  - "16"
+  capacityType:
+  - spot
+  - on-demand
+  operatingSystems:
+    - linux
+  minGeneration: 5
+
+
+clusterName: in-cluster
+IamRole: myRole
+amiFamily: Bottlerocket
+securityGroupSelectorTerms:
+- tags:
+    karpenter.sh/discovery: 'in-cluster'
+subnetSelectorTerms:
+- tags:
+    karpenter.sh/discovery: 'in-cluster'
+nodeTags:
+  component: gitops-bridge
+  team: gitops-bridge
+blockDeviceMappings:
+- deviceName: /dev/xvda
+  ebs:
+    volumeSize: 10Gi
+    volumeType: gp3
+    encrypted: true
+- deviceName: /dev/xvdb
+  ebs:
+    volumeSize: 20Gi
+    volumeType: gp3
+    encrypted: true
+
+
