@@ -15,8 +15,9 @@ spec:
         {{ $labelName }}: {{ $labelValue }}
         {{- end }}
         {{- end }}
-      {{- if hasKey $v "annotations" }}
       annotations:
+        argocd.argoproj.io/sync-options: "SkipDryRunOnMissingResource=true"
+      {{- if hasKey $v "annotations" }}
         {{- range $annotationName, $annotationValue := $v.annotations }}
         {{ $annotationName }}: {{ $annotationValue }}
         {{- end }}

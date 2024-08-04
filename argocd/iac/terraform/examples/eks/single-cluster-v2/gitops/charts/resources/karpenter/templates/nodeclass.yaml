@@ -7,6 +7,13 @@ apiVersion: karpenter.k8s.aws/{{ $.Values.ApiVersion }}
 kind: EC2NodeClass
 metadata:
   name: "{{ $k }}-{{ $v.instances.architecture | default $.Values.instances.architecture }}"
+  annotations:
+    argocd.argoproj.io/sync-options: "SkipDryRunOnMissingResource=true"
+  {{- if hasKey $v "annotations" }}
+    {{- range $annotationName, $annotationValue := $v.annotations }}
+    {{ $annotationName }}: {{ $annotationValue }}
+    {{- end }}
+  {{- end }}
 spec:
   {{- if hasKey $v "IamRole" }}
   role: {{ $v.IamRole }}
