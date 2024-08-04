@@ -2,7 +2,7 @@ syncPolicyAppSet:
   preserveResourcesOnDeletion: true
 goTemplate: true
 goTemplateOptions: ["missingkey=error"]
-stackPathPrefix: 'stacks/stack-k8sv'
+stackPathPrefix: 'stack-k8sv'
 stackPath: '-addons{{- $tenant := default dict (index .tenants .metadata.labels.tenant) -}}
           {{- $cluster := index (default dict (index $tenant "clusters")) .name -}}
           {{- $env := index (default dict (index $tenant "environments")) .metadata.labels.environment -}}
@@ -15,11 +15,11 @@ stackPath: '-addons{{- $tenant := default dict (index .tenants .metadata.labels.
           {{- else -}}
             {{ .addons_version }}
           {{- end -}}.yaml'
-stackPathConfigPrefix: 'stacks/stack-k8sv'
+stackPathConfigPrefix: 'stack-k8sv'
 stackPathConfig: '-config.yaml'
 repoURLGit: "'{{.metadata.annotations.addons_repo_url}}'"
 repoURLGitRevision: HEAD
-repoURLGitBasePath: "**"
+repoURLGitBasePath: "stacks/"
 repoURLValues: "'{{.metadata.annotations.addons_repo_url}}'"
 repoURLValuesRevision: HEAD
 repoURLValuesBasePath: ""

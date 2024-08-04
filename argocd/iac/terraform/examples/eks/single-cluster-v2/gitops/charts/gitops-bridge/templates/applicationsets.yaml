@@ -102,12 +102,12 @@ spec:
               repoURL: {{ $repoURLGit }}
               revision: {{ $repoURLGitRevision }}
               files:
-              - path: '{{ $stackPathConfigPrefix }}{{`{{.metadata.annotations.kubernetes_version}}`}}{{ $stackPathConfig }}'
+              - path: '{{ $repoURLGitBasePath }}{{ $stackPathConfigPrefix }}{{`{{.metadata.annotations.kubernetes_version}}`}}{{ $stackPathConfig }}'
       - git:
           repoURL: {{ $repoURLGit }}
           revision: {{ $repoURLGitRevision }}
           files:
-          - path: '{{ $stackPathPrefix }}{{`{{.metadata.annotations.kubernetes_version}}`}}{{ $stackPath }}'
+          - path: '{{ $repoURLGitBasePath }}{{ $stackPathPrefix }}{{`{{.metadata.annotations.kubernetes_version}}`}}{{ $stackPath }}'
     {{- end }}
 
 
