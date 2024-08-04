@@ -12,6 +12,9 @@
 {{- $project := .Values.project -}}
 {{- $syncPolicy := .Values.syncPolicy -}}
 {{- $stackPath := .Values.stackPath -}}
+{{- $stackPathPrefix := .Values.stackPathPrefix -}}
+{{- $stackPathConfig := .Values.stackPathConfig -}}
+{{- $stackPathConfigPrefix := .Values.stackPathConfigPrefix -}}
 {{- $valueFiles := .Values.valueFiles -}}
 {{- $valuesFilePrefix := .Values.valuesFilePrefix -}}
 {{- $useValuesFilePrefix := .Values.useValuesFilePrefix -}}
@@ -21,12 +24,12 @@
 {{- $templatePatch := .Values.templatePatch -}}
 {{- $applyNestedSelectors := .Values.applyNestedSelectors -}}
 {{- $hasapplyNestedSelectors := hasKey .Values "applyNestedSelectors" -}}
+
 {{- range $name, $addon := .Values.addons }}
+{{- if or $useSelector $addon.enabled }}
+{{- with $addon -}}
 {{- $nameNormalize := printf "%s" $name | replace "_" "-" | trunc 63 | trimSuffix "-"  -}}
 {{- $addonhasapplyNestedSelectors := hasKey $addon "applyNestedSelectors" -}}
-{{- if $addon.enabled }}
-{{- with $addon -}}
----
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -82,23 +85,32 @@ spec:
   {{- end }}
   generators:
     {{- if $useStack }}
-    - matrix:
-        generators:
+  - matrix:
+      generators:
+      - matrix:
+          generators:
     {{- end }}
-          - clusters:
+          - clusters: # for reason this is need it as second in the matrix, if not the above extracting .tenants doesn't work
               selector:
                 matchLabels:
                   argocd.argoproj.io/secret-type: cluster
-                {{- if and $addon.selector $useSelector }}
-                  {{- toYaml $addon.selector | nindent 16 }}
-                {{- end }}
-          {{- if $useStack }}
+              {{- if and $addon.selector $useSelector }}
+                {{- toYaml $addon.selector | nindent 16 }}
+              {{- end }}
+    {{- if $useStack }}
           - git:
               repoURL: {{ $repoURLGit }}
               revision: {{ $repoURLGitRevision }}
               files:
-              - path: '{{ $stackPath }}'
-          {{- end }}
+              - path: '{{ $stackPathConfigPrefix }}{{`{{.metadata.annotations.kubernetes_version}}`}}{{ $stackPathConfig }}'
+      - git:
+          repoURL: {{ $repoURLGit }}
+          revision: {{ $repoURLGitRevision }}
+          files:
+          - path: '{{ $stackPathPrefix }}{{`{{.metadata.annotations.kubernetes_version}}`}}{{ $stackPath }}'
+    {{- end }}
+
+
   template:
     metadata:
       name: addon-{{ $nameNormalize }}{{ if $useSelector }}-{{`{{.nameNormalized}}`}}{{ end }}

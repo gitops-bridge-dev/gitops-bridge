@@ -99,6 +99,7 @@ locals {
     local.aws_addons,
     local.oss_addons,
     { kubernetes_version = local.cluster_version },
+    {argocd.argoproj.io/kubernetes-version = local.cluster_version},
     { aws_cluster_name = module.eks.cluster_name }
   )
 

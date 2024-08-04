@@ -1,0 +1,31 @@
+file: stack-k8sv1.30-addonsv1.3.yaml
+kubernetes_version: "1.30"
+addons:
+  argocd:
+    chart: argo-cd
+    repoUrl: https://argoproj.github.io/argo-helm
+    targetRevision: "7.3.11"
+  aws_load_balancer_controller:
+    chart: aws-load-balancer-controller
+    repoUrl: https://aws.github.io/eks-charts
+    targetRevision: "1.7.1"
+  gatekeeper:
+    chart: gatekeeper
+    repoUrl: https://open-policy-agent.github.io/gatekeeper/charts
+    targetRevision: "3.15.0"
+  metrics_server:
+    chart: metrics-server
+    repoUrl: https://kubernetes-sigs.github.io/metrics-server
+    targetRevision: "3.12.0"
+  aws_ebs_csi_resources:
+    chart: aws-ebs-csi-classes
+    repoUrl: https://gitops-bridge-dev.github.io/gitops-bridge-helm-charts
+    targetRevision: "1.0.0"
+  karpenter:
+    chart: karpenter/karpenter
+    repoUrl: public.ecr.aws
+    targetRevision: "0.37.0"
+  volcano:
+    chart: volcano
+    repoUrl: https://volcano-sh.github.io/helm-charts
+    targetRevision: "1.9.0"
