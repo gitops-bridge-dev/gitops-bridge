@@ -27,6 +27,7 @@ spec:
             repoURLGitBasePath: '{{.metadata.annotations.addons_repo_basepath}}stacks/'
             repoURLGitRevision: '{{.metadata.annotations.addons_repo_revision}}'
             useSelector: true
+            useStack: true
           ignoreMissingValueFiles: true
           valueFiles:
             - '{{.metadata.annotations.addons_repo_basepath}}default/addons/gitops-bridge/values.yaml'

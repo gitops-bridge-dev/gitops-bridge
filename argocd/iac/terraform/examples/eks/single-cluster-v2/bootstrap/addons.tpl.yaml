@@ -27,6 +27,7 @@ spec:
             repoURLGitBasePath: '{{.metadata.annotations.addons_repo_basepath}}stacks/'
             repoURLGitRevision: '{{.metadata.annotations.addons_repo_revision}}'
             useSelector: false
+            useStack: true
             addons:
 %{ for key, value in addons ~}
 %{ if substr(key, 0, 7) == "enable_" && value == true ~}
