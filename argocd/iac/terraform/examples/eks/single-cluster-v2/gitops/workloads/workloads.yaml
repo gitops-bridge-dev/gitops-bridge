@@ -51,9 +51,10 @@ spec:
         name: '{{.name}}'
       syncPolicy:
         automated:
+          selfHeal: false
           allowEmpty: true
           prune: true
         retry:
           backoff:
             duration: 1m
-          limit: 100
+          limit: -1
