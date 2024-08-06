@@ -1,0 +1,46 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: cluster-addons
+  namespace: argocd
+spec:
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  goTemplate: true
+  goTemplateOptions:
+    - missingkey=error
+  generators:
+    - clusters: {}
+  template:
+    metadata:
+      name: cluster-addons
+    spec:
+      project: default
+      source:
+        repoURL: '{{.metadata.annotations.addons_repo_url}}'
+        path: '{{.metadata.annotations.addons_repo_basepath}}charts/gitops-bridge'
+        targetRevision: '{{.metadata.annotations.addons_repo_revision}}'
+        helm:
+          valuesObject:
+            repoURLValuesBasePath: '{{.metadata.annotations.addons_repo_basepath}}'
+            repoURLValuesRevision: '{{.metadata.annotations.addons_repo_revision}}'
+            repoURLGitBasePath: '{{.metadata.annotations.addons_repo_basepath}}stacks/'
+            repoURLGitRevision: '{{.metadata.annotations.addons_repo_revision}}'
+            useSelector: false
+%{ for key, value in addons ~}
+            ${replace(key, "enable_", "")}:
+              enabled: ${value}
+%{ endfor ~}
+      destination:
+        namespace: argocd
+        name: '{{.name}}'
+      syncPolicy:
+        automated:
+          selfHeal: true
+          allowEmpty: true
+          prune: false
+        retry:
+          limit: 100
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true  # Big CRDs.

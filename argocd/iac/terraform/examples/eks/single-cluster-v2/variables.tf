@@ -90,8 +90,8 @@ variable "gitops_workload_path" {
   default     = "single-cluster-v2/k8s"
 }
 
-variable "platform_stack_version" {
-  description = "Platform stack version"
-  type        = string
-  default     = "v1.30-v1.1.0"
+variable "enable_addon_selector" {
+  description = "select addons using cluster selector"
+  type        = bool
+  default     = false
 }

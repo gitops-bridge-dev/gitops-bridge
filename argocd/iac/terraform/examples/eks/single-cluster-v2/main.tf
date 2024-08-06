@@ -106,9 +106,6 @@ locals {
 
   addons_metadata = merge(
     {
-    platform_stack_version = var.platform_stack_version
-    },
-    {
       aws_karpenter_role_name = "${module.eks.cluster_name}-karpenter"
     },
     module.eks_blueprints_addons.gitops_metadata,
@@ -133,7 +130,7 @@ locals {
   )
 
   argocd_apps = {
-    addons    = file("${path.module}/bootstrap/addons.yaml")
+    addons    = var.enable_addon_selector ? file("${path.module}/bootstrap/addons.yaml"): templatefile("${path.module}/addons.tpl.yaml", {addons: local.addons})
     workloads = file("${path.module}/bootstrap/workloads.yaml")
   }
 
