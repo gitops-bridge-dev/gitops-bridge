@@ -27,6 +27,14 @@ spec:
             repoURLGitBasePath: '{{.metadata.annotations.addons_repo_basepath}}stacks/'
             repoURLGitRevision: '{{.metadata.annotations.addons_repo_revision}}'
             useSelector: true
+          ignoreMissingValueFiles: true
+          valueFiles:
+            - '{{.metadata.annotations.addons_repo_basepath}}default/addons/gitops-bridge/values.yaml'
+            - '{{.metadata.annotations.addons_repo_basepath}}environments/{{.metadata.labels.environment}}/gitops-bridge/values.yaml'
+            - '{{.metadata.annotations.addons_repo_basepath}}clusters/{{.nameNormalized}}/addons/values.yaml'
+            - '{{.metadata.annotations.addons_repo_basepath}}tenants/{{.metadata.labels.tenant}}/default/addons/gitops-bridge/values.yaml'
+            - '{{.metadata.annotations.addons_repo_basepath}}tenants/{{.metadata.labels.tenant}}/environments/{{.metadata.labels.environment}}/gitops-bridge/values.yaml'
+            - '{{.metadata.annotations.addons_repo_basepath}}tenants/{{.metadata.labels.tenant}}/clusters/{{.nameNormalized}}/addons/values.yaml'
       destination:
         namespace: argocd
         name: '{{.name}}'
