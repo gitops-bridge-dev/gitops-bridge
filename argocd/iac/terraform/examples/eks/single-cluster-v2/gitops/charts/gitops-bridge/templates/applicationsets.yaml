@@ -30,6 +30,9 @@
 {{- with $addon -}}
 {{- $nameNormalize := printf "%s" $name | replace "_" "-" | trunc 63 | trimSuffix "-"  -}}
 {{- $addonhasapplyNestedSelectors := hasKey $addon "applyNestedSelectors" -}}
+{{- $version := $addon.targetRevision -}}
+{{- $versionWithoutV := regexReplaceAll "^v" $version "" -}}
+{{- $majorMinor := regexReplaceAll "\\.\\d+$" $versionWithoutV "" }}
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -102,12 +105,12 @@ spec:
               repoURL: {{ $repoURLGit }}
               revision: {{ $repoURLGitRevision }}
               files:
-              - path: '{{ $repoURLGitBasePath }}{{ $stackPathConfigPrefix }}{{`{{.metadata.labels.kubernetes_version}}`}}{{ $stackPathConfig }}'
+              - path: '{{ $repoURLGitBasePath }}{{ $stackPathConfigPrefix }}{{`{{.metadata.labels.kubernetes_version}}`}}/{{ $stackPathConfig }}'
       - git:
           repoURL: {{ $repoURLGit }}
           revision: {{ $repoURLGitRevision }}
           files:
-          - path: '{{ $repoURLGitBasePath }}{{ $stackPathPrefix }}{{`{{.metadata.labels.kubernetes_version}}`}}{{ $stackPath }}'
+          - path: '{{ $repoURLGitBasePath }}{{ $stackPathPrefix }}{{`{{.metadata.labels.kubernetes_version}}`}}/{{ $stackPath }}'
     {{- end }}
 
 
@@ -157,9 +160,11 @@ spec:
           {{- range . }}
             - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/values.yaml'
             {{- if $useStack }}
-            - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/{{`{{.addons.`}}{{ $name }}{{`.targetRevision}}`}}/values.yaml'
+            - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/{{`{{- $version := .addons.`}}{{ $name }}{{`.targetRevision -}}
+{{- $versionWithoutV := regexReplaceAll "^v" $version "" -}}
+{{- $majorMinor := regexReplaceAll "\\.\\d+$" $versionWithoutV "" -}}{{- $majorMinor -}}`}}/values.yaml'
             {{- else }}
-            - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/{{ $addon.targetRevision }}/values.yaml'
+            - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/{{ $majorMinor }}/values.yaml'
             {{- end }}
           {{- end }}
           {{- end }}
@@ -185,9 +190,11 @@ spec:
           {{- range . }}
             - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/resources/values.yaml'
             {{- if $useStack }}
-            - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/{{`{{.addons.`}}{{ $name }}{{`.targetRevision}}`}}/resources/values.yaml'
+            - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/{{`{{- $version := .addons.`}}{{ $name }}{{`.targetRevision -}}
+{{- $versionWithoutV := regexReplaceAll "^v" $version "" -}}
+{{- $majorMinor := regexReplaceAll "\\.\\d+$" $versionWithoutV "" -}}{{- $majorMinor -}}`}}/values.yaml'
             {{- else }}
-            - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/{{ $addon.targetRevision }}/resources/values.yaml'
+            - '$values/{{ $repoURLValuesBasePath }}{{ if $useValuesFilePrefix }}{{ $valuesFilePrefix }}{{ end }}{{ . }}/{{ $nameNormalize }}/{{ $majorMinor }}/resources/values.yaml'
             {{- end }}
           {{- end }}
           {{- end }}

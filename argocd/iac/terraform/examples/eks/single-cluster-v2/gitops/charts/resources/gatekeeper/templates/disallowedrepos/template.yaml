@@ -3,7 +3,7 @@ kind: ConstraintTemplate
 metadata:
   name: k8sdisallowedrepos
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-wave: "1"
     metadata.gatekeeper.sh/title: "Disallowed Repositories"
     metadata.gatekeeper.sh/version: 1.0.0
     description: >-
