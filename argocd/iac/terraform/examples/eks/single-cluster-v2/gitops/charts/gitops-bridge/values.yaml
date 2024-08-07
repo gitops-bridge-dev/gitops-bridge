@@ -266,10 +266,10 @@ addons:
     values:
       cloudWatchLogs:
         enabled: true
-        region: '{{.metadata.annotations.aws_region}}''
-        logGroupName: '{{.metadata.annotations.aws_for_fluentbit_log_group_name}}''
-        logGroupTemplate: '{{.metadata.annotations.aws_for_fluentbit_log_group_name}}/workload/$kubernetes['namespace_name']''
-        logStreamTemplate: '$kubernetes['pod_name'].$kubernetes['container_name']'
+        region: '{{.metadata.annotations.aws_region}}'
+        logGroupName: '{{.metadata.annotations.aws_for_fluentbit_log_group_name}}'
+        logGroupTemplate: '{{.metadata.annotations.aws_for_fluentbit_log_group_name}}/workload/$kubernetes["namespace_name"]'
+        logStreamTemplate: '$kubernetes["pod_name"].$kubernetes["container_name"]'
         logRetentionDays: 90
       serviceAccount:
         name: '{{.metadata.annotations.aws_for_fluentbit_service_account}}'
@@ -357,12 +357,12 @@ addons:
             alb.ingress.kubernetes.io/listen-ports: "[{\"HTTPS\":443}]"
             alb.ingress.kubernetes.io/tags: "Environment=hub,GitOps=true"
           ingressClassName: "alb"
-          hosts: {{.metadata.annotations.argo_workflows_hosts}}
+          hosts: '{{.metadata.annotations.argo_workflows_hosts}}'
           paths:
             - /
           pathType: Prefix
           tls:
-          - hosts: {{.metadata.annotations.argo_workflows_hosts}}
+          - hosts: '{{.metadata.annotations.argo_workflows_hosts}}'
   aws_argocd:
     enabled: false
     releaseName: argocd
@@ -398,7 +398,7 @@ addons:
           values: ['true']
     values:
       global:
-        domain: {{.metadata.annotations.argocd_domain}}
+        domain: '{{.metadata.annotations.argocd_domain}}'
       server:
         service:
           type: "ClusterIP"
@@ -526,7 +526,7 @@ addons:
     values:
       provider: aws
       serviceAccount:
-        name: '{{.metadata.annotations.external_dns_service_account}}'s
+        name: '{{.metadata.annotations.external_dns_service_account}}'
         annotations:
           eks.amazonaws.com/role-arn: '{{.metadata.annotations.external_dns_iam_role_arn}}'
       domainFilters: '{{.metadata.annotations.external_dns_domain_filters}}'
