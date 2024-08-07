@@ -4,19 +4,19 @@ addons:
   argocd:
     chart: argo-cd
     repoUrl: https://argoproj.github.io/argo-helm
-    targetRevision: "7.3.11"
+    targetRevision: "7.4.1"
   aws_load_balancer_controller:
     chart: aws-load-balancer-controller
     repoUrl: https://aws.github.io/eks-charts
-    targetRevision: "1.7.1"
+    targetRevision: "1.8.1"
   gatekeeper:
     chart: gatekeeper
     repoUrl: https://open-policy-agent.github.io/gatekeeper/charts
-    targetRevision: "3.15.0"
+    targetRevision: "3.16.3"
   metrics_server:
     chart: metrics-server
     repoUrl: https://kubernetes-sigs.github.io/metrics-server
-    targetRevision: "3.12.0"
+    targetRevision: "3.12.1"
   aws_ebs_csi_resources:
     chart: aws-ebs-csi-classes
     repoUrl: https://gitops-bridge-dev.github.io/gitops-bridge-helm-charts
@@ -100,8 +100,100 @@ addons:
   aws_velero:
     chart: velero
     repoUrl: https://vmware-tanzu.github.io/helm-charts
-    targetRevision: "2.17.0"
+    targetRevision: "7.1.4"
   aws_secrets_store_csi_driver_provider:
     chart: secrets-store-csi-driver-provider-aws
     repoUrl: https://aws.github.io/secrets-store-csi-driver-provider-aws
-    targetRevision: "0.3.6"
+    targetRevision: "0.3.9"
+  argo_events:
+    chart: argo-events
+    repoUrl: https://argoproj.github.io/argo-helm
+    targetRevision: "2.4.7"
+  argo_rollouts:
+    chart: argo-rollouts
+    repoUrl: https://argoproj.github.io/argo-helm
+    targetRevision: "2.37.3"
+  argo_workflows:
+    chart: argo-workflows
+    repoUrl: https://argoproj.github.io/argo-helm
+    targetRevision: "0.41.14"
+  cluster_proportional_autoscaler:
+    chart: cluster-proportional-autoscaler
+    repoUrl: https://kubernetes-sigs.github.io/cluster-proportional-autoscaler
+    targetRevision: "1.1.0"
+  crossplane:
+    chart: crossplane
+    repoUrl: https://crossplane.github.io/charts
+    targetRevision: "1.16.0"
+  crossplane_helm_provider:
+    chart: crossplane-helm
+    repoUrl: https://gitops-bridge-dev.github.io/gitops-bridge-helm-charts
+    targetRevision: "1.1.0"
+  crossplane_kubernetes_provider:
+    chart: crossplane-kubernetes
+    repoUrl: https://gitops-bridge-dev.github.io/gitops-bridge-helm-charts
+    targetRevision: "1.2.0"
+  gpu_operator:
+    chart: gpu-operator
+    repoUrl: https://nvidia.github.io/gpu-operator
+    targetRevision: "v24.6.0"
+  ingress_nginx:
+    chart: ingress-nginx
+    repoUrl: https://kubernetes.github.io/ingress-nginx
+    targetRevision: "4.11.1"
+  keda:
+    chart: keda
+    repoUrl: https://kedacore.github.io/charts
+    targetRevision: "2.15.0"
+  kube_prometheus_stack:
+    chart: kube-prometheus-stack
+    repoUrl: https://prometheus-community.github.io/helm-charts
+    targetRevision: "61.7.1"
+  kyverno:
+    chart: kyverno
+    repoUrl: https://kyverno.github.io/kyverno
+    targetRevision: "3.2.6"
+  prometheus_adapter:
+    chart: prometheus-adapter
+    repoUrl: https://prometheus-community.github.io/helm-charts
+    targetRevision: "4.10.0"
+  secrets_store_csi_driver:
+    chart: secrets-store-csi-driver
+    repoUrl: https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
+    targetRevision: "1.4.4"
+  vpa:
+    chart: vpa
+    repoUrl: https://charts.fairwinds.com/stable
+    targetRevision: "4.5.0"
+  ack_apigatewayv2:
+    chart: aws-controllers-k8s/apigatewayv2-chart
+    repoUrl: public.ecr.aws
+    targetRevision: "1.0.15"
+  ack_dynamodb:
+    chart: aws-controllers-k8s/dynamodb-chart
+    repoUrl: public.ecr.aws
+    targetRevision: "1.2.13"
+  ack_prometheusservice:
+    chart: aws-controllers-k8s/prometheusservice-chart
+    repoUrl: public.ecr.aws
+    targetRevision: "1.2.13"
+  ack_emrcontainers:
+    chart: aws-controllers-k8s/emrcontainers-chart
+    repoUrl: public.ecr.aws
+    targetRevision: "1.0.12"
+  ack_eventbridge:
+    chart: aws-controllers-k8s/eventbridge-chart
+    repoUrl: public.ecr.aws
+    targetRevision: "1.0.13"
+  ack_rds:
+    chart: aws-controllers-k8s/rds-chart
+    repoUrl: public.ecr.aws
+    targetRevision: "1.4.3"
+  ack_s3:
+    chart: aws-controllers-k8s/s3-chart
+    repoUrl: public.ecr.aws
+    targetRevision: "1.0.14"
+  ack_sfn:
+    chart: aws-controllers-k8s/sfn-chart
+    repoUrl: public.ecr.aws
+    targetRevision: "1.0.13"
