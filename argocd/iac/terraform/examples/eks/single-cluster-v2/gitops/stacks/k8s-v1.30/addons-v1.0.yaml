@@ -41,7 +41,7 @@ addons:
     chart: aws-fsx-csi-driver
     repoUrl: https://kubernetes-sigs.github.io/aws-fsx-csi-driver
     targetRevision: "1.9.0"
-  aws_for_fluent_bit:
+  aws_for_fluentbit:
     chart: aws-for-fluent-bit
     repoUrl: https://aws.github.io/eks-charts
     targetRevision: "0.1.34"
