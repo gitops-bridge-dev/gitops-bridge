@@ -190,7 +190,7 @@ addons:
   aws_cloudwatch_metrics:
     enabled: false
     releaseName: aws-cloudwatch-metrics
-    namespace: '.metadata.annotations.enable_aws_cloudwatch_metrics'
+    namespace: '.metadata.annotations.aws_cloudwatch_metrics_namespace'
     chart: aws-cloudwatch-metrics
     repoUrl: https://aws.github.io/eks-charts
     targetRevision: "0.0.11"
@@ -254,7 +254,7 @@ addons:
   aws_for_fluentbit:
     enabled: false
     releaseName: aws-for-fluentbit
-    namespace: '{{.metadata.annotations.aws_for_fluent_bit_namespace}}'
+    namespace: '{{.metadata.annotations.aws_for_fluentbit_namespace}}'
     chart: aws-for-fluent-bit
     repoUrl: https://aws.github.io/eks-charts
     targetRevision: "0.1.34"
@@ -569,7 +569,7 @@ addons:
   velero:
     enabled: false
     releaseName: velero
-    namespace: '{{.metadata.annotations.aws_velero_namespace}}'
+    namespace: '{{.metadata.annotations.velero_namespace}}'
     chart: velero
     repoUrl: https://vmware-tanzu.github.io/helm-charts
     targetRevision: "7.1.4"
