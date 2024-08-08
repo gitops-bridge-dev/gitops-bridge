@@ -1,0 +1,22 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: karpenter-nodes
+  namespace: argocd
+spec:
+  project: infra
+  sources:
+  - repoURL: 'https://opensource.fiverr.com/public_charts/'
+    chart: karpenter_nodes
+    targetRevision: 1.0.3
+    helm:
+      valueFiles:
+      - $values/karpenter_nodes/eks-dev/common.yaml
+      - $values/karpenter_nodes/eks-dev/nodegroups.yaml
+      - $values/karpenter_nodes/eks-dev/userdata.yaml
+  - repoURL: https://github.com/my_values_repo.git
+    targetRevision: HEAD
+    ref: values
+  destination:
+    server: https://kubernetes

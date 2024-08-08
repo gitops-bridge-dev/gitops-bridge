@@ -1,0 +1,14 @@
+addons_version: "default" # this can be also be a version like v1.5
+tenants:
+  tenant1:
+    addons_version: v1.2
+    environments:
+      dev:
+        addons_version: v1.1
+      staging:
+        addons_version: v1.1
+      prod:
+        addons_version: v1.0
+    clusters:
+      cluster1:
+        addons_version: v1.1

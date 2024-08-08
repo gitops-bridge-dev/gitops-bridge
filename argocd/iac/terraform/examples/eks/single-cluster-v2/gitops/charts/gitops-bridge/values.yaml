@@ -1,0 +1,964 @@
+syncPolicyAppSet:
+  preserveResourcesOnDeletion: true
+goTemplate: true
+goTemplateOptions: ["missingkey=error"]
+stackPathPrefix: 'k8s-v'
+stackPath: 'addons-{{- $tenant := default dict (index .tenants .metadata.labels.tenant) -}}
+          {{- $cluster := index (default dict (index $tenant "clusters")) .name -}}
+          {{- $env := index (default dict (index $tenant "environments")) .metadata.labels.environment -}}
+          {{- if $cluster -}}
+            {{ $cluster.addons_version }}
+          {{- else if $env -}}
+            {{ $env.addons_version }}
+          {{- else if $tenant -}}
+            {{ $tenant.addons_version }}
+          {{- else -}}
+            {{ .addons_version }}
+          {{- end -}}.yaml'
+stackPathConfigPrefix: 'k8s-v'
+stackPathConfig: 'addons-config.yaml'
+repoURLGit: "'{{.metadata.annotations.addons_repo_url}}'"
+repoURLGitRevision: HEAD
+repoURLGitBasePath: "stacks/"
+repoURLValues: "'{{.metadata.annotations.addons_repo_url}}'"
+repoURLValuesRevision: HEAD
+repoURLValuesBasePath: ""
+project: default
+namespace: argocd
+useSelector: false
+useStack: true
+useStackChart: true
+syncPolicy:
+  automated:
+    selfHeal: false
+    allowEmpty: true
+    prune: false
+  retry:
+    limit: -1 # number of failed sync attempt retries; unlimited number of attempts if less than 0
+    backoff:
+      duration: 5s # the amount to back off. Default unit is seconds, but could also be a duration (e.g. "2m", "1h")
+      factor: 2 # a factor to multiply the base duration after each failed retry
+      maxDuration: 10m # the maximum amount of time allowed for the backoff strategy
+  syncOptions:
+    - CreateNamespace=true
+    - ServerSideApply=true  # Big CRDs.
+valueFiles:
+  - default/addons
+  - environments/{{.metadata.labels.environment}}/addons
+  - clusters/{{.nameNormalized}}/addons
+valueFilesResources:
+  - environments/{{.metadata.labels.environment}}/addons
+  - clusters/{{.nameNormalized}}/addons
+useValuesFilePrefix: false
+valuesFilePrefix: tenants/{{.metadata.labels.tenant}}/
+addons:
+  argocd:
+    enabled: false
+    releaseName: argocd
+    namespace: argocd
+    chart: argo-cd
+    repoUrl: https://argoproj.github.io/argo-helm
+    targetRevision: "7.4.1"
+    selector:
+      matchExpressions:
+        - key: enable_argocd
+          operator: In
+          values: ['true']
+  aws_load_balancer_controller:
+    enabled: false
+    releaseName: aws-load-balancer-controller
+    aws_load_balancer_controller:
+    chart: aws-load-balancer-controller
+    repoUrl: https://aws.github.io/eks-charts
+    targetRevision: "1.8.1"
+    namespace: '.metadata.annotations.aws_load_balancer_controller_namespace'
+    annotationsAppSet:
+      argocd.argoproj.io/sync-wave: '-1'
+    selector:
+      matchExpressions:
+        - key: enable_aws_load_balancer_controller
+          operator: In
+          values: ['true']
+    values:
+      vpcId: '{{.metadata.annotations.aws_vpc_id}}'
+      clusterName: '{{.metadata.annotations.aws_cluster_name}}'
+      serviceAccount:
+        name: '{{.metadata.annotations.aws_load_balancer_controller_service_account}}'
+        annotations:
+          eks.amazonaws.com/role-arn: '{{.metadata.annotations.aws_load_balancer_controller_iam_role_arn}}'
+    ignoreDifferences:
+        - kind: Secret
+          name: aws-load-balancer-tls
+          jsonPointers: [/data]
+        - group: admissionregistration.k8s.io
+          kind: MutatingWebhookConfiguration
+          jqPathExpressions: ['.webhooks[].clientConfig.caBundle']
+        - group: admissionregistration.k8s.io
+          kind: ValidatingWebhookConfiguration
+          jqPathExpressions: ['.webhooks[].clientConfig.caBundle']
+  gatekeeper:
+    enabled: false
+    releaseName: gatekeeper
+    namespace: gatekeeper-system
+    chart: gatekeeper
+    repoUrl: https://open-policy-agent.github.io/gatekeeper/charts
+    targetRevision: "3.16.3"
+    selector:
+      matchExpressions:
+        - key: enable_gatekeeper
+          operator: In
+          values: ['true']
+    # resources:
+    #   path: manifests/resources/gatekeeper
+    resources:
+      path: charts/resources/gatekeeper
+      helm:
+        valuesObject:
+          environment: '{{.metadata.labels.environment}}'
+  metrics_server:
+    enabled: false
+    releaseName: metrics-server
+    namespace: kube-system
+    metrics_server:
+    chart: metrics-server
+    repoUrl: https://kubernetes-sigs.github.io/metrics-server
+    targetRevision: "3.12.1"
+    selector:
+      matchExpressions:
+        - key: enable_metrics_server
+          operator: In
+          values: ['true']
+  aws_ebs_csi_resources:
+    enabled: false
+    releaseName: aws-ebs-csi-classes
+    chart: aws-ebs-csi-classes
+    repoUrl: https://gitops-bridge-dev.github.io/gitops-bridge-helm-charts
+    targetRevision: "1.0.0"
+    namespace: kube-system
+    selector:
+      matchExpressions:
+        - key: enable_aws_ebs_csi_resources
+          operator: In
+          values: ['true']
+  karpenter:
+    enabled: false
+    releaseName: karpenter
+    namespace: '.metadata.annotations.karpenter_namespace'
+    chart: karpenter/karpenter
+    repoUrl: public.ecr.aws
+    targetRevision: "0.37.0"
+    selector:
+      matchExpressions:
+        - key: enable_karpenter
+          operator: In
+          values: ['true']
+    values:
+      settings:
+        clusterName: '{{.metadata.annotations.aws_cluster_name}}'
+        interruptionQueue: '{{.metadata.annotations.karpenter_sqs_queue_name}}'
+      serviceAccount:
+        name: '{{.metadata.annotations.karpenter_service_account}}'
+        annotations:
+          eks.amazonaws.com/role-arn: '{{.metadata.annotations.karpenter_iam_role_arn}}'
+    resources:
+      path: charts/resources/karpenter
+      helm:
+        valuesObject:
+          environment: '{{.metadata.labels.environment}}'
+          clusterName: '{{.metadata.annotations.aws_cluster_name}}'
+          IamRole: '{{.metadata.annotations.karpenter_node_iam_role_name}}'
+          securityGroupSelectorTerms:
+          - tags:
+              karpenter.sh/discovery: '{{.metadata.annotations.aws_cluster_name}}'
+          subnetSelectorTerms:
+          - tags:
+              karpenter.sh/discovery: '{{.metadata.annotations.aws_cluster_name}}'
+  volcano:
+    enabled: false
+    releaseName: volcano
+    namespace: volcano-system
+    chart: volcano
+    repoUrl: https://volcano-sh.github.io/helm-charts
+    targetRevision: "1.9.0"
+    selector:
+      matchExpressions:
+        - key: enable_volcano
+          operator: In
+          values: ['true']
+    annotationsApp:
+      argocd.argoproj.io/compare-options: "ServerSideDiff=true" # required for volcano https://github.com/argoproj/argo-cd/issues/18548
+  aws_cloudwatch_metrics:
+    enabled: false
+    releaseName: aws-cloudwatch-metrics
+    namespace: '.metadata.annotations.aws_cloudwatch_metrics_namespace'
+    chart: aws-cloudwatch-metrics
+    repoUrl: https://aws.github.io/eks-charts
+    targetRevision: "0.0.11"
+    selector:
+      matchExpressions:
+        - key: enable_aws_cloudwatch_metrics
+          operator: In
+          values: ['true']
+    values:
+      clusterName: '{{.metadata.annotations.aws_cluster_name}}'
+      serviceAccount:
+        name: '{{.metadata.annotations.aws_cloudwatch_metrics_service_account}}'
+        annotations:
+          eks.amazonaws.com/role-arn: '{{.metadata.annotations.aws_cloudwatch_metrics_iam_role_arn}}'
+  aws_efs_csi_driver:
+    enabled: false
+    releaseName: aws-efs-csi-driver
+    namespace: '{{.metadata.annotations.aws_efs_csi_driver_namespace}}'
+    chart: aws-efs-csi-driver
+    repoUrl: https://kubernetes-sigs.github.io/aws-efs-csi-driver
+    targetRevision: "3.0.7"
+    selector:
+      matchExpressions:
+        - key: enable_aws_efs_csi_driver
+          operator: In
+          values: ['true']
+    values:
+      controller:
+        serviceAccount:
+          name: '{{.metadata.annotations.aws_efs_csi_driver_controller_service_account}}'
+          annotations:
+            eks.amazonaws.com/role-arn: '{{.metadata.annotations.aws_efs_csi_driver_iam_role_arn}}'
+      node:
+        serviceAccount:
+          name: '{{.metadata.annotations.aws_efs_csi_driver_node_service_account}}'
+          annotations:
+            eks.amazonaws.com/role-arn: '{{.metadata.annotations.aws_efs_csi_driver_iam_role_arn}}'
+  enable_aws_fsx_csi_driver:
+    enabled: false
+    releaseName: aws-fsx-csi-driver
+    namespace: '{{.metadata.annotations.aws_fsx_csi_driver_namespace}}'
+    chart: aws-fsx-csi-driver
+    repoUrl: https://kubernetes-sigs.github.io/aws-fsx-csi-driver
+    targetRevision: "1.9.0"
+    selector:
+      matchExpressions:
+        - key: enable_aws_fsx_csi_driver
+          operator: In
+          values: ['true']
+    values:
+      controller:
+        serviceAccount:
+          name: '{{.metadata.annotations.aws_fsx_csi_driver_controller_service_account}}'
+          annotations:
+            eks.amazonaws.com/role-arn: '{{.metadata.annotations.aws_fsx_csi_driver_iam_role_arn}}'
+      node:
+        serviceAccount:
+          name: '{{.metadata.annotations.aws_fsx_csi_driver_node_service_account}}'
+          annotations:
+            eks.amazonaws.com/role-arn: '{{.metadata.annotations.aws_fsx_csi_driver_iam_role_arn}}'
+  aws_for_fluentbit:
+    enabled: false
+    releaseName: aws-for-fluentbit
+    namespace: '{{.metadata.annotations.aws_for_fluentbit_namespace}}'
+    chart: aws-for-fluent-bit
+    repoUrl: https://aws.github.io/eks-charts
+    targetRevision: "0.1.34"
+    selector:
+      matchExpressions:
+        - key: enable_aws_for_fluentbit
+          operator: In
+          values: ['true']
+    values:
+      cloudWatchLogs:
+        enabled: true
+        region: '{{.metadata.annotations.aws_region}}'
+        logGroupName: '{{.metadata.annotations.aws_for_fluentbit_log_group_name}}'
+        logGroupTemplate: "{{.metadata.annotations.aws_for_fluentbit_log_group_name}}/workload/$kubernetes['namespace_name']"
+        logStreamTemplate: "$kubernetes['pod_name'].$kubernetes['container_name']"
+        logRetentionDays: 90
+      serviceAccount:
+        name: '{{.metadata.annotations.aws_for_fluentbit_service_account}}'
+        annotations:
+          eks.amazonaws.com/role-arn: '{{.metadata.annotations.aws_for_fluentbit_iam_role_arn}}'
+  aws_fargate_fluentbit:
+    enabled: false
+    releaseName: aws-fargate-fluentbit
+    namespace: 'kube-system'
+    chart: aws-fargate-fluentbit
+    repoUrl: https://gitops-bridge-dev.github.io/gitops-bridge-helm-charts
+    targetRevision: "1.0.0"
+    selector:
+      matchExpressions:
+        - key: enable_fargate_fluentbit
+          operator: In
+          values: ['true']
+    values:
+      region: '{{.metadata.annotations.aws_region}}'
+      log_group_name: '{{.metadata.annotations.fargate_fluentbit_log_group_name}}'
+      log_stream_prefix: '{{.metadata.annotations.fargate_fluentbit_log_stream_prefix}}'
+  aws_gateway_api_controller:
+    enabled: false
+    releaseName: aws-gateway-api-controller
+    namespace: '{{.metadata.annotations.aws_gateway_api_controller_namespace}}'
+    chart: aws-gateway-controller-chart
+    repoUrl: public.ecr.aws
+    targetRevision: "v1.0.7"
+    selector:
+      matchExpressions:
+        - key: enable_aws_gateway_api_controller
+          operator: In
+          values: ['true']
+    values:
+      awsRegion: '{{.metadata.annotations.aws_region}}'
+      awsAccountId: '{{.metadata.annotations.aws_account_id}}'
+      clusterVpcId: '{{.metadata.annotations.aws_vpc_id}}'
+      serviceAccount:
+        name: '{{.metadata.annotations.aws_gateway_api_controller_service_account}}'
+        annotations:
+          eks.amazonaws.com/role-arn: '{{.metadata.annotations.aws_gateway_api_controller_iam_role_arn}}'
+  aws_node_termination_handler:
+    enabled: false
+    releaseName: aws-node-termination-handler
+    namespace: '{{.metadata.annotations.aws_node_termination_handler_namespace}}'
+    chart: aws-node-termination-handler
+    repoUrl: https://aws.github.io/eks-charts
+    targetRevision: "0.21.0"
+    selector:
+      matchExpressions:
+        - key: enable_aws_node_termination_handler
+          operator: In
+          values: ['true']
+    values:
+      awsRegion: '{{.metadata.annotations.aws_region}}'
+      queueURL: '{{.metadata.annotations.aws_node_termination_handler_sqs_queue_url}}'
+      enableSqsTerminationDraining: true
+      serviceAccount:
+        name: '{{.metadata.annotations.aws_node_termination_handler_service_account}}'
+        annotations:
+          eks.amazonaws.com/role-arn: '{{.metadata.annotations.aws_node_termination_handler_iam_role_arn}}'
+  aws_argo_workflows_ingress:
+    enabled: false
+    releaseName: aws-argo-workflows-ingress
+    namespace: '{{default "argo-worflows" (index .metadata.annotations "argo_workflows_namespace") }}'
+    chart: argo-workflows
+    repoUrl: https://argoproj.github.io/argo-helm
+    targetRevision: "0.41.14"
+    selector:
+      matchExpressions:
+        - key: enable_aws_argo_workflows_ingress
+          operator: In
+          values: ['true']
+    values:
+      server:
+        serviceType: ClusterIP
+        servicePort: "2746"
+        servicePortName: http
+        ingress:
+          enabled: true
+          annotations:
+            alb.ingress.kubernetes.io/scheme: "internet-facing"
+            alb.ingress.kubernetes.io/target-type: "ip"
+            alb.ingress.kubernetes.io/backend-protocol: "HTTP"
+            alb.ingress.kubernetes.io/listen-ports: "[{\"HTTPS\":443}]"
+            alb.ingress.kubernetes.io/tags: "Environment=hub,GitOps=true"
+          ingressClassName: "alb"
+          hosts: '{{.metadata.annotations.argo_workflows_hosts}}'
+          paths:
+            - /
+          pathType: Prefix
+          tls:
+          - hosts: '{{.metadata.annotations.argo_workflows_hosts}}'
+  aws_argocd:
+    enabled: false
+    releaseName: argocd
+    namespace: '{{default "argocd" (index .metadata.annotations "aws_argocd_namespace") }}'
+    chart: argo-cd
+    repoUrl: https://argoproj.github.io/argo-helm
+    targetRevision: "7.4.1"
+    selector:
+      matchExpressions:
+        - key: enable_aws_argocd
+          operator: In
+          values: ['true']
+    values:
+      controller:
+        serviceAccount:
+          annotations:
+            eks.amazonaws.com/role-arn: '{{.metadata.annotations.argocd_iam_role_arn}}'
+      server:
+        serviceAccount:
+          annotations:
+            eks.amazonaws.com/role-arn: '{{.metadata.annotations.argocd_iam_role_arn}}'
+  aws_argocd_ingress:
+    enabled: false
+    releaseName: argocd
+    namespace: '{{default "argocd" (index .metadata.annotations "aws_argocd_ingress_namespace") }}'
+    chart: argo-cd
+    repoUrl: https://argoproj.github.io/argo-helm
+    targetRevision: "7.4.1"
+    selector:
+      matchExpressions:
+        - key: enable_aws_argocd_ingress
+          operator: In
+          values: ['true']
+    values:
+      global:
+        domain: '{{.metadata.annotations.argocd_domain}}'
+      server:
+        service:
+          type: "ClusterIP"
+        ingress:
+          enabled: true
+          controller: "aws"
+          ingressClassName: "alb"
+          annotations:
+            alb.ingress.kubernetes.io/scheme: "internet-facing"
+            alb.ingress.kubernetes.io/target-type: "ip"
+            alb.ingress.kubernetes.io/backend-protocol: "HTTPS"
+            alb.ingress.kubernetes.io/listen-ports: "[{\"HTTP\":80},{\"HTTPS\":443}]"
+            alb.ingress.kubernetes.io/ssl-redirect: "443"
+            alb.ingress.kubernetes.io/tags: "Environment=hub,GitOps=true"
+          aws:
+            serviceType: "ClusterIP"  # Instance mode needs type NodePort, IP mode needs type ClusterIP or NodePort
+            backendProtocolVersion: "GRPC"  # This tells AWS to send traffic from the ALB using HTTP2. Can use gRPC as well if you want to leverage gRPC specific features
+  cert_manager:
+    enabled: false
+    releaseName: cert-manager
+    namespace: '{{.metadata.annotations.cert_manager_namespace}}'
+    chart: cert-manager
+    repoUrl: https://charts.jetstack.io
+    targetRevision: "v1.15.2"
+    selector:
+      matchExpressions:
+        - key: enable_cert_manager
+          operator: In
+          values: ['true']
+    values:
+      installCRDs: true
+      serviceAccount:
+        name: '{{.metadata.annotations.cert_manager_service_account}}'
+        annotations:
+          eks.amazonaws.com/role-arn: '{{.metadata.annotations.cert_manager_iam_role_arn}}'
+  cluster_autoscaler:
+    enabled: false
+    releaseName: cluster-autoscaler
+    namespace: '{{.metadata.annotations.cluster_autoscaler_namespace}}'
+    chart: cluster-autoscaler
+    repoUrl: https://kubernetes.github.io/autoscaler
+    targetRevision: "9.37.0"
+    selector:
+      matchExpressions:
+        - key: enable_cluster_autoscaler
+          operator: In
+          values: ['true']
+    values:
+      image:
+        tag: 'v{{.metada.labels.kubernetes_version}}.0'
+      awsRegion: '{{.metadata.annotations.aws_region}}'
+      autoDiscovery:
+        clusterName: '{{.metadata.annotations.aws_cluster_name}}'
+      rbac:
+        serviceAccount:
+          name: '{{.metadata.annotations.cluster_autoscaler_service_account}}'
+          annotations:
+            eks.amazonaws.com/role-arn: '{{.metadata.annotations.cluster_autoscaler_iam_role_arn}}'
+  aws_crossplane_provider:
+    enabled: false
+    releaseName: crossplane-aws
+    namespace: crossplane-system
+    chart: crossplane-aws
+    repoUrl: https://gitops-bridge-dev.github.io/gitops-bridge-helm-charts
+    targetRevision: "2.2.0"
+    selector:
+      matchExpressions:
+        - key: enable_aws_crossplane_provider
+          operator: In
+          values: ['true']
+    values:
+      deploymentRuntimeConfig:
+        metadata:
+          role_arn: '{{.metadata.annotations.aws_crossplane_iam_role_arn}}'
+      provider:
+        package:
+          registry: xpkg.upbound.io/crossplane-contrib/provider-aws
+          version: "v0.49.1"
+  aws_crossplane_upbound_provider:
+    enabled: false
+    releaseName: crossplane-aws-upbound
+    namespace: crossplane-system
+    chart: crossplane-aws-upbound
+    repoUrl: https://gitops-bridge-dev.github.io/gitops-bridge-helm-charts
+    targetRevision: "3.0.0"
+    selector:
+      matchExpressions:
+        - key: enable_aws_crossplane_upbound_provider
+          operator: In
+          values: ['true']
+    values:
+      deploymentRuntimeConfig:
+        metadata:
+          role_arn: '{{.metadata.annotations.aws_upbound_crossplane_iam_role_arn}}'
+      provider:
+        package:
+          registry: xpkg.upbound.io/upbound
+          version: v1.1.0
+      providers:
+      - cloudfront
+      - cloudwatchlogs
+      - dynamodb
+      - ec2
+      - eks
+      - firehose
+      - iam
+      - kms
+      - lambda
+      - rds
+      - s3
+      - sns
+      - sqs
+  external-dns:
+    enabled: false
+    releaseName: external-dns
+    namespace: '{{.metadata.annotations.external_dns_namespace}}'
+    chart: external-dns
+    repoUrl: https://kubernetes-sigs.github.io/external-dns
+    targetRevision: "1.14.5"
+    selector:
+      matchExpressions:
+        - key: enable_external_dns
+          operator: In
+          values: ['true']
+    values:
+      provider: aws
+      serviceAccount:
+        name: '{{.metadata.annotations.external_dns_service_account}}'
+        annotations:
+          eks.amazonaws.com/role-arn: '{{.metadata.annotations.external_dns_iam_role_arn}}'
+      domainFilters: '{{.metadata.annotations.external_dns_domain_filters}}'
+      txtOwnerId: '{{.metadata.annotations.aws_cluster_name}}'
+      policy: '{{default "upsert-only" (index .metadata.annotations "external_dns_policy")}}'
+  external_secrets:
+    enabled: false
+    releaseName: external-secrets
+    namespace: '{{.metadata.annotations.external_secrets_namespace}}'
+    chart: external-secrets
+    repoUrl: https://charts.external-secrets.io
+    targetRevision: "0.10.0"
+    selector:
+      matchExpressions:
+        - key: enable_external_secrets
+          operator: In
+          values: ['true']
+    values:
+      serviceAccount:
+        name: '{{.metadata.annotations.external_secrets_service_account}}'
+        annotations:
+          eks.amazonaws.com/role-arn: '{{.metadata.annotations.external_secrets_iam_role_arn}}'
+  aws_privateca_issuer:
+    enabled: false
+    releaseName: privateca-issuer
+    namespace: '{{.metadata.annotations.aws_privateca_issuer_namespace}}'
+    chart: aws-privateca-issuer
+    repoUrl: https://cert-manager.github.io/aws-privateca-issuer
+    targetRevision: "v1.3.0"
+    selector:
+      matchExpressions:
+        - key: enable_aws_privateca_issuer
+          operator: In
+          values: ['true']
+    values:
+      serviceAccount:
+        name: '{{.metadata.annotations.aws_privateca_issuer_service_account}}'
+        annotations:
+          eks.amazonaws.com/role-arn: '{{.metadata.annotations.aws_privateca_issuer_iam_role_arn}}'
+  velero:
+    enabled: false
+    releaseName: velero
+    namespace: '{{.metadata.annotations.velero_namespace}}'
+    chart: velero
+    repoUrl: https://vmware-tanzu.github.io/helm-charts
+    targetRevision: "7.1.4"
+    selector:
+      matchExpressions:
+        - key: enable_velero
+          operator: In
+          values: ['true']
+    values:
+      configuration:
+        backupStorageLocation:
+        - name: default
+          provider: aws
+          prefix: '{{.metadata.annotations.velero_backup_s3_bucket_prefix}}'
+          bucket: '{{.metadata.annotations.velero_backup_s3_bucket_name}}'
+          config:
+            region: '{{.metadata.annotations.aws_region}}'
+        volumeSnapshotLocation:
+        - name: default
+          provider: aws
+          config:
+            region: '{{.metadata.annotations.aws_region}}'
+      serviceAccount:
+        server:
+          name: '{{.metadata.annotations.velero_service_account}}'
+          annotations:
+            eks.amazonaws.com/role-arn: '{{.metadata.annotations.velero_iam_role_arn}}'
+      initContainers:
+      - name: velero-plugin-for-aws
+        image: velero/velero-plugin-for-aws:v1.10.0
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - mountPath: /target
+            name: plugins
+  aws_secrets_store_csi_driver_provider:
+    enabled: false
+    releaseName: secrets-store-csi-driver-provider-aws
+    namespace: '{{default "kube-system" (index .metadata.annotations "aws_secrets_store_csi_driver_provider_namespace")}}'
+    chart: secrets-store-csi-driver-provider-aws
+    repoUrl: https://aws.github.io/secrets-store-csi-driver-provider-aws
+    targetRevision: "0.3.9"
+    selector:
+      matchExpressions:
+        - key: enable_aws_secrets_store_csi_driver_provider
+          operator: In
+          values: ['true']
+  argo_events:
+    enabled: false
+    releaseName: argo-events
+    namespace: '{{default "argo-events" (index .metadata.annotations "argo_events_namespace")}}'
+    chart: argo-events
+    repoUrl: https://argoproj.github.io/argo-helm
+    targetRevision: "2.4.7"
+    selector:
+      matchExpressions:
+        - key: enable_argo_events
+          operator: In
+          values: ['true']
+  argo_rollouts:
+    enabled: false
+    releaseName: argo-rollouts
+    namespace: '{{default "argo-rollouts" (index .metadata.annotations "argo_rollouts_namespace")}}'
+    chart: argo-rollouts
+    repoUrl: https://argoproj.github.io/argo-helm
+    targetRevision: "2.37.3"
+    selector:
+      matchExpressions:
+        - key: enable_argo_rollouts
+          operator: In
+          values: ['true']
+  argo_workflows:
+    enabled: false
+    releaseName: argo-workflows
+    namespace: '{{default "argo-workflows" (index .metadata.annotations "argo_workflows_namespace")}}'
+    chart: argo-workflows
+    repoUrl: https://argoproj.github.io/argo-helm
+    targetRevision: "0.41.14"
+    selector:
+      matchExpressions:
+        - key: enable_argo_workflows
+          operator: In
+          values: ['true']
+  cluster_proportional_autoscaler:
+    enabled: false
+    releaseName: cluster-proportional-autoscaler
+    namespace: '{{default "kube-system" (index .metadata.annotations "cluster_proportional_autoscaler_namespace")}}'
+    chart: cluster-proportional-autoscaler
+    repoUrl: https://kubernetes-sigs.github.io/cluster-proportional-autoscaler
+    targetRevision: "1.1.0"
+    selector:
+      matchExpressions:
+        - key: enable_cluster_proportional_autoscaler
+          operator: In
+          values: ['true']
+  crossplane:
+    enabled: false
+    releaseName: crossplane
+    namespace: '{{default "crossplane-system" (index .metadata.annotations "crossplane_namespace")}}'
+    chart: crossplane
+    repoUrl: https://crossplane.github.io/charts
+    targetRevision: "1.16.0"
+    selector:
+      matchExpressions:
+        - key: enable_crossplane
+          operator: In
+          values: ['true']
+    ignoreDifferences:
+    - kind: Deployment
+      group: apps
+      jqPathExpressions:
+        - .spec.template.spec.containers[].env[].valueFrom.resourceFieldRef.divisor
+        - .spec.template.spec.initContainers[].env[].valueFrom.resourceFieldRef.divisor
+  crossplane_helm_provider:
+    enabled: false
+    releaseName: crossplane-helm
+    namespace: '{{default "crossplane-system" (index .metadata.annotations "crossplane_helm_namespace")}}'
+    chart: crossplane-helm
+    repoUrl: https://gitops-bridge-dev.github.io/gitops-bridge-helm-charts
+    targetRevision: "1.1.0"
+    selector:
+      matchExpressions:
+        - key: enable_crossplane_helm_provider
+          operator: In
+          values: ['true']
+  crossplane_kubernetes_provider:
+    enabled: false
+    releaseName: crossplane-kubernetes
+    namespace: '{{default "crossplane-system" (index .metadata.annotations "crossplane_kubernetes_namespace")}}'
+    chart: crossplane-kubernetes
+    repoUrl: https://gitops-bridge-dev.github.io/gitops-bridge-helm-charts
+    targetRevision: "1.2.0"
+    selector:
+      matchExpressions:
+        - key: enable_crossplane_kubernetes_provider
+          operator: In
+          values: ['true']
+  gpu_operator:
+    enabled: false
+    releaseName: gpu-operator
+    namespace: '{{default "gpu-operator" (index .metadata.annotations "gpu_operator_namespace")}}'
+    chart: gpu-operator
+    repoUrl: https://nvidia.github.io/gpu-operator
+    targetRevision: "v24.6.0"
+    selector:
+      matchExpressions:
+        - key: enable_gpu_operator
+          operator: In
+          values: ['true']
+  ingress_nginx:
+    enabled: false
+    releaseName: ingress-nginx
+    namespace: '{{default "ingress-nginx" (index .metadata.annotations "ingress_nginx_namespace")}}'
+    chart: ingress-nginx
+    repoUrl: https://kubernetes.github.io/ingress-nginx
+    targetRevision: "4.11.1"
+    selector:
+      matchExpressions:
+        - key: enable_ingress_nginx
+          operator: In
+          values: ['true']
+  keda:
+    enabled: false
+    releaseName: keda
+    namespace: '{{default "keda" (index .metadata.annotations "keda_namespace")}}'
+    chart: keda
+    repoUrl: https://kedacore.github.io/charts
+    targetRevision: "2.15.0"
+    selector:
+      matchExpressions:
+        - key: enable_keda
+          operator: In
+          values: ['true']
+  kube_prometheus_stack:
+    enabled: false
+    releaseName: kube-prometheus-stack
+    namespace: '{{default "kube-prometheus-stack" (index .metadata.annotations "kube_prometheus_stack_namespace")}}'
+    chart: kube-prometheus-stack
+    repoUrl: https://prometheus-community.github.io/helm-charts
+    targetRevision: "61.7.1"
+    selector:
+      matchExpressions:
+        - key: enable_kube_prometheus_stack
+          operator: In
+          values: ['true']
+  kyverno:
+    enabled: false
+    releaseName: kyverno
+    namespace: '{{default "kyverno" (index .metadata.annotations "kyverno_namespace")}}'
+    chart: kyverno
+    repoUrl: https://kyverno.github.io/kyverno
+    targetRevision: "3.2.6"
+    selector:
+      matchExpressions:
+        - key: enable_kyverno
+          operator: In
+          values: ['true']
+  prometheus_adapter:
+    enabled: false
+    releaseName: prometheus-adapter
+    namespace: '{{default "prometheus-adapter" (index .metadata.annotations "prometheus_adapter_namespace")}}'
+    chart: prometheus-adapter
+    repoUrl: https://prometheus-community.github.io/helm-charts
+    targetRevision: "4.10.0"
+    selector:
+      matchExpressions:
+        - key: enable_prometheus_adapter
+          operator: In
+          values: ['true']
+  secrets_store_csi_driver:
+    enabled: false
+    releaseName: secrets-store-csi-driver
+    namespace: '{{default "kube-system" (index .metadata.annotations "secrets_store_csi_driver_namespace")}}'
+    chart: secrets-store-csi-driver
+    repoUrl: https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
+    targetRevision: "1.4.4"
+    selector:
+      matchExpressions:
+        - key: enable_secrets_store_csi_driver
+          operator: In
+          values: ['true']
+  vpa:
+    enabled: false
+    releaseName: vpa
+    namespace: '{{default "vpa" (index .metadata.annotations "vpa_namespace")}}'
+    chart: vpa
+    repoUrl: https://charts.fairwinds.com/stable
+    targetRevision: "4.5.0"
+    selector:
+      matchExpressions:
+        - key: enable_vpa
+          operator: In
+          values: ['true']
+  ack_apigatewayv2:
+    enabled: false
+    releaseName: ack-apigatewayv2
+    namespace: '{{default "aws-controllers-k8s" (index .metadata.annotations "ack_apigatewayv2_namespace")}}'
+    chart: aws-controllers-k8s/apigatewayv2-chart
+    repoUrl: public.ecr.aws
+    targetRevision: "1.0.15"
+    selector:
+      matchExpressions:
+        - key: enable_ack_apigatewayv2
+          operator: In
+          values: ['true']
+    values:
+      aws:
+        region: '{{.metadata.annotations.aws_region}}'
+      nameOverride: 'aws-controllers-k8s'
+      serviceAccount:
+        name: '{{.metadata.annotations.ack_apigatewayv2_service_account}}'
+        annotations:
+          eks.amazonaws.com/role-arn: '{{.metadata.annotations.ack_apigatewayv2_iam_role_arn}}'
+  ack_dynamodb:
+    enabled: false
+    releaseName: ack-dynamodb
+    namespace: '{{default "aws-controllers-k8s" (index .metadata.annotations "ack_dynamodb_namespace")}}'
+    chart: aws-controllers-k8s/dynamodb-chart
+    repoUrl: public.ecr.aws
+    targetRevision: "1.2.13"
+    selector:
+      matchExpressions:
+        - key: enable_ack_dynamodb
+          operator: In
+          values: ['true']
+    values:
+      aws:
+        region: '{{.metadata.annotations.aws_region}}'
+      nameOverride: 'aws-controllers-k8s'
+      serviceAccount:
+        name: '{{.metadata.annotations.ack_dynamodb_service_account}}'
+        annotations:
+          eks.amazonaws.com/role-arn: '{{.metadata.annotations.ack_dynamodb_iam_role_arn}}'
+  ack_prometheusservice:
+    enabled: false
+    releaseName: ack-prometheusservice
+    namespace: '{{default "aws-controllers-k8s" (index .metadata.annotations "ack_prometheusservice_namespace")}}'
+    chart: aws-controllers-k8s/prometheusservice-chart
+    repoUrl: public.ecr.aws
+    targetRevision: "1.2.13"
+    selector:
+      matchExpressions:
+        - key: enable_ack_prometheusservice
+          operator: In
+          values: ['true']
+    values:
+      aws:
+        region: '{{.metadata.annotations.aws_region}}'
+      nameOverride: 'aws-controllers-k8s'
+      serviceAccount:
+        name: '{{.metadata.annotations.ack_prometheusservice_service_account}}'
+        annotations:
+          eks.amazonaws.com/role-arn: '{{.metadata.annotations.ack_prometheusservice_iam_role_arn}}'
+  ack_emrcontainers:
+    enabled: false
+    releaseName: ack-emrcontainers
+    namespace: '{{default "aws-controllers-k8s" (index .metadata.annotations "ack_emrcontainers_namespace")}}'
+    chart: aws-controllers-k8s/emrcontainers-chart
+    repoUrl: public.ecr.aws
+    targetRevision: "1.0.12"
+    selector:
+      matchExpressions:
+        - key: enable_ack_emrcontainers
+          operator: In
+          values: ['true']
+    values:
+      aws:
+        region: '{{.metadata.annotations.aws_region}}'
+      nameOverride: 'aws-controllers-k8s'
+      serviceAccount:
+        name: '{{.metadata.annotations.ack_emrcontainers_service_account}}'
+        annotations:
+          eks.amazonaws.com/role-arn: '{{.metadata.annotations.ack_emrcontainers_iam_role_arn}}'
+  ack_eventbridge:
+    enabled: false
+    releaseName: ack-eventbridge
+    namespace: '{{default "aws-controllers-k8s" (index .metadata.annotations "ack_eventbridge_namespace")}}'
+    chart: aws-controllers-k8s/eventbridge-chart
+    repoUrl: public.ecr.aws
+    targetRevision: "1.0.13"
+    selector:
+      matchExpressions:
+        - key: enable_ack_eventbridge
+          operator: In
+          values: ['true']
+    values:
+      aws:
+        region: '{{.metadata.annotations.aws_region}}'
+      nameOverride: 'aws-controllers-k8s'
+      serviceAccount:
+        name: '{{.metadata.annotations.ack_eventbridge_service_account}}'
+        annotations:
+          eks.amazonaws.com/role-arn: '{{.metadata.annotations.ack_eventbridge_iam_role_arn}}'
+  ack_rds:
+    enabled: false
+    releaseName: ack-rds
+    namespace: '{{default "aws-controllers-k8s" (index .metadata.annotations "ack_rds_namespace")}}'
+    chart: aws-controllers-k8s/rds-chart
+    repoUrl: public.ecr.aws
+    targetRevision: "1.4.3"
+    selector:
+      matchExpressions:
+        - key: enable_ack_rds
+          operator: In
+          values: ['true']
+    values:
+      aws:
+        region: '{{.metadata.annotations.aws_region}}'
+      nameOverride: 'aws-controllers-k8s'
+      serviceAccount:
+        name: '{{.metadata.annotations.ack_rds_service_account}}'
+        annotations:
+          eks.amazonaws.com/role-arn: '{{.metadata.annotations.ack_rds_iam_role_arn}}'
+  ack_s3:
+    enabled: false
+    releaseName: ack-s3
+    namespace: '{{default "aws-controllers-k8s" (index .metadata.annotations "ack_s3_namespace")}}'
+    chart: aws-controllers-k8s/s3-chart
+    repoUrl: public.ecr.aws
+    targetRevision: "1.0.14"
+    selector:
+      matchExpressions:
+        - key: enable_ack_s3
+          operator: In
+          values: ['true']
+    values:
+      aws:
+        region: '{{.metadata.annotations.aws_region}}'
+      nameOverride: 'aws-controllers-k8s'
+      serviceAccount:
+        name: '{{.metadata.annotations.ack_s3_service_account}}'
+        annotations:
+          eks.amazonaws.com/role-arn: '{{.metadata.annotations.ack_s3_iam_role_arn}}'
+  ack_sfn:
+    enabled: false
+    releaseName: ack-sfn
+    namespace: '{{default "aws-controllers-k8s" (index .metadata.annotations "ack_sfn_namespace")}}'
+    chart: aws-controllers-k8s/sfn-chart
+    repoUrl: public.ecr.aws
+    targetRevision: "1.0.13"
+    selector:
+      matchExpressions:
+        - key: enable_ack_sfn
+          operator: In
+          values: ['true']
+    values:
+      aws:
+        region: '{{.metadata.annotations.aws_region}}'
+      nameOverride: 'aws-controllers-k8s'
+      serviceAccount:
+        name: '{{.metadata.annotations.ack_sfn_service_account}}'
+        annotations:
+          eks.amazonaws.com/role-arn: '{{.metadata.annotations.ack_sfn_iam_role_arn}}'

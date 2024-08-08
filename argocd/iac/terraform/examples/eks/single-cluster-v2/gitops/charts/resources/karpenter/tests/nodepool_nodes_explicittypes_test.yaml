@@ -1,0 +1,63 @@
+suite: test nodepool - nodes-explicittypes
+templates:
+  - nodepool.yaml
+values:
+  - values.yaml
+
+tests:
+  - it: Verify nodes-explicittypes metadata
+    documentIndex: 1
+    asserts:
+      - isKind:
+          of: NodePool
+      - equal:
+          path: metadata.name
+          value: nodes-explicittypes-amd64
+      - equal:
+          path: spec.template.metadata.labels.cluster
+          value: eks-dev
+      - equal:
+          path: spec.template.metadata.labels.nodegroup
+          value: nodes-explicittypes
+      - equal:
+          path: spec.template.spec.nodeClassRef.name
+          value: default
+
+  - it: Verify nodes-explicittypes requirements
+    documentIndex: 1
+    asserts:
+      - equal:
+          path: spec.template.spec.requirements[0].key
+          value: "topology.kubernetes.io/zone"
+      - equal:
+          path: spec.template.spec.requirements[1].key
+          value: "kubernetes.io/arch"
+      - equal:
+          path: spec.template.spec.requirements[2].key
+          value: "karpenter.sh/capacity-type"
+      - equal:
+          path: spec.template.spec.requirements[3].key
+          value: "kubernetes.io/os"
+      - equal:
+          path: spec.template.spec.requirements[4].key
+          value: "karpenter.k8s.aws/instance-size"
+      - equal:
+          path: spec.template.spec.requirements[5].key
+          value: "node.kubernetes.io/instance-type"
+      - equal:
+          path: spec.template.spec.requirements[5].values[0]
+          value: t3a.large
+      - equal:
+          path: spec.template.spec.requirements[5].values[1]
+          value: t3a.xlarge
+      - isNull:
+          path: spec.template.spec.requirements[6]
+      - equal:
+          path: spec.template.spec.startupTaints[0].key
+          value: "node.cilium.io/agent-not-ready"
+      - equal:
+          path: spec.template.spec.startupTaints[0].value
+          value: "true"
+      - equal:
+          path: spec.template.spec.startupTaints[0].effect
+          value: NoExecute

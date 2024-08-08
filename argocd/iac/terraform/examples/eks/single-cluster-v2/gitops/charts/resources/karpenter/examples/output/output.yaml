@@ -1,0 +1,1931 @@
+---
+# Source: karpenter_nodes/templates/priorityclass.yaml
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: karpenter-headroom
+value: -1000000
+globalDefault: false
+description: "Used for dummy pods to generate headroom in karpenter"
+---
+# Source: karpenter_nodes/templates/nodeclass.yaml
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: "nodes-canary-amd64"
+spec:
+  role: eks_nodes_role
+  amiFamily: AL2
+  amiSelectorTerms:
+  subnetSelectorTerms:
+    - tags:
+        Name: eks-dev-eu-west-1a
+    - tags:
+        Name: eks-dev-eu-west-1b
+    - tags:
+        Name: eks-dev-eu-west-1c
+  securityGroupSelectorTerms:
+    - tags:
+        Name: eks-nodes
+    - tags:
+        Name: eks-dev
+  tags:
+    cluster: eks-dev
+    nodegroup: nodes-canary
+    component: eks-karpenter-nodes
+    created_by: helm
+    team: devops
+    managed_by: karpenter
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        deleteOnTermination: true
+        encrypted: true
+        iops: 3000
+        throughput: 125
+        volumeSize: 100Gi
+        volumeType: gp3
+  detailedMonitoring: false
+  associatePublicIPAddress: false
+  metadataOptions:
+    httpEndpoint: enabled
+    httpProtocolIPv6: disabled
+    httpPutResponseHopLimit: 2
+    httpTokens: required
+  userData: |
+    CLUSTER_NAME=eks-dev
+    INSTANCEGROUP=nodes-canary
+    INSTANCE_ID=`/usr/bin/ec2-metadata --instance-id | awk '{print $2}'`
+    ID_SUFFIX=`/usr/bin/ec2-metadata --instance-id | awk '{print substr($0,length-5,6)}'`
+    HOSTNAME="${CLUSTER_NAME}-${INSTANCEGROUP}-$ID_SUFFIX"
+    hostname $HOSTNAME
+    echo $HOSTNAME > /etc/hostname
+    aws ec2 create-tags --resources $INSTANCE_ID --tags=Key=Name,Value=$HOSTNAME
+    sed -i "s/127.0.0.1 [0-9a-z-]*\s*localhost/127.0.0.1 $HOSTNAME localhost/" /etc/hosts
+    # Sysctl changes
+    ## Disable IPv6
+    cat <<EOF > /etc/sysctl.d/10-disable-ipv6.conf
+    # disable ipv6 config
+    net.ipv6.conf.all.disable_ipv6 = 1
+    net.ipv6.conf.default.disable_ipv6 = 1
+    net.ipv6.conf.lo.disable_ipv6 = 1
+    EOF
+    ## Stolen from this guy: https://blog.codeship.com/running-1000-containers-in-docker-swarm/
+    cat <<EOF > /etc/sysctl.d/99-kube-net.conf
+    # Have a larger connection range available
+    net.ipv4.ip_local_port_range=1024 65000
+    # Reuse closed sockets faster
+    net.ipv4.tcp_tw_reuse=1
+    net.ipv4.tcp_fin_timeout=15
+    # The maximum number of "backlogged sockets".  Default is 128.
+    net.core.somaxconn=4096
+    net.core.netdev_max_backlog=4096
+    # 16MB per socket - which sounds like a lot,
+    # but will virtually never consume that much.
+    net.core.rmem_max=16777216
+    net.core.wmem_max=16777216
+    # Various network tunables
+    net.ipv4.tcp_max_syn_backlog=20480
+    net.ipv4.tcp_max_tw_buckets=400000
+    net.ipv4.tcp_no_metrics_save=1
+    net.ipv4.tcp_rmem=4096 87380 16777216
+    net.ipv4.tcp_syn_retries=2
+    net.ipv4.tcp_synack_retries=2
+    net.ipv4.tcp_wmem=4096 65536 16777216
+    #vm.min_free_kbytes=65536
+    # Connection tracking to prevent dropped connections (usually issue on LBs)
+    net.netfilter.nf_conntrack_max=262144
+    net.ipv4.netfilter.ip_conntrack_generic_timeout=120
+    net.netfilter.nf_conntrack_tcp_timeout_established=86400
+    # ARP cache settings for a highly loaded docker swarm
+    net.ipv4.neigh.default.gc_thresh1=8096
+    net.ipv4.neigh.default.gc_thresh2=12288
+    net.ipv4.neigh.default.gc_thresh3=16384
+    EOF
+    systemctl restart systemd-sysctl.service
+    #Increase RegistryQPS
+    echo "$(jq '.registryPullQPS=100' /etc/kubernetes/kubelet/kubelet-config.json)" > /etc/kubernetes/kubelet/kubelet-config.json
+    echo "$(jq '.registryBurst=200' /etc/kubernetes/kubelet/kubelet-config.json)" > /etc/kubernetes/kubelet/kubelet-config.json
+    mkdir -p /etc/containerd/certs.d/docker.io
+    cat<<EOF>/etc/containerd/certs.d/docker.io/hosts.toml
+    server = "https://registry-1.docker.io"
+    [host."http://registry"]
+      capabilities = ["pull", "resolve"]
+      skip_verify = true
+    EOF
+---
+# Source: karpenter_nodes/templates/nodeclass.yaml
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: "nodes-cilium-managed-amd64"
+spec:
+  role: eks_nodes_role
+  amiFamily: AL2
+  amiSelectorTerms:
+  subnetSelectorTerms:
+    - tags:
+        Name: eks-dev-eu-west-1a
+    - tags:
+        Name: eks-dev-eu-west-1b
+    - tags:
+        Name: eks-dev-eu-west-1c
+  securityGroupSelectorTerms:
+    - tags:
+        Name: eks-nodes
+    - tags:
+        Name: eks-dev
+  tags:
+    cluster: eks-dev
+    nodegroup: nodes-cilium-managed
+    component: eks-karpenter-nodes
+    created_by: helm
+    team: devops
+    managed_by: karpenter
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        deleteOnTermination: true
+        encrypted: true
+        iops: 3000
+        throughput: 125
+        volumeSize: 100Gi
+        volumeType: gp3
+  detailedMonitoring: false
+  associatePublicIPAddress: false
+  metadataOptions:
+    httpEndpoint: enabled
+    httpProtocolIPv6: disabled
+    httpPutResponseHopLimit: 2
+    httpTokens: required
+  userData: |
+    CLUSTER_NAME=eks-dev
+    INSTANCEGROUP=nodes-cilium-managed
+    INSTANCE_ID=`/usr/bin/ec2-metadata --instance-id | awk '{print $2}'`
+    ID_SUFFIX=`/usr/bin/ec2-metadata --instance-id | awk '{print substr($0,length-5,6)}'`
+    HOSTNAME="${CLUSTER_NAME}-${INSTANCEGROUP}-$ID_SUFFIX"
+    hostname $HOSTNAME
+    echo $HOSTNAME > /etc/hostname
+    aws ec2 create-tags --resources $INSTANCE_ID --tags=Key=Name,Value=$HOSTNAME
+    sed -i "s/127.0.0.1 [0-9a-z-]*\s*localhost/127.0.0.1 $HOSTNAME localhost/" /etc/hosts
+    # Sysctl changes
+    ## Disable IPv6
+    cat <<EOF > /etc/sysctl.d/10-disable-ipv6.conf
+    # disable ipv6 config
+    net.ipv6.conf.all.disable_ipv6 = 1
+    net.ipv6.conf.default.disable_ipv6 = 1
+    net.ipv6.conf.lo.disable_ipv6 = 1
+    EOF
+    ## Stolen from this guy: https://blog.codeship.com/running-1000-containers-in-docker-swarm/
+    cat <<EOF > /etc/sysctl.d/99-kube-net.conf
+    # Have a larger connection range available
+    net.ipv4.ip_local_port_range=1024 65000
+    # Reuse closed sockets faster
+    net.ipv4.tcp_tw_reuse=1
+    net.ipv4.tcp_fin_timeout=15
+    # The maximum number of "backlogged sockets".  Default is 128.
+    net.core.somaxconn=4096
+    net.core.netdev_max_backlog=4096
+    # 16MB per socket - which sounds like a lot,
+    # but will virtually never consume that much.
+    net.core.rmem_max=16777216
+    net.core.wmem_max=16777216
+    # Various network tunables
+    net.ipv4.tcp_max_syn_backlog=20480
+    net.ipv4.tcp_max_tw_buckets=400000
+    net.ipv4.tcp_no_metrics_save=1
+    net.ipv4.tcp_rmem=4096 87380 16777216
+    net.ipv4.tcp_syn_retries=2
+    net.ipv4.tcp_synack_retries=2
+    net.ipv4.tcp_wmem=4096 65536 16777216
+    #vm.min_free_kbytes=65536
+    # Connection tracking to prevent dropped connections (usually issue on LBs)
+    net.netfilter.nf_conntrack_max=262144
+    net.ipv4.netfilter.ip_conntrack_generic_timeout=120
+    net.netfilter.nf_conntrack_tcp_timeout_established=86400
+    # ARP cache settings for a highly loaded docker swarm
+    net.ipv4.neigh.default.gc_thresh1=8096
+    net.ipv4.neigh.default.gc_thresh2=12288
+    net.ipv4.neigh.default.gc_thresh3=16384
+    EOF
+    systemctl restart systemd-sysctl.service
+    #Increase RegistryQPS
+    echo "$(jq '.registryPullQPS=100' /etc/kubernetes/kubelet/kubelet-config.json)" > /etc/kubernetes/kubelet/kubelet-config.json
+    echo "$(jq '.registryBurst=200' /etc/kubernetes/kubelet/kubelet-config.json)" > /etc/kubernetes/kubelet/kubelet-config.json
+    mkdir -p /etc/containerd/certs.d/docker.io
+    cat<<EOF>/etc/containerd/certs.d/docker.io/hosts.toml
+    server = "https://registry-1.docker.io"
+    [host."http://registry"]
+      capabilities = ["pull", "resolve"]
+      skip_verify = true
+    EOF
+---
+# Source: karpenter_nodes/templates/nodeclass.yaml
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: "nodes-default-amd64"
+spec:
+  role: eks_nodes_role
+  amiFamily: AL2
+  amiSelectorTerms:
+  subnetSelectorTerms:
+    - tags:
+        Name: eks-dev-eu-west-1a
+    - tags:
+        Name: eks-dev-eu-west-1b
+    - tags:
+        Name: eks-dev-eu-west-1c
+  securityGroupSelectorTerms:
+    - tags:
+        Name: eks-nodes
+    - tags:
+        Name: eks-dev
+  tags:
+    cluster: eks-dev
+    nodegroup: nodes-default
+    component: eks-karpenter-nodes
+    created_by: helm
+    team: devops
+    managed_by: karpenter
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        deleteOnTermination: true
+        encrypted: true
+        iops: 3000
+        throughput: 125
+        volumeSize: 100Gi
+        volumeType: gp3
+  detailedMonitoring: false
+  associatePublicIPAddress: false
+  metadataOptions:
+    httpEndpoint: enabled
+    httpProtocolIPv6: disabled
+    httpPutResponseHopLimit: 2
+    httpTokens: required
+  userData: |
+    CLUSTER_NAME=eks-dev
+    INSTANCEGROUP=nodes-default
+    INSTANCE_ID=`/usr/bin/ec2-metadata --instance-id | awk '{print $2}'`
+    ID_SUFFIX=`/usr/bin/ec2-metadata --instance-id | awk '{print substr($0,length-5,6)}'`
+    HOSTNAME="${CLUSTER_NAME}-${INSTANCEGROUP}-$ID_SUFFIX"
+    hostname $HOSTNAME
+    echo $HOSTNAME > /etc/hostname
+    aws ec2 create-tags --resources $INSTANCE_ID --tags=Key=Name,Value=$HOSTNAME
+    sed -i "s/127.0.0.1 [0-9a-z-]*\s*localhost/127.0.0.1 $HOSTNAME localhost/" /etc/hosts
+    # Sysctl changes
+    ## Disable IPv6
+    cat <<EOF > /etc/sysctl.d/10-disable-ipv6.conf
+    # disable ipv6 config
+    net.ipv6.conf.all.disable_ipv6 = 1
+    net.ipv6.conf.default.disable_ipv6 = 1
+    net.ipv6.conf.lo.disable_ipv6 = 1
+    EOF
+    ## Stolen from this guy: https://blog.codeship.com/running-1000-containers-in-docker-swarm/
+    cat <<EOF > /etc/sysctl.d/99-kube-net.conf
+    # Have a larger connection range available
+    net.ipv4.ip_local_port_range=1024 65000
+    # Reuse closed sockets faster
+    net.ipv4.tcp_tw_reuse=1
+    net.ipv4.tcp_fin_timeout=15
+    # The maximum number of "backlogged sockets".  Default is 128.
+    net.core.somaxconn=4096
+    net.core.netdev_max_backlog=4096
+    # 16MB per socket - which sounds like a lot,
+    # but will virtually never consume that much.
+    net.core.rmem_max=16777216
+    net.core.wmem_max=16777216
+    # Various network tunables
+    net.ipv4.tcp_max_syn_backlog=20480
+    net.ipv4.tcp_max_tw_buckets=400000
+    net.ipv4.tcp_no_metrics_save=1
+    net.ipv4.tcp_rmem=4096 87380 16777216
+    net.ipv4.tcp_syn_retries=2
+    net.ipv4.tcp_synack_retries=2
+    net.ipv4.tcp_wmem=4096 65536 16777216
+    #vm.min_free_kbytes=65536
+    # Connection tracking to prevent dropped connections (usually issue on LBs)
+    net.netfilter.nf_conntrack_max=262144
+    net.ipv4.netfilter.ip_conntrack_generic_timeout=120
+    net.netfilter.nf_conntrack_tcp_timeout_established=86400
+    # ARP cache settings for a highly loaded docker swarm
+    net.ipv4.neigh.default.gc_thresh1=8096
+    net.ipv4.neigh.default.gc_thresh2=12288
+    net.ipv4.neigh.default.gc_thresh3=16384
+    EOF
+    systemctl restart systemd-sysctl.service
+    #Increase RegistryQPS
+    echo "$(jq '.registryPullQPS=100' /etc/kubernetes/kubelet/kubelet-config.json)" > /etc/kubernetes/kubelet/kubelet-config.json
+    echo "$(jq '.registryBurst=200' /etc/kubernetes/kubelet/kubelet-config.json)" > /etc/kubernetes/kubelet/kubelet-config.json
+    mkdir -p /etc/containerd/certs.d/docker.io
+    cat<<EOF>/etc/containerd/certs.d/docker.io/hosts.toml
+    server = "https://registry-1.docker.io"
+    [host."http://registry"]
+      capabilities = ["pull", "resolve"]
+      skip_verify = true
+    EOF
+---
+# Source: karpenter_nodes/templates/nodeclass.yaml
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: "nodes-gpu-amd64"
+spec:
+  role: eks_nodes_role
+  amiFamily: AL2
+  amiSelectorTerms:
+  subnetSelectorTerms:
+    - tags:
+        Name: eks-dev-eu-west-1a
+    - tags:
+        Name: eks-dev-eu-west-1b
+    - tags:
+        Name: eks-dev-eu-west-1c
+  securityGroupSelectorTerms:
+    - tags:
+        Name: eks-nodes
+    - tags:
+        Name: eks-dev
+  tags:
+    cluster: eks-dev
+    nodegroup: nodes-gpu
+    component: eks-karpenter-nodes
+    created_by: helm
+    team: devops
+    managed_by: karpenter
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        deleteOnTermination: true
+        encrypted: true
+        iops: 3000
+        throughput: 125
+        volumeSize: 100Gi
+        volumeType: gp3
+  detailedMonitoring: false
+  associatePublicIPAddress: false
+  metadataOptions:
+    httpEndpoint: enabled
+    httpProtocolIPv6: disabled
+    httpPutResponseHopLimit: 2
+    httpTokens: required
+  userData: |
+    CLUSTER_NAME=eks-dev
+    INSTANCEGROUP=nodes-gpu
+    INSTANCE_ID=`/usr/bin/ec2-metadata --instance-id | awk '{print $2}'`
+    ID_SUFFIX=`/usr/bin/ec2-metadata --instance-id | awk '{print substr($0,length-5,6)}'`
+    HOSTNAME="${CLUSTER_NAME}-${INSTANCEGROUP}-$ID_SUFFIX"
+    hostname $HOSTNAME
+    echo $HOSTNAME > /etc/hostname
+    aws ec2 create-tags --resources $INSTANCE_ID --tags=Key=Name,Value=$HOSTNAME
+    sed -i "s/127.0.0.1 [0-9a-z-]*\s*localhost/127.0.0.1 $HOSTNAME localhost/" /etc/hosts
+    # Sysctl changes
+    ## Disable IPv6
+    cat <<EOF > /etc/sysctl.d/10-disable-ipv6.conf
+    # disable ipv6 config
+    net.ipv6.conf.all.disable_ipv6 = 1
+    net.ipv6.conf.default.disable_ipv6 = 1
+    net.ipv6.conf.lo.disable_ipv6 = 1
+    EOF
+    ## Stolen from this guy: https://blog.codeship.com/running-1000-containers-in-docker-swarm/
+    cat <<EOF > /etc/sysctl.d/99-kube-net.conf
+    # Have a larger connection range available
+    net.ipv4.ip_local_port_range=1024 65000
+    # Reuse closed sockets faster
+    net.ipv4.tcp_tw_reuse=1
+    net.ipv4.tcp_fin_timeout=15
+    # The maximum number of "backlogged sockets".  Default is 128.
+    net.core.somaxconn=4096
+    net.core.netdev_max_backlog=4096
+    # 16MB per socket - which sounds like a lot,
+    # but will virtually never consume that much.
+    net.core.rmem_max=16777216
+    net.core.wmem_max=16777216
+    # Various network tunables
+    net.ipv4.tcp_max_syn_backlog=20480
+    net.ipv4.tcp_max_tw_buckets=400000
+    net.ipv4.tcp_no_metrics_save=1
+    net.ipv4.tcp_rmem=4096 87380 16777216
+    net.ipv4.tcp_syn_retries=2
+    net.ipv4.tcp_synack_retries=2
+    net.ipv4.tcp_wmem=4096 65536 16777216
+    #vm.min_free_kbytes=65536
+    # Connection tracking to prevent dropped connections (usually issue on LBs)
+    net.netfilter.nf_conntrack_max=262144
+    net.ipv4.netfilter.ip_conntrack_generic_timeout=120
+    net.netfilter.nf_conntrack_tcp_timeout_established=86400
+    # ARP cache settings for a highly loaded docker swarm
+    net.ipv4.neigh.default.gc_thresh1=8096
+    net.ipv4.neigh.default.gc_thresh2=12288
+    net.ipv4.neigh.default.gc_thresh3=16384
+    EOF
+    systemctl restart systemd-sysctl.service
+    #Increase RegistryQPS
+    echo "$(jq '.registryPullQPS=100' /etc/kubernetes/kubelet/kubelet-config.json)" > /etc/kubernetes/kubelet/kubelet-config.json
+    echo "$(jq '.registryBurst=200' /etc/kubernetes/kubelet/kubelet-config.json)" > /etc/kubernetes/kubelet/kubelet-config.json
+    mkdir -p /etc/containerd/certs.d/docker.io
+    cat<<EOF>/etc/containerd/certs.d/docker.io/hosts.toml
+    server = "https://registry-1.docker.io"
+    [host."http://registry"]
+      capabilities = ["pull", "resolve"]
+      skip_verify = true
+    EOF
+---
+# Source: karpenter_nodes/templates/nodeclass.yaml
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: "nodes-ingress-multiarch"
+spec:
+  role: eks_nodes_role
+  amiFamily: AL2
+  amiSelectorTerms:
+  subnetSelectorTerms:
+    - tags:
+        Name: eks-dev-eu-west-1a
+    - tags:
+        Name: eks-dev-eu-west-1b
+    - tags:
+        Name: eks-dev-eu-west-1c
+  securityGroupSelectorTerms:
+    - tags:
+        Name: eks-nodes
+    - tags:
+        Name: eks-dev
+  tags:
+    cluster: eks-dev
+    nodegroup: nodes-ingress
+    component: eks-karpenter-nodes
+    created_by: helm
+    team: devops
+    managed_by: karpenter
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        deleteOnTermination: true
+        encrypted: true
+        iops: 3000
+        throughput: 125
+        volumeSize: 100Gi
+        volumeType: gp3
+  detailedMonitoring: false
+  associatePublicIPAddress: false
+  metadataOptions:
+    httpEndpoint: enabled
+    httpProtocolIPv6: disabled
+    httpPutResponseHopLimit: 2
+    httpTokens: required
+  userData: |
+    CLUSTER_NAME=eks-dev
+    INSTANCEGROUP=nodes-ingress
+    INSTANCE_ID=`/usr/bin/ec2-metadata --instance-id | awk '{print $2}'`
+    ID_SUFFIX=`/usr/bin/ec2-metadata --instance-id | awk '{print substr($0,length-5,6)}'`
+    HOSTNAME="${CLUSTER_NAME}-${INSTANCEGROUP}-$ID_SUFFIX"
+    hostname $HOSTNAME
+    echo $HOSTNAME > /etc/hostname
+    aws ec2 create-tags --resources $INSTANCE_ID --tags=Key=Name,Value=$HOSTNAME
+    sed -i "s/127.0.0.1 [0-9a-z-]*\s*localhost/127.0.0.1 $HOSTNAME localhost/" /etc/hosts
+    # Sysctl changes
+    ## Disable IPv6
+    cat <<EOF > /etc/sysctl.d/10-disable-ipv6.conf
+    # disable ipv6 config
+    net.ipv6.conf.all.disable_ipv6 = 1
+    net.ipv6.conf.default.disable_ipv6 = 1
+    net.ipv6.conf.lo.disable_ipv6 = 1
+    EOF
+    ## Stolen from this guy: https://blog.codeship.com/running-1000-containers-in-docker-swarm/
+    cat <<EOF > /etc/sysctl.d/99-kube-net.conf
+    # Have a larger connection range available
+    net.ipv4.ip_local_port_range=1024 65000
+    # Reuse closed sockets faster
+    net.ipv4.tcp_tw_reuse=1
+    net.ipv4.tcp_fin_timeout=15
+    # The maximum number of "backlogged sockets".  Default is 128.
+    net.core.somaxconn=4096
+    net.core.netdev_max_backlog=4096
+    # 16MB per socket - which sounds like a lot,
+    # but will virtually never consume that much.
+    net.core.rmem_max=16777216
+    net.core.wmem_max=16777216
+    # Various network tunables
+    net.ipv4.tcp_max_syn_backlog=20480
+    net.ipv4.tcp_max_tw_buckets=400000
+    net.ipv4.tcp_no_metrics_save=1
+    net.ipv4.tcp_rmem=4096 87380 16777216
+    net.ipv4.tcp_syn_retries=2
+    net.ipv4.tcp_synack_retries=2
+    net.ipv4.tcp_wmem=4096 65536 16777216
+    #vm.min_free_kbytes=65536
+    # Connection tracking to prevent dropped connections (usually issue on LBs)
+    net.netfilter.nf_conntrack_max=262144
+    net.ipv4.netfilter.ip_conntrack_generic_timeout=120
+    net.netfilter.nf_conntrack_tcp_timeout_established=86400
+    # ARP cache settings for a highly loaded docker swarm
+    net.ipv4.neigh.default.gc_thresh1=8096
+    net.ipv4.neigh.default.gc_thresh2=12288
+    net.ipv4.neigh.default.gc_thresh3=16384
+    EOF
+    systemctl restart systemd-sysctl.service
+    #Increase RegistryQPS
+    echo "$(jq '.registryPullQPS=100' /etc/kubernetes/kubelet/kubelet-config.json)" > /etc/kubernetes/kubelet/kubelet-config.json
+    echo "$(jq '.registryBurst=200' /etc/kubernetes/kubelet/kubelet-config.json)" > /etc/kubernetes/kubelet/kubelet-config.json
+---
+# Source: karpenter_nodes/templates/nodeclass.yaml
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: "nodes-jobs-amd64"
+spec:
+  role: eks_nodes_role
+  amiFamily: AL2
+  amiSelectorTerms:
+  subnetSelectorTerms:
+    - tags:
+        Name: eks-dev-eu-west-1a
+    - tags:
+        Name: eks-dev-eu-west-1b
+    - tags:
+        Name: eks-dev-eu-west-1c
+  securityGroupSelectorTerms:
+    - tags:
+        Name: eks-nodes
+    - tags:
+        Name: eks-dev
+  tags:
+    cluster: eks-dev
+    nodegroup: nodes-jobs
+    component: eks-karpenter-nodes
+    created_by: helm
+    team: devops
+    managed_by: karpenter
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        deleteOnTermination: true
+        encrypted: true
+        iops: 9000
+        throughput: 125
+        volumeSize: 500Gi
+        volumeType: gp3
+  detailedMonitoring: false
+  associatePublicIPAddress: false
+  metadataOptions:
+    httpEndpoint: enabled
+    httpProtocolIPv6: disabled
+    httpPutResponseHopLimit: 2
+    httpTokens: required
+  userData: |
+    CLUSTER_NAME=eks-dev
+    INSTANCEGROUP=nodes-jobs
+    INSTANCE_ID=`/usr/bin/ec2-metadata --instance-id | awk '{print $2}'`
+    ID_SUFFIX=`/usr/bin/ec2-metadata --instance-id | awk '{print substr($0,length-5,6)}'`
+    HOSTNAME="${CLUSTER_NAME}-${INSTANCEGROUP}-$ID_SUFFIX"
+    hostname $HOSTNAME
+    echo $HOSTNAME > /etc/hostname
+    aws ec2 create-tags --resources $INSTANCE_ID --tags=Key=Name,Value=$HOSTNAME
+    sed -i "s/127.0.0.1 [0-9a-z-]*\s*localhost/127.0.0.1 $HOSTNAME localhost/" /etc/hosts
+    # Sysctl changes
+    ## Disable IPv6
+    cat <<EOF > /etc/sysctl.d/10-disable-ipv6.conf
+    # disable ipv6 config
+    net.ipv6.conf.all.disable_ipv6 = 1
+    net.ipv6.conf.default.disable_ipv6 = 1
+    net.ipv6.conf.lo.disable_ipv6 = 1
+    EOF
+    ## Stolen from this guy: https://blog.codeship.com/running-1000-containers-in-docker-swarm/
+    cat <<EOF > /etc/sysctl.d/99-kube-net.conf
+    # Have a larger connection range available
+    net.ipv4.ip_local_port_range=1024 65000
+    # Reuse closed sockets faster
+    net.ipv4.tcp_tw_reuse=1
+    net.ipv4.tcp_fin_timeout=15
+    # The maximum number of "backlogged sockets".  Default is 128.
+    net.core.somaxconn=4096
+    net.core.netdev_max_backlog=4096
+    # 16MB per socket - which sounds like a lot,
+    # but will virtually never consume that much.
+    net.core.rmem_max=16777216
+    net.core.wmem_max=16777216
+    # Various network tunables
+    net.ipv4.tcp_max_syn_backlog=20480
+    net.ipv4.tcp_max_tw_buckets=400000
+    net.ipv4.tcp_no_metrics_save=1
+    net.ipv4.tcp_rmem=4096 87380 16777216
+    net.ipv4.tcp_syn_retries=2
+    net.ipv4.tcp_synack_retries=2
+    net.ipv4.tcp_wmem=4096 65536 16777216
+    #vm.min_free_kbytes=65536
+    # Connection tracking to prevent dropped connections (usually issue on LBs)
+    net.netfilter.nf_conntrack_max=262144
+    net.ipv4.netfilter.ip_conntrack_generic_timeout=120
+    net.netfilter.nf_conntrack_tcp_timeout_established=86400
+    # ARP cache settings for a highly loaded docker swarm
+    net.ipv4.neigh.default.gc_thresh1=8096
+    net.ipv4.neigh.default.gc_thresh2=12288
+    net.ipv4.neigh.default.gc_thresh3=16384
+    EOF
+    systemctl restart systemd-sysctl.service
+    #Increase RegistryQPS
+    echo "$(jq '.registryPullQPS=100' /etc/kubernetes/kubelet/kubelet-config.json)" > /etc/kubernetes/kubelet/kubelet-config.json
+    echo "$(jq '.registryBurst=200' /etc/kubernetes/kubelet/kubelet-config.json)" > /etc/kubernetes/kubelet/kubelet-config.json
+    mkdir -p /etc/containerd/certs.d/docker.io
+    cat<<EOF>/etc/containerd/certs.d/docker.io/hosts.toml
+    server = "https://registry-1.docker.io"
+    [host."http://registry"]
+      capabilities = ["pull", "resolve"]
+      skip_verify = true
+    EOF
+---
+# Source: karpenter_nodes/templates/nodeclass.yaml
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: "nodes-monitoring-multiarch"
+spec:
+  role: eks_nodes_role
+  amiFamily: AL2
+  amiSelectorTerms:
+  subnetSelectorTerms:
+    - tags:
+        Name: eks-dev-eu-west-1a
+    - tags:
+        Name: eks-dev-eu-west-1b
+    - tags:
+        Name: eks-dev-eu-west-1c
+  securityGroupSelectorTerms:
+    - tags:
+        Name: eks-nodes
+    - tags:
+        Name: eks-dev
+  tags:
+    cluster: eks-dev
+    nodegroup: nodes-monitoring
+    component: eks-karpenter-nodes
+    created_by: helm
+    team: devops
+    innercomponent: monitoring
+    managed_by: karpenter
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        deleteOnTermination: true
+        encrypted: true
+        iops: 3000
+        throughput: 125
+        volumeSize: 100Gi
+        volumeType: gp3
+  detailedMonitoring: false
+  associatePublicIPAddress: false
+  metadataOptions:
+    httpEndpoint: enabled
+    httpProtocolIPv6: disabled
+    httpPutResponseHopLimit: 2
+    httpTokens: required
+  userData: |
+    CLUSTER_NAME=eks-dev
+    INSTANCEGROUP=nodes-monitoring
+    INSTANCE_ID=`/usr/bin/ec2-metadata --instance-id | awk '{print $2}'`
+    ID_SUFFIX=`/usr/bin/ec2-metadata --instance-id | awk '{print substr($0,length-5,6)}'`
+    HOSTNAME="${CLUSTER_NAME}-${INSTANCEGROUP}-$ID_SUFFIX"
+    hostname $HOSTNAME
+    echo $HOSTNAME > /etc/hostname
+    aws ec2 create-tags --resources $INSTANCE_ID --tags=Key=Name,Value=$HOSTNAME
+    sed -i "s/127.0.0.1 [0-9a-z-]*\s*localhost/127.0.0.1 $HOSTNAME localhost/" /etc/hosts
+    # Sysctl changes
+    ## Disable IPv6
+    cat <<EOF > /etc/sysctl.d/10-disable-ipv6.conf
+    # disable ipv6 config
+    net.ipv6.conf.all.disable_ipv6 = 1
+    net.ipv6.conf.default.disable_ipv6 = 1
+    net.ipv6.conf.lo.disable_ipv6 = 1
+    EOF
+    ## Stolen from this guy: https://blog.codeship.com/running-1000-containers-in-docker-swarm/
+    cat <<EOF > /etc/sysctl.d/99-kube-net.conf
+    # Have a larger connection range available
+    net.ipv4.ip_local_port_range=1024 65000
+    # Reuse closed sockets faster
+    net.ipv4.tcp_tw_reuse=1
+    net.ipv4.tcp_fin_timeout=15
+    # The maximum number of "backlogged sockets".  Default is 128.
+    net.core.somaxconn=4096
+    net.core.netdev_max_backlog=4096
+    # 16MB per socket - which sounds like a lot,
+    # but will virtually never consume that much.
+    net.core.rmem_max=16777216
+    net.core.wmem_max=16777216
+    # Various network tunables
+    net.ipv4.tcp_max_syn_backlog=20480
+    net.ipv4.tcp_max_tw_buckets=400000
+    net.ipv4.tcp_no_metrics_save=1
+    net.ipv4.tcp_rmem=4096 87380 16777216
+    net.ipv4.tcp_syn_retries=2
+    net.ipv4.tcp_synack_retries=2
+    net.ipv4.tcp_wmem=4096 65536 16777216
+    #vm.min_free_kbytes=65536
+    # Connection tracking to prevent dropped connections (usually issue on LBs)
+    net.netfilter.nf_conntrack_max=262144
+    net.ipv4.netfilter.ip_conntrack_generic_timeout=120
+    net.netfilter.nf_conntrack_tcp_timeout_established=86400
+    # ARP cache settings for a highly loaded docker swarm
+    net.ipv4.neigh.default.gc_thresh1=8096
+    net.ipv4.neigh.default.gc_thresh2=12288
+    net.ipv4.neigh.default.gc_thresh3=16384
+    EOF
+    systemctl restart systemd-sysctl.service
+    #Increase RegistryQPS
+    echo "$(jq '.registryPullQPS=100' /etc/kubernetes/kubelet/kubelet-config.json)" > /etc/kubernetes/kubelet/kubelet-config.json
+    echo "$(jq '.registryBurst=200' /etc/kubernetes/kubelet/kubelet-config.json)" > /etc/kubernetes/kubelet/kubelet-config.json
+    mkdir -p /etc/containerd/certs.d/docker.io
+    cat<<EOF>/etc/containerd/certs.d/docker.io/hosts.toml
+    server = "https://registry-1.docker.io"
+    [host."http://registry"]
+      capabilities = ["pull", "resolve"]
+      skip_verify = true
+    EOF
+---
+# Source: karpenter_nodes/templates/nodeclass.yaml
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: "nodes-workers-amd64"
+spec:
+  role: eks_nodes_role
+  amiFamily: AL2
+  amiSelectorTerms:
+  subnetSelectorTerms:
+    - tags:
+        Name: eks-dev-eu-west-1a
+    - tags:
+        Name: eks-dev-eu-west-1b
+    - tags:
+        Name: eks-dev-eu-west-1c
+  securityGroupSelectorTerms:
+    - tags:
+        Name: eks-nodes
+    - tags:
+        Name: eks-dev
+  tags:
+    cluster: eks-dev
+    nodegroup: nodes-workers
+    component: eks-karpenter-nodes
+    created_by: helm
+    team: devops
+    managed_by: karpenter
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        deleteOnTermination: true
+        encrypted: true
+        iops: 3000
+        throughput: 125
+        volumeSize: 100Gi
+        volumeType: gp3
+  detailedMonitoring: false
+  associatePublicIPAddress: false
+  metadataOptions:
+    httpEndpoint: enabled
+    httpProtocolIPv6: disabled
+    httpPutResponseHopLimit: 2
+    httpTokens: required
+  userData: |
+    CLUSTER_NAME=eks-dev
+    INSTANCEGROUP=nodes-workers
+    INSTANCE_ID=`/usr/bin/ec2-metadata --instance-id | awk '{print $2}'`
+    ID_SUFFIX=`/usr/bin/ec2-metadata --instance-id | awk '{print substr($0,length-5,6)}'`
+    HOSTNAME="${CLUSTER_NAME}-${INSTANCEGROUP}-$ID_SUFFIX"
+    hostname $HOSTNAME
+    echo $HOSTNAME > /etc/hostname
+    aws ec2 create-tags --resources $INSTANCE_ID --tags=Key=Name,Value=$HOSTNAME
+    sed -i "s/127.0.0.1 [0-9a-z-]*\s*localhost/127.0.0.1 $HOSTNAME localhost/" /etc/hosts
+    # Sysctl changes
+    ## Disable IPv6
+    cat <<EOF > /etc/sysctl.d/10-disable-ipv6.conf
+    # disable ipv6 config
+    net.ipv6.conf.all.disable_ipv6 = 1
+    net.ipv6.conf.default.disable_ipv6 = 1
+    net.ipv6.conf.lo.disable_ipv6 = 1
+    EOF
+    ## Stolen from this guy: https://blog.codeship.com/running-1000-containers-in-docker-swarm/
+    cat <<EOF > /etc/sysctl.d/99-kube-net.conf
+    # Have a larger connection range available
+    net.ipv4.ip_local_port_range=1024 65000
+    # Reuse closed sockets faster
+    net.ipv4.tcp_tw_reuse=1
+    net.ipv4.tcp_fin_timeout=15
+    # The maximum number of "backlogged sockets".  Default is 128.
+    net.core.somaxconn=4096
+    net.core.netdev_max_backlog=4096
+    # 16MB per socket - which sounds like a lot,
+    # but will virtually never consume that much.
+    net.core.rmem_max=16777216
+    net.core.wmem_max=16777216
+    # Various network tunables
+    net.ipv4.tcp_max_syn_backlog=20480
+    net.ipv4.tcp_max_tw_buckets=400000
+    net.ipv4.tcp_no_metrics_save=1
+    net.ipv4.tcp_rmem=4096 87380 16777216
+    net.ipv4.tcp_syn_retries=2
+    net.ipv4.tcp_synack_retries=2
+    net.ipv4.tcp_wmem=4096 65536 16777216
+    #vm.min_free_kbytes=65536
+    # Connection tracking to prevent dropped connections (usually issue on LBs)
+    net.netfilter.nf_conntrack_max=262144
+    net.ipv4.netfilter.ip_conntrack_generic_timeout=120
+    net.netfilter.nf_conntrack_tcp_timeout_established=86400
+    # ARP cache settings for a highly loaded docker swarm
+    net.ipv4.neigh.default.gc_thresh1=8096
+    net.ipv4.neigh.default.gc_thresh2=12288
+    net.ipv4.neigh.default.gc_thresh3=16384
+    EOF
+    systemctl restart systemd-sysctl.service
+    #Increase RegistryQPS
+    echo "$(jq '.registryPullQPS=100' /etc/kubernetes/kubelet/kubelet-config.json)" > /etc/kubernetes/kubelet/kubelet-config.json
+    echo "$(jq '.registryBurst=200' /etc/kubernetes/kubelet/kubelet-config.json)" > /etc/kubernetes/kubelet/kubelet-config.json
+    mkdir -p /etc/containerd/certs.d/docker.io
+    cat<<EOF>/etc/containerd/certs.d/docker.io/hosts.toml
+    server = "https://registry-1.docker.io"
+    [host."http://registry"]
+      capabilities = ["pull", "resolve"]
+      skip_verify = true
+    EOF
+---
+# Source: karpenter_nodes/templates/nodepool.yaml
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
+metadata:
+  name: "nodes-canary-amd64"
+spec:
+  template:
+    metadata:
+      labels:
+        nodegroup: nodes-canary
+        cluster: eks-dev
+    spec:
+      nodeClassRef:
+        name: nodes-canary-amd64
+      taints:
+        - key: dedicated
+          effect: NoSchedule
+          value: nodes_canary
+      requirements:
+        - key: "karpenter.k8s.aws/instance-category"
+          operator: In
+          values:
+          - m
+          - r
+          - c
+        - key: "karpenter.k8s.aws/instance-cpu"
+          operator: In
+          values:
+          - "4"
+          - "8"
+          - "12"
+          - "16"
+          - "24"
+          - "32"
+          - "48"
+        - key: karpenter.k8s.aws/instance-generation
+          operator: Gt
+          values:
+          - "3"
+        - key: "topology.kubernetes.io/zone"
+          operator: In
+          values:
+          - eu-west-1a
+          - eu-west-1b
+          - eu-west-1c
+        - key: "kubernetes.io/arch"
+          operator: In
+          values:
+          - amd64
+        - key: "karpenter.sh/capacity-type"
+          operator: In
+          values:
+          - spot
+        - key: kubernetes.io/os
+          operator: In
+          values:
+          - linux
+        - key: "karpenter.k8s.aws/instance-family"
+          operator: NotIn
+          values:
+          - c6a
+          - m6a
+          - r6a
+          - c5a
+          - m5a
+          - r5a
+          - c6ad
+          - m6ad
+          - r6ad
+          - m5ad
+          - r5ad
+          - r5ad
+        - key: "karpenter.k8s.aws/instance-size"
+          operator: NotIn
+          values:
+          - metal
+        - key: capacity-spread
+          operator: In
+          values:
+            - "1"
+            - "2"
+            - "3"
+            - "4"
+            - "5"
+      kubelet:
+        systemReserved:
+          cpu: 250m
+          memory: 200Mi
+          ephemeral-storage: 2Gi
+        kubeReserved:
+          cpu: 250m
+          memory: 1Gi
+          ephemeral-storage: 4Gi
+        evictionHard:
+          memory.available: 768Mi
+          nodefs.available: 8%
+          nodefs.inodesFree: 8%
+        evictionSoft:
+          memory.available: 1280Mi
+          nodefs.available: 10%
+          nodefs.inodesFree: 15%
+          imagefs.available: 10%
+          imagefs.inodesFree: 10%
+          pid.available: 10%
+        evictionSoftGracePeriod:
+          imagefs.available: 10m0s
+          imagefs.inodesFree: 10m0s
+          memory.available: 5m0s
+          nodefs.available: 10m0s
+          nodefs.inodesFree: 10m0s
+          pid.available: 2m0s
+  disruption:
+    expireAfter: 720h
+    consolidationPolicy: WhenUnderutilized
+  weight: 1
+---
+# Source: karpenter_nodes/templates/nodepool.yaml
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
+metadata:
+  name: "nodes-cilium-managed-amd64"
+spec:
+  template:
+    metadata:
+      labels:
+        nodegroup: nodes-cilium-managed
+        cluster: eks-dev
+    spec:
+      nodeClassRef:
+        name: nodes-cilium-managed-amd64
+      taints:
+        - key: dedicated
+          effect: NoSchedule
+          value: nodes_cilium_managed
+      startupTaints:
+        - key: node.cilium.io/agent-not-ready
+          value: "true"
+          effect: NoExecute
+      requirements:
+        - key: "karpenter.k8s.aws/instance-category"
+          operator: In
+          values:
+          - m
+          - r
+          - c
+        - key: "karpenter.k8s.aws/instance-cpu"
+          operator: In
+          values:
+          - "4"
+          - "8"
+          - "12"
+          - "16"
+          - "24"
+          - "32"
+          - "48"
+        - key: karpenter.k8s.aws/instance-generation
+          operator: Gt
+          values:
+          - "3"
+        - key: "topology.kubernetes.io/zone"
+          operator: In
+          values:
+          - eu-west-1a
+          - eu-west-1b
+          - eu-west-1c
+        - key: "kubernetes.io/arch"
+          operator: In
+          values:
+          - amd64
+        - key: "karpenter.sh/capacity-type"
+          operator: In
+          values:
+          - spot
+        - key: kubernetes.io/os
+          operator: In
+          values:
+          - linux
+        - key: "karpenter.k8s.aws/instance-family"
+          operator: NotIn
+          values:
+          - c6a
+          - m6a
+          - r6a
+          - c5a
+          - m5a
+          - r5a
+          - c6ad
+          - m6ad
+          - r6ad
+          - m5ad
+          - r5ad
+          - r5ad
+        - key: "karpenter.k8s.aws/instance-size"
+          operator: NotIn
+          values:
+          - metal
+      kubelet:
+        systemReserved:
+          cpu: 250m
+          memory: 200Mi
+          ephemeral-storage: 2Gi
+        kubeReserved:
+          cpu: 250m
+          memory: 1Gi
+          ephemeral-storage: 4Gi
+        evictionHard:
+          memory.available: 768Mi
+          nodefs.available: 8%
+          nodefs.inodesFree: 8%
+        evictionSoft:
+          memory.available: 1280Mi
+          nodefs.available: 10%
+          nodefs.inodesFree: 15%
+          imagefs.available: 10%
+          imagefs.inodesFree: 10%
+          pid.available: 10%
+        evictionSoftGracePeriod:
+          imagefs.available: 10m0s
+          imagefs.inodesFree: 10m0s
+          memory.available: 5m0s
+          nodefs.available: 10m0s
+          nodefs.inodesFree: 10m0s
+          pid.available: 2m0s
+  disruption:
+    expireAfter: 720h
+    consolidationPolicy: WhenUnderutilized
+  weight: 1
+---
+# Source: karpenter_nodes/templates/nodepool.yaml
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
+metadata:
+  name: "nodes-default-amd64"
+spec:
+  template:
+    metadata:
+      labels:
+        nodegroup: nodes-default
+        cluster: eks-dev
+    spec:
+      nodeClassRef:
+        name: nodes-default-amd64
+      requirements:
+        - key: "karpenter.k8s.aws/instance-category"
+          operator: In
+          values:
+          - m
+          - r
+        - key: "karpenter.k8s.aws/instance-cpu"
+          operator: In
+          values:
+          - "4"
+          - "8"
+          - "12"
+          - "16"
+          - "24"
+          - "32"
+          - "48"
+        - key: karpenter.k8s.aws/instance-generation
+          operator: Gt
+          values:
+          - "3"
+        - key: "topology.kubernetes.io/zone"
+          operator: In
+          values:
+          - eu-west-1a
+          - eu-west-1b
+          - eu-west-1c
+        - key: "kubernetes.io/arch"
+          operator: In
+          values:
+          - amd64
+        - key: "karpenter.sh/capacity-type"
+          operator: In
+          values:
+          - spot
+        - key: kubernetes.io/os
+          operator: In
+          values:
+          - linux
+        - key: "karpenter.k8s.aws/instance-family"
+          operator: NotIn
+          values:
+          - c6a
+          - m6a
+          - r6a
+          - c5a
+          - m5a
+          - r5a
+          - c6ad
+          - m6ad
+          - r6ad
+          - m5ad
+          - r5ad
+          - r5ad
+        - key: "karpenter.k8s.aws/instance-size"
+          operator: NotIn
+          values:
+          - metal
+        - key: capacity-spread
+          operator: In
+          values:
+            - "1"
+            - "2"
+            - "3"
+            - "4"
+            - "5"
+      kubelet:
+        systemReserved:
+          cpu: 250m
+          memory: 200Mi
+          ephemeral-storage: 2Gi
+        kubeReserved:
+          cpu: 250m
+          memory: 1Gi
+          ephemeral-storage: 4Gi
+        evictionHard:
+          memory.available: 768Mi
+          nodefs.available: 8%
+          nodefs.inodesFree: 8%
+        evictionSoft:
+          memory.available: 1280Mi
+          nodefs.available: 10%
+          nodefs.inodesFree: 15%
+          imagefs.available: 10%
+          imagefs.inodesFree: 10%
+          pid.available: 10%
+        evictionSoftGracePeriod:
+          imagefs.available: 10m0s
+          imagefs.inodesFree: 10m0s
+          memory.available: 5m0s
+          nodefs.available: 10m0s
+          nodefs.inodesFree: 10m0s
+          pid.available: 2m0s
+  disruption:
+    expireAfter: 720h
+    consolidationPolicy: WhenUnderutilized
+  weight: 2
+---
+# Source: karpenter_nodes/templates/nodepool.yaml
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
+metadata:
+  name: "nodes-default-od-amd64"
+spec:
+  template:
+    metadata:
+      labels:
+        nodegroup: nodes-default
+        cluster: eks-dev
+    spec:
+      nodeClassRef:
+        name: nodes-default-amd64
+      requirements:
+        - key: "karpenter.k8s.aws/instance-category"
+          operator: In
+          values:
+          - m
+          - r
+        - key: "karpenter.k8s.aws/instance-cpu"
+          operator: In
+          values:
+          - "4"
+          - "8"
+          - "12"
+          - "16"
+          - "24"
+          - "32"
+          - "48"
+        - key: karpenter.k8s.aws/instance-generation
+          operator: Gt
+          values:
+          - "4"
+        - key: "topology.kubernetes.io/zone"
+          operator: In
+          values:
+          - eu-west-1a
+          - eu-west-1b
+          - eu-west-1c
+        - key: "kubernetes.io/arch"
+          operator: In
+          values:
+          - amd64
+        - key: "karpenter.sh/capacity-type"
+          operator: In
+          values:
+          - on-demand
+        - key: kubernetes.io/os
+          operator: In
+          values:
+          - linux
+        - key: "karpenter.k8s.aws/instance-family"
+          operator: NotIn
+          values:
+          - c6a
+          - m6a
+          - r6a
+          - c5a
+          - m5a
+          - r5a
+          - c6ad
+          - m6ad
+          - r6ad
+          - m5ad
+          - r5ad
+          - r5ad
+        - key: "karpenter.k8s.aws/instance-size"
+          operator: NotIn
+          values:
+          - metal
+        - key: capacity-spread
+          operator: In
+          values:
+            - "6"
+      kubelet:
+        systemReserved:
+          cpu: 250m
+          memory: 200Mi
+          ephemeral-storage: 2Gi
+        kubeReserved:
+          cpu: 250m
+          memory: 1Gi
+          ephemeral-storage: 4Gi
+        evictionHard:
+          memory.available: 768Mi
+          nodefs.available: 8%
+          nodefs.inodesFree: 8%
+        evictionSoft:
+          memory.available: 1280Mi
+          nodefs.available: 10%
+          nodefs.inodesFree: 15%
+          imagefs.available: 10%
+          imagefs.inodesFree: 10%
+          pid.available: 10%
+        evictionSoftGracePeriod:
+          imagefs.available: 10m0s
+          imagefs.inodesFree: 10m0s
+          memory.available: 5m0s
+          nodefs.available: 10m0s
+          nodefs.inodesFree: 10m0s
+          pid.available: 2m0s
+  disruption:
+    expireAfter: 720h
+    consolidationPolicy: WhenUnderutilized
+  weight: 1
+---
+# Source: karpenter_nodes/templates/nodepool.yaml
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
+metadata:
+  name: "nodes-gpu-amd64"
+spec:
+  template:
+    metadata:
+      labels:
+        nodegroup: nodes-gpu
+        cluster: eks-dev
+        gpu: true
+    spec:
+      nodeClassRef:
+        name: nodes-gpu-amd64
+      taints:
+        - key: dedicated
+          effect: NoSchedule
+          value: nodes_gpu
+        - key: dedicated
+          value: gpu
+          effect: NoSchedule
+      requirements:
+        - key: "topology.kubernetes.io/zone"
+          operator: In
+          values:
+          - eu-west-1a
+          - eu-west-1b
+          - eu-west-1c
+        - key: "kubernetes.io/arch"
+          operator: In
+          values:
+          - amd64
+        - key: "karpenter.sh/capacity-type"
+          operator: In
+          values:
+          - spot
+        - key: kubernetes.io/os
+          operator: In
+          values:
+          - linux
+        - key: "karpenter.k8s.aws/instance-family"
+          operator: NotIn
+          values:
+          - c6a
+          - m6a
+          - r6a
+          - c5a
+          - m5a
+          - r5a
+          - c6ad
+          - m6ad
+          - r6ad
+          - m5ad
+          - r5ad
+          - r5ad
+        - key: "karpenter.k8s.aws/instance-size"
+          operator: NotIn
+          values:
+          - metal
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values:
+            - g5.xlarge
+            - g5.2xlarge
+            - g5.4xlarge
+      kubelet:
+        systemReserved:
+          cpu: 250m
+          memory: 200Mi
+          ephemeral-storage: 2Gi
+        kubeReserved:
+          cpu: 250m
+          memory: 1Gi
+          ephemeral-storage: 4Gi
+        evictionHard:
+          memory.available: 768Mi
+          nodefs.available: 8%
+          nodefs.inodesFree: 8%
+        evictionSoft:
+          memory.available: 1280Mi
+          nodefs.available: 10%
+          nodefs.inodesFree: 15%
+          imagefs.available: 10%
+          imagefs.inodesFree: 10%
+          pid.available: 10%
+        evictionSoftGracePeriod:
+          imagefs.available: 10m0s
+          imagefs.inodesFree: 10m0s
+          memory.available: 5m0s
+          nodefs.available: 10m0s
+          nodefs.inodesFree: 10m0s
+          pid.available: 2m0s
+  disruption:
+    expireAfter: 720h
+    consolidationPolicy: WhenUnderutilized
+  limits:
+    cpu: 128
+  weight: 1
+---
+# Source: karpenter_nodes/templates/nodepool.yaml
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
+metadata:
+  name: "nodes-ingress-multiarch"
+spec:
+  template:
+    metadata:
+      labels:
+        nodegroup: nodes-ingress
+        cluster: eks-dev
+    spec:
+      nodeClassRef:
+        name: nodes-ingress-multiarch
+      taints:
+        - key: dedicated
+          effect: NoSchedule
+          value: nodes_ingress
+      requirements:
+        - key: "karpenter.k8s.aws/instance-category"
+          operator: In
+          values:
+          - m
+          - r
+          - c
+        - key: "karpenter.k8s.aws/instance-cpu"
+          operator: In
+          values:
+          - "8"
+        - key: karpenter.k8s.aws/instance-generation
+          operator: Gt
+          values:
+          - "6"
+        - key: "topology.kubernetes.io/zone"
+          operator: In
+          values:
+          - eu-west-1a
+          - eu-west-1b
+          - eu-west-1c
+        - key: "kubernetes.io/arch"
+          operator: In
+          values:
+          - amd64
+          - arm64
+        - key: "karpenter.sh/capacity-type"
+          operator: In
+          values:
+          - on-demand
+        - key: kubernetes.io/os
+          operator: In
+          values:
+          - linux
+        - key: "karpenter.k8s.aws/instance-family"
+          operator: NotIn
+          values:
+          - c6a
+          - m6a
+          - r6a
+          - c5a
+          - m5a
+          - r5a
+          - c6ad
+          - m6ad
+          - r6ad
+          - m5ad
+          - r5ad
+          - r5ad
+        - key: "karpenter.k8s.aws/instance-size"
+          operator: NotIn
+          values:
+          - metal
+      kubelet:
+        systemReserved:
+          cpu: 250m
+          memory: 200Mi
+          ephemeral-storage: 2Gi
+        kubeReserved:
+          cpu: 250m
+          memory: 1Gi
+          ephemeral-storage: 4Gi
+        evictionHard:
+          memory.available: 768Mi
+          nodefs.available: 8%
+          nodefs.inodesFree: 8%
+        evictionSoft:
+          memory.available: 1280Mi
+          nodefs.available: 10%
+          nodefs.inodesFree: 15%
+          imagefs.available: 10%
+          imagefs.inodesFree: 10%
+          pid.available: 10%
+        evictionSoftGracePeriod:
+          imagefs.available: 10m0s
+          imagefs.inodesFree: 10m0s
+          memory.available: 5m0s
+          nodefs.available: 10m0s
+          nodefs.inodesFree: 10m0s
+          pid.available: 2m0s
+  disruption:
+    expireAfter: Never
+    consolidationPolicy: WhenUnderutilized
+  weight: 1
+---
+# Source: karpenter_nodes/templates/nodepool.yaml
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
+metadata:
+  name: "nodes-jobs-amd64"
+spec:
+  template:
+    metadata:
+      labels:
+        nodegroup: nodes-jobs
+        cluster: eks-dev
+    spec:
+      nodeClassRef:
+        name: nodes-jobs-amd64
+      taints:
+        - key: dedicated
+          effect: NoSchedule
+          value: nodes_jobs
+      requirements:
+        - key: "karpenter.k8s.aws/instance-category"
+          operator: In
+          values:
+          - m
+          - r
+          - c
+        - key: "karpenter.k8s.aws/instance-cpu"
+          operator: In
+          values:
+          - "8"
+          - "16"
+        - key: karpenter.k8s.aws/instance-generation
+          operator: Gt
+          values:
+          - "3"
+        - key: "topology.kubernetes.io/zone"
+          operator: In
+          values:
+          - eu-west-1a
+          - eu-west-1b
+          - eu-west-1c
+        - key: "kubernetes.io/arch"
+          operator: In
+          values:
+          - amd64
+        - key: "karpenter.sh/capacity-type"
+          operator: In
+          values:
+          - on-demand
+        - key: kubernetes.io/os
+          operator: In
+          values:
+          - linux
+        - key: "karpenter.k8s.aws/instance-family"
+          operator: NotIn
+          values:
+          - c6a
+          - m6a
+          - r6a
+          - c5a
+          - m5a
+          - r5a
+          - c6ad
+          - m6ad
+          - r6ad
+          - m5ad
+          - r5ad
+          - r5ad
+        - key: "karpenter.k8s.aws/instance-size"
+          operator: NotIn
+          values:
+          - metal
+      kubelet:
+        systemReserved:
+          cpu: 250m
+          memory: 200Mi
+          ephemeral-storage: 2Gi
+        kubeReserved:
+          cpu: 250m
+          memory: 1Gi
+          ephemeral-storage: 4Gi
+        evictionHard:
+          memory.available: 768Mi
+          nodefs.available: 8%
+          nodefs.inodesFree: 8%
+        evictionSoft:
+          memory.available: 1280Mi
+          nodefs.available: 10%
+          nodefs.inodesFree: 15%
+          imagefs.available: 10%
+          imagefs.inodesFree: 10%
+          pid.available: 10%
+        evictionSoftGracePeriod:
+          imagefs.available: 10m0s
+          imagefs.inodesFree: 10m0s
+          memory.available: 5m0s
+          nodefs.available: 10m0s
+          nodefs.inodesFree: 10m0s
+          pid.available: 2m0s
+  disruption:
+    expireAfter: Never
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 5m
+  weight: 1
+---
+# Source: karpenter_nodes/templates/nodepool.yaml
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
+metadata:
+  name: "nodes-monitoring-multiarch"
+spec:
+  template:
+    metadata:
+      labels:
+        nodegroup: nodes-monitoring
+        cluster: eks-dev
+        prometheus-scrape: true
+    spec:
+      nodeClassRef:
+        name: nodes-monitoring-multiarch
+      taints:
+        - key: dedicated
+          effect: NoSchedule
+          value: nodes_monitoring
+      requirements:
+        - key: "karpenter.k8s.aws/instance-category"
+          operator: In
+          values:
+          - m
+          - r
+          - c
+        - key: "karpenter.k8s.aws/instance-cpu"
+          operator: In
+          values:
+          - "4"
+          - "8"
+          - "12"
+          - "16"
+          - "24"
+          - "32"
+          - "48"
+        - key: karpenter.k8s.aws/instance-generation
+          operator: Gt
+          values:
+          - "3"
+        - key: "topology.kubernetes.io/zone"
+          operator: In
+          values:
+          - eu-west-1a
+          - eu-west-1b
+          - eu-west-1c
+        - key: "kubernetes.io/arch"
+          operator: In
+          values:
+          - amd64
+          - arm64
+        - key: "karpenter.sh/capacity-type"
+          operator: In
+          values:
+          - on-demand
+        - key: kubernetes.io/os
+          operator: In
+          values:
+          - linux
+        - key: "karpenter.k8s.aws/instance-family"
+          operator: NotIn
+          values:
+        - key: "karpenter.k8s.aws/instance-size"
+          operator: NotIn
+          values:
+          - metal
+      kubelet:
+        systemReserved:
+          cpu: 250m
+          memory: 200Mi
+          ephemeral-storage: 2Gi
+        kubeReserved:
+          cpu: 250m
+          memory: 1Gi
+          ephemeral-storage: 4Gi
+        evictionHard:
+          memory.available: 768Mi
+          nodefs.available: 8%
+          nodefs.inodesFree: 8%
+        evictionSoft:
+          memory.available: 1280Mi
+          nodefs.available: 10%
+          nodefs.inodesFree: 15%
+          imagefs.available: 10%
+          imagefs.inodesFree: 10%
+          pid.available: 10%
+        evictionSoftGracePeriod:
+          imagefs.available: 10m0s
+          imagefs.inodesFree: 10m0s
+          memory.available: 5m0s
+          nodefs.available: 10m0s
+          nodefs.inodesFree: 10m0s
+          pid.available: 2m0s
+  disruption:
+    expireAfter: Never
+    consolidationPolicy: WhenUnderutilized
+  weight: 1
+---
+# Source: karpenter_nodes/templates/nodepool.yaml
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
+metadata:
+  name: "nodes-workers-amd64"
+spec:
+  template:
+    metadata:
+      labels:
+        nodegroup: nodes-workers
+        cluster: eks-dev
+    spec:
+      nodeClassRef:
+        name: nodes-workers-amd64
+      taints:
+        - key: dedicated
+          effect: NoSchedule
+          value: nodes_workers
+      requirements:
+        - key: "karpenter.k8s.aws/instance-category"
+          operator: In
+          values:
+          - m
+          - r
+        - key: "karpenter.k8s.aws/instance-cpu"
+          operator: In
+          values:
+          - "4"
+          - "8"
+          - "12"
+          - "16"
+          - "24"
+          - "32"
+          - "48"
+        - key: karpenter.k8s.aws/instance-generation
+          operator: Gt
+          values:
+          - "3"
+        - key: "topology.kubernetes.io/zone"
+          operator: In
+          values:
+          - eu-west-1a
+          - eu-west-1b
+          - eu-west-1c
+        - key: "kubernetes.io/arch"
+          operator: In
+          values:
+          - amd64
+        - key: "karpenter.sh/capacity-type"
+          operator: In
+          values:
+          - spot
+        - key: kubernetes.io/os
+          operator: In
+          values:
+          - linux
+        - key: "karpenter.k8s.aws/instance-family"
+          operator: NotIn
+          values:
+          - c6a
+          - m6a
+          - r6a
+          - c5a
+          - m5a
+          - r5a
+          - c6ad
+          - m6ad
+          - r6ad
+          - m5ad
+          - r5ad
+          - r5ad
+        - key: "karpenter.k8s.aws/instance-size"
+          operator: NotIn
+          values:
+          - metal
+        - key: capacity-spread
+          operator: In
+          values:
+            - "1"
+            - "2"
+            - "3"
+            - "4"
+            - "5"
+      kubelet:
+        systemReserved:
+          cpu: 250m
+          memory: 200Mi
+          ephemeral-storage: 2Gi
+        kubeReserved:
+          cpu: 250m
+          memory: 1Gi
+          ephemeral-storage: 4Gi
+        evictionHard:
+          memory.available: 768Mi
+          nodefs.available: 8%
+          nodefs.inodesFree: 8%
+        evictionSoft:
+          memory.available: 1280Mi
+          nodefs.available: 10%
+          nodefs.inodesFree: 15%
+          imagefs.available: 10%
+          imagefs.inodesFree: 10%
+          pid.available: 10%
+        evictionSoftGracePeriod:
+          imagefs.available: 10m0s
+          imagefs.inodesFree: 10m0s
+          memory.available: 5m0s
+          nodefs.available: 10m0s
+          nodefs.inodesFree: 10m0s
+          pid.available: 2m0s
+  disruption:
+    expireAfter: 720h
+    consolidationPolicy: WhenUnderutilized
+  weight: 2
+---
+# Source: karpenter_nodes/templates/nodepool.yaml
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
+metadata:
+  name: "nodes-workers-c-amd64"
+spec:
+  template:
+    metadata:
+      labels:
+        nodegroup: nodes-workers
+        cluster: eks-dev
+    spec:
+      nodeClassRef:
+        name: nodes-workers-amd64
+      taints:
+        - key: dedicated
+          effect: NoSchedule
+          value: nodes_workers
+      requirements:
+        - key: "karpenter.k8s.aws/instance-category"
+          operator: In
+          values:
+          - c
+        - key: "karpenter.k8s.aws/instance-cpu"
+          operator: In
+          values:
+          - "4"
+          - "8"
+          - "12"
+          - "16"
+          - "24"
+          - "32"
+          - "48"
+        - key: karpenter.k8s.aws/instance-generation
+          operator: Gt
+          values:
+          - "3"
+        - key: "topology.kubernetes.io/zone"
+          operator: In
+          values:
+          - eu-west-1a
+          - eu-west-1b
+          - eu-west-1c
+        - key: "kubernetes.io/arch"
+          operator: In
+          values:
+          - amd64
+        - key: "karpenter.sh/capacity-type"
+          operator: In
+          values:
+          - spot
+        - key: kubernetes.io/os
+          operator: In
+          values:
+          - linux
+        - key: "karpenter.k8s.aws/instance-family"
+          operator: NotIn
+          values:
+          - c6a
+          - m6a
+          - r6a
+          - c5a
+          - m5a
+          - r5a
+          - c6ad
+          - m6ad
+          - r6ad
+          - m5ad
+          - r5ad
+          - r5ad
+        - key: "karpenter.k8s.aws/instance-size"
+          operator: NotIn
+          values:
+          - metal
+        - key: capacity-spread
+          operator: In
+          values:
+            - "1"
+            - "2"
+            - "3"
+            - "4"
+            - "5"
+      kubelet:
+        systemReserved:
+          cpu: 250m
+          memory: 200Mi
+          ephemeral-storage: 2Gi
+        kubeReserved:
+          cpu: 250m
+          memory: 1Gi
+          ephemeral-storage: 4Gi
+        evictionHard:
+          memory.available: 768Mi
+          nodefs.available: 8%
+          nodefs.inodesFree: 8%
+        evictionSoft:
+          memory.available: 1280Mi
+          nodefs.available: 10%
+          nodefs.inodesFree: 15%
+          imagefs.available: 10%
+          imagefs.inodesFree: 10%
+          pid.available: 10%
+        evictionSoftGracePeriod:
+          imagefs.available: 10m0s
+          imagefs.inodesFree: 10m0s
+          memory.available: 5m0s
+          nodefs.available: 10m0s
+          nodefs.inodesFree: 10m0s
+          pid.available: 2m0s
+  disruption:
+    expireAfter: 720h
+    consolidationPolicy: WhenUnderutilized
+  weight: 1

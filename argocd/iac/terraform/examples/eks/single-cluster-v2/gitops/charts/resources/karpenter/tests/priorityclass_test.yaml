@@ -1,0 +1,21 @@
+suite: test priorityclass
+templates:
+  - priorityclass.yaml
+
+values:
+  - values.yaml
+tests:
+  - it: Verify priorityclass
+    documentIndex: 0
+    asserts:
+      - isKind:
+          of: PriorityClass
+      - equal:
+          path: metadata.name
+          value: karpenter-headroom
+      - equal:
+          path: value
+          value: -1000000
+      - equal:
+          path: globalDefault
+          value: false

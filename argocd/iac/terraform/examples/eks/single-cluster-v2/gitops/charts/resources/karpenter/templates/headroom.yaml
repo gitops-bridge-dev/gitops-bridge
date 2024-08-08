@@ -1,0 +1,64 @@
+{{- range $k, $v := .Values.nodeGroups }}
+{{- range $nhr := $v.headRoom }}
+{{ $data :=
+    dict "sv" $nhr.size
+}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: headroom-{{ $k }}-{{ $v.instances.architecture | default $.Values.instances.architecture }}-{{ $nhr.size }}
+  namespace: {{ $.Values.headRoomNamespace | default "karpenter" }}
+  labels:
+    k8s-app: headroom-{{ $k }}-{{ $v.instances.architecture | default $.Values.instances.architecture }}-{{ $nhr.size }}
+spec:
+  replicas: {{ $nhr.count | default 1}}
+  selector:
+    matchLabels:
+      k8s-app: headroom-{{ $k }}-{{ $v.instances.architecture | default $.Values.instances.architecture }}-{{ $nhr.size }}
+  template:
+    metadata:
+      labels:
+        k8s-app: headroom-{{ $k }}-{{ $v.instances.architecture | default $.Values.instances.architecture }}-{{ $nhr.size }}
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: karpenter.sh/nodepool
+                operator: In
+                values:
+                - {{ $k }}-{{ $v.instances.architecture | default $.Values.instances.architecture }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: k8s-app
+                operator: In
+                values:
+                - headroom-{{ $k }}-{{ $v.instances.architecture | default $.Values.instances.architecture }}-{{ $nhr.size }}
+            {{- if hasKey $nhr "antiAffinitySpec" }}
+            {{- $nhr.antiAffinitySpec | toYaml | nindent 14 }}
+            {{- end }}
+            topologyKey: kubernetes.io/hostname
+            {{- if hasKey $nhr "nameSpaces" }}
+            namespaces:
+            - {{ $.Values.headRoomNamespace | default "karpenter" }}
+                {{- range $nhr.nameSpaces }}
+            - {{ . }}
+                {{- end }}
+            {{- else }}
+            namespaces: {}
+            {{- end }}
+      tolerations:
+        - operator: Exists
+      containers:
+      - name: pause
+        image: registry.k8s.io/pause
+        resources:
+          requests:
+            {{- include "headroom.sizing" (merge (dict "Args" $data) . ) | indent 12 }}
+      priorityClassName: karpenter-headroom
+{{- end }}
+{{- end }}

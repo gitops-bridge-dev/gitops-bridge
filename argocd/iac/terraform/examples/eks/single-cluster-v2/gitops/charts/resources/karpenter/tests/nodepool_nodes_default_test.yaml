@@ -1,0 +1,158 @@
+suite: test nodepool - nodes-default
+templates:
+  - nodepool.yaml
+values:
+  - values.yaml
+
+tests:
+  - it: Verify nodes-default metadata
+    documentIndex: 0
+    asserts:
+      - isKind:
+          of: NodePool
+      - equal:
+          path: metadata.name
+          value: nodes-default-amd64
+      - equal:
+          path: spec.template.metadata.labels.cluster
+          value: eks-dev
+      - equal:
+          path: spec.template.metadata.labels.nodegroup
+          value: nodes-default
+      - equal:
+          path: spec.template.metadata.labels.testlabel1
+          value: label1
+      - equal:
+          path: spec.template.metadata.labels.testlabel2
+          value: label2
+      - equal:
+          path: spec.template.spec.nodeClassRef.name
+          value: nodes-default-amd64
+      - equal:
+          path: spec.template.spec.taints[0].key
+          value: testtaint1
+      - equal:
+          path: spec.template.spec.taints[0].value
+          value: taint1
+      - equal:
+          path: spec.template.spec.taints[0].effect
+          value: NoSchedule
+      - equal:
+          path: spec.template.spec.taints[1].key
+          value: testtaint2
+      - equal:
+          path: spec.template.spec.taints[1].value
+          value: taint2
+      - equal:
+          path: spec.template.spec.taints[1].effect
+          value: NoSchedule
+
+
+  - it: Verify nodes-default requirements
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.template.spec.requirements[0].key
+          value: "karpenter.k8s.aws/instance-category"
+      - notContains:
+          path: spec.template.spec.requirements[0].values
+          content: t
+      - equal:
+          path: spec.template.spec.requirements[0].values[0]
+          value: m
+      - equal:
+          path: spec.template.spec.requirements[0].values[2]
+          value: c
+      - equal:
+          path: spec.template.spec.requirements[1].key
+          value: "karpenter.k8s.aws/instance-cpu"
+      - equal:
+          path: spec.template.spec.requirements[1].values[0]
+          value: "4"
+      - equal:
+          path: spec.template.spec.requirements[1].values[2]
+          value: "16"
+      - equal:
+          path: spec.template.spec.requirements[2].key
+          value: "karpenter.k8s.aws/instance-generation"
+      - equal:
+          path: spec.template.spec.requirements[2].operator
+          value: "Gt"
+      - equal:
+          path: spec.template.spec.requirements[2].values[0]
+          value: "6"
+      - equal:
+          path: spec.template.spec.requirements[3].key
+          value: "topology.kubernetes.io/zone"
+      - equal:
+          path: spec.template.spec.requirements[3].values[0]
+          value: "eu-west-1a"
+      - equal:
+          path: spec.template.spec.requirements[3].values[2]
+          value: "eu-west-1c"
+      - equal:
+          path: spec.template.spec.requirements[4].key
+          value: "kubernetes.io/arch"
+      - equal:
+          path: spec.template.spec.requirements[4].values[0]
+          value: "amd64"
+      - equal:
+          path: spec.template.spec.requirements[5].key
+          value: "karpenter.sh/capacity-type"
+      - equal:
+          path: spec.template.spec.requirements[5].values[0]
+          value: "spot"
+      - equal:
+          path: spec.template.spec.requirements[5].values[1]
+          value: "on-demand"
+      - equal:
+          path: spec.template.spec.requirements[6].key
+          value: "kubernetes.io/os"
+      - equal:
+          path: spec.template.spec.requirements[6].values[0]
+          value: "linux"
+      - equal:
+          path: spec.template.spec.requirements[7].key
+          value: "karpenter.k8s.aws/instance-family"
+      - equal:
+          path: spec.template.spec.requirements[7].values[0]
+          value: "c6a"
+      - equal:
+          path: spec.template.spec.requirements[8].key
+          value: "karpenter.k8s.aws/instance-size"
+      - equal:
+          path: spec.template.spec.requirements[8].operator
+          value: NotIn
+      - equal:
+          path: spec.template.spec.requirements[8].values[0]
+          value: metal
+
+  - it: Verify nodes-default kubelet
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.template.spec.kubelet.systemReserved.cpu
+          value: 250m
+      - equal:
+          path: spec.template.spec.kubelet.kubeReserved.ephemeral-storage
+          value: 4Gi
+
+  - it: Verify nodes-default Options
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.disruption.expireAfter
+          value: 720h
+      - equal:
+          path: spec.disruption.consolidationPolicy
+          value: WhenUnderutilized
+      - isNull:
+          path: spec.disruption.consolidateAfter
+      - isNull:
+          path: spec.disruption.budgets
+      - isNull:
+          path: spec.limits
+      - equal:
+          path: spec.weight
+          value: 1
+

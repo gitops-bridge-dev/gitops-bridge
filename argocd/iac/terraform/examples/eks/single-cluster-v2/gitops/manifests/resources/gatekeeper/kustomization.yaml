@@ -1,0 +1,21 @@
+resources:
+- disallowedrepos
+# commonAnnotations:
+#   argocd.argoproj.io/sync-wave: "1"
+#   argocd.argoproj.io/sync-options: "SkipDryRunOnMissingResource=true"
+patches:
+  - target:
+      kind: ConstraintTemplate
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "1"
+  - target:
+      group: constraints.gatekeeper.sh
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "2"
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-options
+        value: "SkipDryRunOnMissingResource=true"

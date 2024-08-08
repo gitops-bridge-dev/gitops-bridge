@@ -1,0 +1,4 @@
+disallowedrepos:
+  parameters:
+    repos:
+      - "k8s.gcr.io/"

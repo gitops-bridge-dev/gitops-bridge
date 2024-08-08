@@ -1,0 +1,60 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: workload-namespaces
+  namespace: argocd
+spec:
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  goTemplate: true
+  goTemplateOptions:
+    - missingkey=error
+  generators:
+    - matrix:
+        generators:
+          - clusters:
+              selector:
+                matchLabels:
+                  argocd.argoproj.io/secret-type: cluster
+          - git:
+              repoURL: '{{.metadata.annotations.workload_repo_url}}'
+              revision: '{{.metadata.annotations.workload_repo_revision}}'
+              directories:
+                - path: '{{.metadata.annotations.workload_repo_basepath}}namespaces/*'
+
+  template:
+    metadata:
+      name: 'namespaces-{{.path.basename}}'
+      labels:
+        environment: '{{.metadata.labels.environment}}'
+        component: '{{.path.basename}}'
+        workloads: 'true'
+    spec:
+      project: 'default'
+      sources:
+      - repoURL: '{{.metadata.annotations.workload_repo_url}}'
+        targetRevision: '{{.metadata.annotations.workload_repo_revision}}'
+        ref: values
+      - chart: team
+        repoURL: 'https://gitops-bridge-dev.github.io/gitops-bridge-helm-charts'
+        targetRevision: '2.0.0'
+        helm:
+          releaseName: 'teams'
+          ignoreMissingValueFiles: true
+          valueFiles:
+            - '$values/{{.path.path}}/values.yaml'
+      - repoURL: '{{.metadata.annotations.workload_repo_url}}'
+        path: '{{.metadata.annotations.workload_repo_basepath}}apps/{{.path.basename}}'
+        targetRevision: '{{.metadata.annotations.workload_repo_revision}}'
+      destination:
+        namespace: '{{.path.basename}}'
+        name: '{{.name}}'
+      syncPolicy:
+        automated:
+          selfHeal: false
+          allowEmpty: true
+          prune: true
+        retry:
+          backoff:
+            duration: 1m
+          limit: -1

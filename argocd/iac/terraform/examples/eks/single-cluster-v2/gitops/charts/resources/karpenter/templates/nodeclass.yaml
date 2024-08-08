@@ -1,0 +1,83 @@
+{{- range $k, $v := $.Values.nodeGroups }}
+{{- $_ := set $ "key" $k }}
+{{- $_ := set $ "value" $v }}
+{{- if not (hasKey $v "nodeClassRef") }}
+---
+apiVersion: karpenter.k8s.aws/{{ $.Values.ApiVersion }}
+kind: EC2NodeClass
+metadata:
+  name: "{{ $k }}-{{ $v.instances.architecture | default $.Values.instances.architecture }}"
+  annotations:
+    argocd.argoproj.io/sync-options: "SkipDryRunOnMissingResource=true"
+  {{- if hasKey $v "annotations" }}
+    {{- range $annotationName, $annotationValue := $v.annotations }}
+    {{ $annotationName }}: {{ $annotationValue }}
+    {{- end }}
+  {{- end }}
+spec:
+  {{- if hasKey $v "IamRole" }}
+  role: {{ $v.IamRole }}
+  {{- else if hasKey $v "IamInstanceProfile" }}
+  instanceProfile: {{ $v.IamInstanceProfile }}
+  {{- else if hasKey $.Values "IamRole" }}
+  role: {{ $.Values.IamRole }}
+  {{- else if hasKey $.Values "IamInstanceProfile" }}
+  instanceProfile: {{ $.Values.IamInstanceProfile }}
+  {{- else }}
+  {{- fail "nodeClass error: Either IamRole or IamInstanceProfile must be defined" }}
+  {{- end }}
+  amiFamily: {{ $v.amiFamily | default $.Values.amiFamily }}
+  {{- if or (hasKey $v "amiSelectorTerms") (hasKey $.Values "amiSelectorTerms") }}
+  amiSelectorTerms:
+    {{- toYaml ($v.amiSelectorTerms | default $.Values.amiSelectorTerms) | nindent 4 }}
+  {{- end }}
+  subnetSelectorTerms:
+  {{- if hasKey $v "subnetSelectorTerms" }}
+    {{- toYaml $v.subnetSelectorTerms | nindent 4 }}
+  {{- else }}
+    {{- toYaml $.Values.subnetSelectorTerms | nindent 4 }}
+  {{- end }}
+  securityGroupSelectorTerms:
+  {{- if hasKey $v "securityGroupSelectorTerms" }}
+    {{- toYaml $v.securityGroupSelectorTerms | nindent 4 }}
+  {{- else }}
+    {{- toYaml $.Values.securityGroupSelectorTerms | nindent 4 }}
+  {{- end }}
+  tags:
+    cluster: {{ $.Values.clusterName }}
+    {{ $.Values.nodeGroupLabelName }}: {{ $v.nodeGroupLabel | default $k }}
+    {{- if or (hasKey $v "nodeTags") (hasKey $.Values "nodeTags") }}
+    {{- toYaml ($v.nodeTags | default $.Values.nodeTags) | nindent 4 }}
+    {{- end }}
+    {{- if hasKey $v "additionalNodeTags" }}
+    {{- toYaml $v.additionalNodeTags | nindent 4 }}
+    {{- end }}
+    managed_by: karpenter
+  blockDeviceMappings:
+  {{- if hasKey $v "blockDeviceMappings" }}
+    {{- toYaml $v.blockDeviceMappings | nindent 4 }}
+  {{- else }}
+    {{- toYaml $.Values.blockDeviceMappings | nindent 4 }}
+  {{- end }}
+  {{- if hasKey $v "instanceStorePolicy" }}
+  instanceStorePolicy: {{ $v.instanceStorePolicy }}
+  {{- else if hasKey $.Values "instanceStorePolicy" }}
+  instanceStorePolicy: {{ $.Values.instanceStorePolicy }}
+  {{- end }}
+  detailedMonitoring: {{ $v.detailedMonitoring | default $.Values.detailedMonitoring }}
+  associatePublicIPAddress: {{ $v.associatePublicIPAddress | default $.Values.associatePublicIPAddress }}
+  metadataOptions:
+    httpEndpoint: {{ $v.metaDataHttpEndpoint | default $.Values.metaDataHttpEndpoint }}
+    httpProtocolIPv6: {{ $v.metaDataHttpProtocolIPv6 | default $.Values.metaDataHttpProtocolIPv6 }}
+    httpPutResponseHopLimit: {{ $v.metaDataHttpPutResponseHopLimit | default $.Values.metaDataHttpPutResponseHopLimit }}
+    httpTokens: {{ $v.metaDataHttpTokens | default $.Values.metaDataHttpTokens }}
+  {{- if or (hasKey $v "userData") (hasKey $.Values "userData") }}
+  userData: |
+  {{- if hasKey $v "userData" }}
+    {{- tpl $v.userData $ | nindent 4 }}
+  {{- else if hasKey $.Values "userData" }}
+    {{- tpl $.Values.userData $ | nindent 4 }}
+  {{- end }}
+  {{- end}}
+{{- end }}
+{{- end }}

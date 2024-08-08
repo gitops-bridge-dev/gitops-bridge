@@ -1,0 +1,73 @@
+suite: test headroom nodes-workers
+templates:
+  - headroom.yaml
+
+values:
+  - values.yaml
+
+tests:
+  - it: Verify nodes-workers metadata
+    documentIndex: 1
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: headroom-nodes-workers-arm64-xlarge
+      - equal:
+          path: metadata.labels.k8s-app
+          value: headroom-nodes-workers-arm64-xlarge
+
+  - it: Verify nodes-workers affinity
+    documentIndex: 1
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: karpenter.sh/nodepool
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].operator
+          value: In
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].values[0]
+          value: nodes-workers-arm64
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].key
+          value: k8s-app
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].operator
+          value: In
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].values[0]
+          value: headroom-nodes-workers-arm64-xlarge
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[1].key
+          value: testlabel2
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[1].operator
+          value: In
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[1].values[0]
+          value: value1
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[1].values[1]
+          value: value2
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].namespaces[0]
+          value: karpenter
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].namespaces[1]
+          value: default
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].namespaces[2]
+          value: kube-system
+
+  - it: Verify nodes-workers Requests
+    documentIndex: 1
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: "8"
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 32Gi
+
