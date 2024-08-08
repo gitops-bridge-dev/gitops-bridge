@@ -268,8 +268,8 @@ addons:
         enabled: true
         region: '{{.metadata.annotations.aws_region}}'
         logGroupName: '{{.metadata.annotations.aws_for_fluentbit_log_group_name}}'
-        logGroupTemplate: '{{.metadata.annotations.aws_for_fluentbit_log_group_name}}/workload/$kubernetes["namespace_name"]'
-        logStreamTemplate: '$kubernetes["pod_name"].$kubernetes["container_name"]'
+        logGroupTemplate: "{{.metadata.annotations.aws_for_fluentbit_log_group_name}}/workload/$kubernetes['namespace_name']"
+        logStreamTemplate: "$kubernetes['pod_name'].$kubernetes['container_name']"
         logRetentionDays: 90
       serviceAccount:
         name: '{{.metadata.annotations.aws_for_fluentbit_service_account}}'
