@@ -32,8 +32,11 @@ variable "addons" {
     enable_aws_ebs_csi_resources        = true # generate gp2 and gp3 storage classes for ebs-csi
     enable_metrics_server               = true
     enable_gatekeeper                   = true
-    enable_karpenter                   = true
+    enable_karpenter                    = true
     enable_argocd                       = true
+    enable_kyverno                      = true
+    enable_aws_cloudwatch_metrics       = true
+    enable_aws_for_fluentbit            = true
   }
 }
 # Addons Git

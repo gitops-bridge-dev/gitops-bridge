@@ -251,16 +251,16 @@ addons:
           name: '{{.metadata.annotations.aws_fsx_csi_driver_node_service_account}}'
           annotations:
             eks.amazonaws.com/role-arn: '{{.metadata.annotations.aws_fsx_csi_driver_iam_role_arn}}'
-  aws_for_fluent_bit:
+  aws_for_fluentbit:
     enabled: false
-    releaseName: aws-for-fluent-bit
+    releaseName: aws-for-fluentbit
     namespace: '{{.metadata.annotations.aws_for_fluent_bit_namespace}}'
     chart: aws-for-fluent-bit
     repoUrl: https://aws.github.io/eks-charts
     targetRevision: "0.1.34"
     selector:
       matchExpressions:
-        - key: enable_aws_for_fluent_bit
+        - key: enable_aws_for_fluentbit
           operator: In
           values: ['true']
     values:
