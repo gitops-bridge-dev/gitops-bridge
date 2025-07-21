@@ -1,0 +1,58 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubecost
+  namespace: argocd
+spec:
+  project: default
+  source:
+    chart: cost-analyzer
+    repoURL: https://kubecost.github.io/cost-analyzer/
+    targetRevision: 2.7.2
+    helm:
+      values: |
+        kubecostProductConfigs:
+          networkCostsEnabled: true
+          networkCostAnalyzerEnabled: true
+          clusterName: ${cluster_name}
+          recommendations:
+            enabled: true
+            usageAnalysis: true
+        networkCosts:
+          enabled: true
+          config:
+            services: true
+            pods: true
+            nodes: true
+        prometheus:
+          nodeExporter:
+            enabled: true
+        service:
+          type: ClusterIP
+        ingress:
+          enabled: true
+          annotations:
+            kubernetes.io/ingress.class: "alb"
+            alb.ingress.kubernetes.io/scheme: "internet-facing"
+            alb.ingress.kubernetes.io/target-type: "ip"
+            alb.ingress.kubernetes.io/backend-protocol: "HTTP"
+            alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+            alb.ingress.kubernetes.io/tags: "Environment=prod,GitOps=true"
+          hosts:
+            - kubecost-v1.pocketfm.org
+          paths:
+            - /
+          pathType: Prefix
+          tls:
+            - hosts:
+              - kubecost-v1.pocketfm.org
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kubecost
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
